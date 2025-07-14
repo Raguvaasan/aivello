@@ -40,29 +40,21 @@ export const Navbar: React.FC<NavbarProps> = ({ onEnterApp }) => {
                 </button>
                 <div className="absolute top-full right-0 w-48 py-2 mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
                   {tools.slice(0, 3).map((tool) => (
-                    <a
+                    <button
                       key={tool.id}
-                      href="#"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        navigate(tool.path, { replace: true });
-                      }}
-                      className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                      onClick={() => navigate(tool.path, { replace: true })}
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                     >
                       {tool.name}
-                    </a>
+                    </button>
                   ))}
                   <div className="border-t border-gray-200 dark:border-gray-700 my-1"></div>
-                  <a
-                    href="#"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      navigate('/app', { replace: true });
-                    }}
-                    className="block px-4 py-2 text-sm text-blue-600 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  <button
+                    onClick={() => navigate('/app', { replace: true })}
+                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                   >
-                    View All Tools →
-                  </a>
+                    View All Tools
+                  </button>
                 </div>
               </div>
               <button

@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { FiMenu, FiMoon, FiSun, FiHome } from 'react-icons/fi';
 import { IconWrapper } from '../common/IconWrapper';
 import { useTheme } from '../../hooks/useTheme';
+import { UserProfile } from '../auth/UserProfile';
 
 interface HeaderProps {
   isSidebarOpen: boolean;
@@ -50,6 +51,7 @@ export const Header: React.FC<HeaderProps> = ({
                 <IconWrapper icon={FiMoon} className="h-5 w-5" />
               )}
             </motion.button>
+            <UserProfile />
           </div>
         </div>
       </div>

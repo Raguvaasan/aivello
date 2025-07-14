@@ -8,7 +8,7 @@ import { Sidebar } from '../../components/layout/Sidebar';
 export const AppLayout: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const { darkMode, themeClasses } = useTheme();
+  const { themeClasses } = useTheme();
 
   return (
     <div className={`min-h-screen ${themeClasses}`}>
