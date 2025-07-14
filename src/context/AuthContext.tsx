@@ -6,6 +6,7 @@ import {
   GithubAuthProvider,
   signOut
 } from '@firebase/auth';
+import toast from 'react-hot-toast'
 import { auth } from '../config/firebase';
 import { createUserDocument, updateUserLastLogin } from '../utils/firestore';
 
@@ -58,19 +59,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
-    } catch (error) {
-      console.error('Error signing in with Google:', error);
+    } catch (error: any) {
+    if (error.code === 'auth/account-exists-with-different-credential') {
+      toast.error("This email is already linked with GitHub login.")
+    } else if (error.code === 'auth/popup-closed-by-user') {
+      toast.error("Popup closed. Please try again.")
+    } else {
+      toast.error("Google login failed. Try again.")
     }
+
+    console.error("Error signing in with Google:", error)
+  }
   };
 
   const signInWithGithub = async () => {
-    try {
-      const provider = new GithubAuthProvider();
-      await signInWithPopup(auth, provider);
-    } catch (error) {
-      console.error('Error signing in with Github:', error);
-    }
-  };
+  try {
+    const provider = new GithubAuthProvider();
+    await signInWithPopup(auth, provider);
+  } catch (error: any) {
+  if (error.code === 'auth/account-exists-with-different-credential') {
+    toast.error("This email is already registered using a different provider.")
+  } else {
+    toast.error("GitHub login failed. Try again.")
+  }
+  console.error("Error signing in with GitHub:", error)
+  }
+};
+
 
   const logout = async () => {
     try {
