@@ -18,7 +18,7 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className={`${darkMode ? 'dark' : ''}`}>
+    <div className={`${darkMode ? 'dark' : 'light'}`}>
       <LandingPage />
     </div>
   );

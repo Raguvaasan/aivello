@@ -1,9 +1,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { FiMenu, FiMoon, FiSun, FiHome } from 'react-icons/fi';
+//import { motion } from 'framer-motion';
+import { FiMenu, 
+  // FiMoon, FiSun, 
+  FiHome } from 'react-icons/fi';
 import { IconWrapper } from '../common/IconWrapper';
-import { useTheme } from '../../hooks/useTheme';
+//import { useTheme } from '../../hooks/useTheme';
 import { UserProfile } from '../auth/UserProfile';
 
 interface HeaderProps {
@@ -15,7 +17,7 @@ export const Header: React.FC<HeaderProps> = ({
   isSidebarOpen,
   setIsSidebarOpen,
 }) => {
-  const { darkMode, toggleDarkMode } = useTheme();
+ // const { darkMode, toggleDarkMode } = useTheme();
 
   return (
     <header className="sticky top-0 z-50 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 h-16">
@@ -39,7 +41,7 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
 
           <div className="flex items-center gap-4">
-            <motion.button
+            {/* <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={toggleDarkMode}
@@ -50,7 +52,7 @@ export const Header: React.FC<HeaderProps> = ({
               ) : (
                 <IconWrapper icon={FiMoon} className="h-5 w-5" />
               )}
-            </motion.button>
+            </motion.button> */}
             <UserProfile />
           </div>
         </div>

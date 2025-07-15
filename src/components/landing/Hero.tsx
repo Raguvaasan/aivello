@@ -44,13 +44,13 @@ export const Hero: React.FC<HeroProps> = ({ onEnterApp }) => {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="relative"
           >
-            <div className="relative z-10">
+            {/* <div className="relative z-10">
               <img
                 src="/hero-image.png"
                 alt="AI Tools Preview"
                 className="rounded-lg shadow-2xl"
               />
-            </div>
+            </div> */}
             <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-500 opacity-20 blur-3xl" />
           </motion.div>
         </div>

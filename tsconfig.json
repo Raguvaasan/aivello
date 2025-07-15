@@ -19,7 +19,8 @@
     "noEmit": true,
     "jsx": "react-jsx",
     "paths": {
-      "@firebase/*": ["./node_modules/@firebase/*"]
+      "@firebase/*": ["./node_modules/@firebase/*"],
+      
     }
   },
   "include": [

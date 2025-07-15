@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 
 const ImageCompressor = () => {
-  const [originalImage, setOriginalImage] = useState<File | null>(null);
+ // const [originalImage, setOriginalImage] = useState<File | null>(null);
   const [compressedUrl, setCompressedUrl] = useState<string | null>(null);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setOriginalImage(e.target.files[0]);
+     // setOriginalImage(e.target.files[0]);
       compressImage(e.target.files[0]);
     }
   };
