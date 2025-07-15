@@ -8,7 +8,7 @@ export interface UserData {
   createdAt: Timestamp;
   lastLogin: Timestamp;
   preferences?: {
-    theme: 'light' | 'dark';
+    theme: 'light';
     notifications: boolean;
   }
 }

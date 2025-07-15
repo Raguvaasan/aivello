@@ -6,7 +6,7 @@ import { useTheme } from './hooks/useTheme';
 
 const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
-  const { darkMode } = useTheme();
+  const darkMode  = "light";
 
   useEffect(() => {
     // Simulate initial loading
@@ -18,7 +18,7 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className={`${darkMode ? 'dark' : 'light'}`}>
+    <div className={`${darkMode == "light" ? 'dark' : 'light'}`}>
       <LandingPage />
     </div>
   );
