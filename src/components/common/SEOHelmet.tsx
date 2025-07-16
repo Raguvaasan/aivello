@@ -1,5 +1,4 @@
-import React from 'react';
-import { Helmet } from 'react-helmet-async';
+import React, { useEffect } from 'react';
 
 interface SEOHelmetProps {
   title?: string;
@@ -30,72 +29,109 @@ export const SEOHelmet: React.FC<SEOHelmetProps> = ({
 }) => {
   const fullTitle = title.includes('AiVello') ? title : `${title} | AiVello`;
 
-  return (
-    <Helmet>
-      {/* Primary Meta Tags */}
-      <title>{fullTitle}</title>
-      <meta name="title" content={fullTitle} />
-      <meta name="description" content={description} />
-      <meta name="keywords" content={keywords} />
-      <link rel="canonical" href={url} />
+  useEffect(() => {
+    // Update document title
+    document.title = fullTitle;
 
-      {/* Open Graph / Facebook */}
-      <meta property="og:type" content={type} />
-      <meta property="og:url" content={url} />
-      <meta property="og:title" content={fullTitle} />
-      <meta property="og:description" content={description} />
-      <meta property="og:image" content={image} />
-      <meta property="og:site_name" content="AiVello" />
-      <meta property="og:locale" content="en_US" />
+    // Function to update or create meta tag
+    const updateMetaTag = (name: string, content: string, isProperty = false) => {
+      const selector = isProperty ? `meta[property="${name}"]` : `meta[name="${name}"]`;
+      let meta = document.querySelector(selector) as HTMLMetaElement;
+      
+      if (!meta) {
+        meta = document.createElement('meta');
+        if (isProperty) {
+          meta.setAttribute('property', name);
+        } else {
+          meta.setAttribute('name', name);
+        }
+        document.head.appendChild(meta);
+      }
+      meta.setAttribute('content', content);
+    };
 
-      {/* Twitter */}
-      <meta property="twitter:card" content="summary_large_image" />
-      <meta property="twitter:url" content={url} />
-      <meta property="twitter:title" content={fullTitle} />
-      <meta property="twitter:description" content={description} />
-      <meta property="twitter:image" content={image} />
-      <meta property="twitter:creator" content="@aivello" />
-      <meta property="twitter:site" content="@aivello" />
+    // Function to update or create link tag
+    const updateLinkTag = (rel: string, href: string) => {
+      let link = document.querySelector(`link[rel="${rel}"]`) as HTMLLinkElement;
+      if (!link) {
+        link = document.createElement('link');
+        link.setAttribute('rel', rel);
+        document.head.appendChild(link);
+      }
+      link.setAttribute('href', href);
+    };
 
-      {/* Article specific meta tags */}
-      {type === 'article' && article && (
-        <>
-          <meta property="article:author" content={article.author} />
-          {article.publishedTime && (
-            <meta property="article:published_time" content={article.publishedTime} />
-          )}
-          {article.modifiedTime && (
-            <meta property="article:modified_time" content={article.modifiedTime} />
-          )}
-          {article.section && (
-            <meta property="article:section" content={article.section} />
-          )}
-          {article.tags && article.tags.map((tag, index) => (
-            <meta key={index} property="article:tag" content={tag} />
-          ))}
-        </>
-      )}
+    // Primary Meta Tags
+    updateMetaTag('title', fullTitle);
+    updateMetaTag('description', description);
+    updateMetaTag('keywords', keywords);
+    updateLinkTag('canonical', url);
 
-      {/* Additional SEO Meta Tags */}
-      <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
-      <meta name="author" content="AiVello Team" />
-      <meta name="language" content="English" />
-      <meta name="revisit-after" content="7 days" />
-      <meta name="distribution" content="global" />
-      <meta name="rating" content="general" />
+    // Open Graph / Facebook
+    updateMetaTag('og:type', type, true);
+    updateMetaTag('og:url', url, true);
+    updateMetaTag('og:title', fullTitle, true);
+    updateMetaTag('og:description', description, true);
+    updateMetaTag('og:image', image, true);
+    updateMetaTag('og:site_name', 'AiVello', true);
+    updateMetaTag('og:locale', 'en_US', true);
 
-      {/* Theme and Mobile */}
-      <meta name="theme-color" content="#1d4ed8" />
-      <meta name="apple-mobile-web-app-capable" content="yes" />
-      <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-      <meta name="apple-mobile-web-app-title" content="AiVello" />
+    // Twitter
+    updateMetaTag('twitter:card', 'summary_large_image');
+    updateMetaTag('twitter:url', url);
+    updateMetaTag('twitter:title', fullTitle);
+    updateMetaTag('twitter:description', description);
+    updateMetaTag('twitter:image', image);
+    updateMetaTag('twitter:creator', '@aivello');
 
-      {/* Structured Data */}
-      {structuredData && (
-        <script type="application/ld+json">
-          {JSON.stringify(structuredData)}
-        </script>
-      )}
-    </Helmet>
-  );
+    // Additional meta tags
+    updateMetaTag('robots', 'index, follow');
+    updateMetaTag('googlebot', 'index, follow');
+    updateMetaTag('viewport', 'width=device-width, initial-scale=1');
+    updateMetaTag('theme-color', '#1d4ed8');
+
+    // Article meta tags (if article type)
+    if (article && type === 'article') {
+      if (article.author) updateMetaTag('article:author', article.author, true);
+      if (article.publishedTime) updateMetaTag('article:published_time', article.publishedTime, true);
+      if (article.modifiedTime) updateMetaTag('article:modified_time', article.modifiedTime, true);
+      if (article.section) updateMetaTag('article:section', article.section, true);
+      if (article.tags) {
+        article.tags.forEach(tag => {
+          const meta = document.createElement('meta');
+          meta.setAttribute('property', 'article:tag');
+          meta.setAttribute('content', tag);
+          document.head.appendChild(meta);
+        });
+      }
+    }
+
+    // Structured Data
+    if (structuredData) {
+      // Remove existing structured data
+      const existingScript = document.querySelector('#structured-data');
+      if (existingScript) {
+        existingScript.remove();
+      }
+
+      // Add new structured data
+      const script = document.createElement('script');
+      script.id = 'structured-data';
+      script.type = 'application/ld+json';
+      script.textContent = JSON.stringify(structuredData);
+      document.head.appendChild(script);
+    }
+
+    // Cleanup function
+    return () => {
+      // Remove structured data script when component unmounts
+      const script = document.querySelector('#structured-data');
+      if (script) {
+        script.remove();
+      }
+    };
+  }, [fullTitle, description, keywords, image, url, type, article, structuredData]);
+
+  // This component doesn't render anything
+  return null;
 };

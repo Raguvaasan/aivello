@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AiVello Logo PNG Generator</title>
+    <style>
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8fafc;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+        h1 {
+            color: #1e293b;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo-section {
+            margin: 30px 0;
+            padding: 20px;
+            background-color: #f1f5f9;
+            border-radius: 8px;
+        }
+        .logo-display {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 20px 0;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+        }
+        canvas {
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin: 15px 0;
+            flex-wrap: wrap;
+        }
+        button {
+            background: linear-gradient(135deg, #3B82F6, #1D4ED8);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: transform 0.2s;
+        }
+        button:hover {
+            transform: translateY(-1px);
+        }
+        .size-selector {
+            margin: 10px 0;
+            text-align: center;
+        }
+        select {
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid #d1d5db;
+            background: white;
+        }
+        .download-section {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
+        }
+        .info {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 20px 0;
+            color: #1e40af;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 AiVello Logo PNG Generator</h1>
+        
+        <div class="info">
+            <strong>Instructions:</strong> Select a logo version and size, then click "Generate PNG" to create your logo. Right-click the generated image and select "Save image as..." to download.
+        </div>
+
+        <!-- Main Logo Section -->
+        <div class="logo-section">
+            <h2>📝 Text Logo (Horizontal)</h2>
+            <div class="size-selector">
+                <label>Size: </label>
+                <select id="textLogoSize">
+                    <option value="200x60">200×60 (Default)</option>
+                    <option value="400x120">400×120 (2x)</option>
+                    <option value="600x180">600×180 (3x)</option>
+                    <option value="800x240">800×240 (4x)</option>
+                </select>
+            </div>
+            <div class="logo-display">
+                <canvas id="textLogoCanvas" width="200" height="60"></canvas>
+            </div>
+            <div class="controls">
+                <button onclick="generateTextLogo()">Generate PNG</button>
+                <button onclick="downloadCanvas('textLogoCanvas', 'aivello-logo')">Download</button>
+            </div>
+        </div>
+
+        <!-- Icon Logo Section -->
+        <div class="logo-section">
+            <h2>🔵 Icon Logo (Square)</h2>
+            <div class="size-selector">
+                <label>Size: </label>
+                <select id="iconLogoSize">
+                    <option value="32">32×32 (Favicon)</option>
+                    <option value="64">64×64 (Small)</option>
+                    <option value="128">128×128 (Medium)</option>
+                    <option value="192">192×192 (PWA)</option>
+                    <option value="256">256×256 (Large)</option>
+                    <option value="512">512×512 (Extra Large)</option>
+                </select>
+            </div>
+            <div class="logo-display">
+                <canvas id="iconLogoCanvas" width="128" height="128"></canvas>
+            </div>
+            <div class="controls">
+                <button onclick="generateIconLogo()">Generate PNG</button>
+                <button onclick="downloadCanvas('iconLogoCanvas', 'aivello-icon')">Download</button>
+            </div>
+        </div>
+
+        <!-- Favicon Section -->
+        <div class="logo-section">
+            <h2>🌐 Favicon (16×16)</h2>
+            <div class="logo-display">
+                <canvas id="faviconCanvas" width="16" height="16"></canvas>
+            </div>
+            <div class="controls">
+                <button onclick="generateFavicon()">Generate Favicon</button>
+                <button onclick="downloadCanvas('faviconCanvas', 'favicon')">Download</button>
+            </div>
+        </div>
+
+        <div class="download-section">
+            <p><strong>💡 Tip:</strong> For best results, use the 192×192 and 512×512 sizes for PWA icons, and 32×32 or 16×16 for favicons.</p>
+        </div>
+    </div>
+
+    <script>
+        // Text Logo Generator
+        function generateTextLogo() {
+            const select = document.getElementById('textLogoSize');
+            const [width, height] = select.value.split('x').map(Number);
+            const canvas = document.getElementById('textLogoCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            canvas.width = width;
+            canvas.height = height;
+            
+            // Clear canvas
+            ctx.fillStyle = 'transparent';
+            ctx.fillRect(0, 0, width, height);
+            
+            // Create gradient
+            const gradient = ctx.createLinearGradient(0, 0, width, 0);
+            gradient.addColorStop(0, '#3B82F6');
+            gradient.addColorStop(0.5, '#1D4ED8');
+            gradient.addColorStop(1, '#8B5CF6');
+            
+            // Scale factor
+            const scale = width / 200;
+            
+            // Main text
+            ctx.fillStyle = gradient;
+            ctx.font = `${Math.round(32 * scale)}px Inter, system-ui, sans-serif`;
+            ctx.fontWeight = '800';
+            ctx.textAlign = 'center';
+            ctx.fillText('AiVello', width / 2, height * 0.65);
+            
+            // Subtitle
+            ctx.fillStyle = '#64748B';
+            ctx.font = `${Math.round(10 * scale)}px Inter, system-ui, sans-serif`;
+            ctx.fontWeight = '500';
+            ctx.fillText('AI TOOLS', width / 2, height * 0.9);
+            
+            // Decorative AI badge
+            const badgeX = width * 0.125;
+            const badgeY = height * 0.5;
+            const badgeR = 12 * scale;
+            
+            // Badge circle
+            ctx.fillStyle = gradient;
+            ctx.globalAlpha = 0.1;
+            ctx.beginPath();
+            ctx.arc(badgeX, badgeY, badgeR, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // Badge text
+            ctx.globalAlpha = 1;
+            ctx.fillStyle = gradient;
+            ctx.font = `${Math.round(10 * scale)}px Inter, system-ui, sans-serif`;
+            ctx.fontWeight = '700';
+            ctx.textAlign = 'center';
+            ctx.fillText('AI', badgeX, badgeY + 3 * scale);
+        }
+
+        // Icon Logo Generator
+        function generateIconLogo() {
+            const select = document.getElementById('iconLogoSize');
+            const size = parseInt(select.value);
+            const canvas = document.getElementById('iconLogoCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            canvas.width = size;
+            canvas.height = size;
+            
+            // Clear canvas
+            ctx.fillStyle = 'transparent';
+            ctx.fillRect(0, 0, size, size);
+            
+            // Create gradient
+            const gradient = ctx.createLinearGradient(0, 0, size, size);
+            gradient.addColorStop(0, '#3B82F6');
+            gradient.addColorStop(0.5, '#1D4ED8');
+            gradient.addColorStop(1, '#8B5CF6');
+            
+            const center = size / 2;
+            const radius = size * 0.47;
+            
+            // Background circle
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(center, center, radius, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // AI text
+            ctx.fillStyle = 'white';
+            ctx.font = `${Math.round(size * 0.31)}px Inter, system-ui, sans-serif`;
+            ctx.fontWeight = '800';
+            ctx.textAlign = 'center';
+            ctx.fillText('Ai', center, center + size * 0.08);
+        }
+
+        // Favicon Generator
+        function generateFavicon() {
+            const canvas = document.getElementById('faviconCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            canvas.width = 16;
+            canvas.height = 16;
+            
+            // Clear canvas
+            ctx.fillStyle = 'transparent';
+            ctx.fillRect(0, 0, 16, 16);
+            
+            // Simple blue circle with A
+            ctx.fillStyle = '#1D4ED8';
+            ctx.beginPath();
+            ctx.arc(8, 8, 7, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // White A
+            ctx.fillStyle = 'white';
+            ctx.font = '10px Arial, sans-serif';
+            ctx.fontWeight = 'bold';
+            ctx.textAlign = 'center';
+            ctx.fillText('A', 8, 12);
+        }
+
+        // Download function
+        function downloadCanvas(canvasId, filename) {
+            const canvas = document.getElementById(canvasId);
+            const link = document.createElement('a');
+            link.download = `${filename}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
+        // Initialize with default logos
+        window.onload = function() {
+            generateTextLogo();
+            generateIconLogo();
+            generateFavicon();
+        }
+
+        // Update canvas size when selection changes
+        document.getElementById('textLogoSize').addEventListener('change', generateTextLogo);
+        document.getElementById('iconLogoSize').addEventListener('change', generateIconLogo);
+    </script>
+</body>
+</html>
