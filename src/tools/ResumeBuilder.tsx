@@ -3,6 +3,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { jsPDF } from 'jspdf';
 import { Document, Packer, Paragraph, TextRun } from 'docx';
+
+import { QRCode } from 'react-qrcode-logo';
+
 import { saveAs } from 'file-saver';
 import { Input } from '../components/ui/input';
 import { Textarea } from '../components/ui/textarea';
@@ -18,6 +21,8 @@ type Lang = { language: string; proficiency: string };
 const ResumeBuilder = () => {
   const previewRef = useRef<HTMLDivElement>(null);
   const [template, setTemplate] = useState<number>(1);
+  const [theme, setTheme] = useState<string>('blue');
+  const [font, setFont] = useState<string>('sans');
   const [form, setForm] = useState({
     name: '',
     email: '',
@@ -35,6 +40,7 @@ const ResumeBuilder = () => {
     projects: [{ title: '', description: '' }],
     certifications: [{ name: '', issuer: '', year: '' }],
     family: [{ relation: '', name: '', occupation: '' }],
+    linkedin: '',
   });
 const [user, setUser] = useState<any>(null); // store current user
 
@@ -42,50 +48,57 @@ const [user, setUser] = useState<any>(null); // store current user
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
-      if (currentUser) {
-        // Load resume if saved before
-        const docRef = doc(db, 'resumes', currentUser.uid);
-        const docSnap:any = await getDoc(docRef);
-        if (docSnap.exists()) {
-          setForm(docSnap.data());
-        }
-      } else {
-        const defaultForm:any = {
-  name: '',
-  email: '',
-  phone: '',
-  address: '',
-  profilePhoto: '',
-  summary: '',
-  skills: [] as Skill[],
-  languages: [] as Lang[],
-  hobbies: [] as string[],
-  experiences: [] as {
-    company: string;
-    role: string;
-    duration: string;
-    description: string;
-  }[],
-  education: [] as {
-    institution: string;
-    degree: string;
-    duration: string;
-    description: string;
-  }[],
-  projects: [] as {
-    title: string;
-    link: string;
-    description: string;
-  }[],
-  certificates: [] as {
-    title: string;
-    authority: string;
-    year: string;
-  }[],
-};
+     // console.log('Current user:', currentUser);
+//       if (currentUser) {
+//         // Load resume if saved before
+//         const docRef = doc(db, 'resumes', currentUser.uid);
+//         const docSnap:any = await getDoc(docRef);
+//         if (docSnap.exists()) {
+//         const data = docSnap.data();
+//         // ✅ Load only if email is present
+//         if (data.email) {
+//           setForm(data);
+//         } else {
+//           console.warn('Resume exists but email is missing in the data.');
+//         }
+//       }
+//       } else {
+//         const defaultForm:any = {
+//   name: '',
+//   email: '',
+//   phone: '',
+//   address: '',
+//   profilePhoto: '',
+//   summary: '',
+//   skills: [] as Skill[],
+//   languages: [] as Lang[],
+//   hobbies: [] as string[],
+//   experiences: [] as {
+//     company: string;
+//     role: string;
+//     duration: string;
+//     description: string;
+//   }[],
+//   education: [] as {
+//     institution: string;
+//     degree: string;
+//     duration: string;
+//     description: string;
+//   }[],
+//   projects: [] as {
+//     title: string;
+//     link: string;
+//     description: string;
+//   }[],
+//   certificates: [] as {
+//     title: string;
+//     authority: string;
+//     year: string;
+//   }[],
+// };
 
-       setForm(defaultForm);
-      }
+//        setForm(defaultForm);
+//       }
     });
     return () => unsubscribe();
   }, []);
@@ -266,6 +279,7 @@ const [user, setUser] = useState<any>(null); // store current user
     email: 'rajkumar@example.com',
     phone: '9876543210',
     address: '123, Anna Nagar, Chennai',
+    linkedin: 'https://www.linkedin.com/in/rajkumar',
     profilePhoto: '',
     summary:
       'Experienced software developer with 3+ years in frontend and backend technologies. Skilled in building scalable web apps using React and Node.js. Passionate about solving real-world problems through clean and efficient code.',
@@ -335,6 +349,7 @@ const loadFromCloud = async () => {
   }
 };
 
+
   return (
     <div className="p-6 space-y-6">
       <h2 className="text-2xl font-bold">AI Resume Builder</h2>
@@ -349,6 +364,19 @@ const loadFromCloud = async () => {
           <option value={1}>Classic</option>
           <option value={2}>Modern</option>
         </select>
+        <select onChange={(e) => setTheme(e.target.value)} className="border p-2">
+          <option value="blue">Blue</option>
+          <option value="green">Green</option>
+          <option value="gray">Gray</option>
+        </select>
+        <select onChange={(e) => setFont(e.target.value)} className="border p-2">
+          <option value="sans">Sans-serif</option>
+          <option value="serif">Serif</option>
+          <option value="mono">Monospace</option>
+        </select>
+        <Button variant="outline" onClick={loadFromCloud}>
+    Load Resume
+  </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -357,7 +385,7 @@ const loadFromCloud = async () => {
         <Input name="email" placeholder="Email" value={form.email} onChange={handleChange} />
         <Input name="phone" placeholder="Phone" value={form.phone} onChange={handleChange} />
         <Input name="address" placeholder="Address" value={form.address} onChange={handleChange} />
-
+<Input name="linkedin" placeholder="LinkedIn URL" value={form.linkedin} onChange={handleChange} />
         {/* Profile Photo */}
         <div className="md:col-span-2">
           <label className="font-semibold">Upload Profile Photo</label>
@@ -594,15 +622,25 @@ const loadFromCloud = async () => {
         </div>
       </div>
 
-      <div className="flex gap-4 mt-6">
-        <Button className="bg-green-600 text-white" onClick={downloadPDF}>Download PDF</Button>
-        <Button variant="outline" onClick={downloadDOCX}>Download DOCX</Button>
-        <Button variant="outline" onClick={onPrint}>Print</Button>
-        <Button variant="outline" onClick={autoFill}>AI Suggest</Button>
-        <Button variant="outline" onClick={saveToCloud}>Save to Cloud</Button>
-        <Button variant="outline" onClick={loadFromCloud}>Load Resume</Button>
+     <div className="flex flex-wrap gap-4 mt-6">
+  <Button className="bg-green-600 text-white" onClick={downloadPDF}>
+    Download PDF
+  </Button>
+  <Button variant="outline" onClick={downloadDOCX}>
+    Download DOCX
+  </Button>
+  <Button variant="outline" onClick={onPrint}>
+    Print
+  </Button>
+  <Button variant="outline" onClick={autoFill}>
+    AI Suggest
+  </Button>
+  <Button variant="outline" onClick={saveToCloud}>
+    Save to Cloud
+  </Button>
+ 
+</div>
 
-      </div>
 
       <Card className="mt-10 print:p-0 print:shadow-none">
         <CardContent ref={previewRef} className="p-4 space-y-2">
@@ -615,6 +653,12 @@ const loadFromCloud = async () => {
           )}
           <h2 className="text-xl font-bold">{form.name}</h2>
           <p>{form.email} | {form.phone} | {form.address}</p>
+{form.linkedin && (
+            <div className="mt-2">
+              <h4 className="font-semibold">LinkedIn QR</h4>
+              <QRCode value={form.linkedin} size={64} />
+            </div>
+          )}
 
           <div>
             <h4 className="font-semibold">Summary</h4>
