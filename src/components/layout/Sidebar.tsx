@@ -4,6 +4,7 @@ import { FiX } from 'react-icons/fi';
 import { IconWrapper } from '../common/IconWrapper';
 import { Tool } from '../../types';
 import { Link, useLocation } from 'react-router-dom';
+import { AivelloIcon } from '../common/AivelloLogo';
 
 interface SidebarProps {
   tools: Tool[];
@@ -33,9 +34,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
     >
       <div className="p-4">
         <div className="flex items-center justify-between md:justify-start mb-6">
-          <h2 className="text-2xl font-bold text-gray-800 dark:text-white">
-            Aivello
-          </h2>
+          <div className="flex items-center space-x-2">
+            <AivelloIcon width={32} height={32} />
+            <h2 className="text-2xl font-bold text-gray-800 dark:text-white">
+              Aivello
+            </h2>
+          </div>
           <button
             onClick={() => setIsSidebarOpen(false)}
             className="md:hidden p-2 rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"

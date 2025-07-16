@@ -7,7 +7,7 @@ interface HeroProps {
 
 export const Hero: React.FC<HeroProps> = ({ onEnterApp }) => {
   return (
-    <section className="relative pt-20 pb-32 bg-gray-900">
+    <section className="relative pt-20 pb-32 bg-gray-900 dark:bg-gray-950 transition-colors duration-300">
       <div className="container mx-auto px-6">
         <div className="grid md:grid-cols-2 gap-12 items-center">
           <motion.div
@@ -18,20 +18,20 @@ export const Hero: React.FC<HeroProps> = ({ onEnterApp }) => {
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6">
               All-in-One AI Tools Platform
             </h1>
-            <p className="text-xl text-gray-400 mb-8">
+            <p className="text-xl text-gray-400 dark:text-gray-500 mb-8">
               Access powerful AI tools for content creation, productivity, and more. 
               No sign-up required, start using now!
             </p>
             <div className="space-x-4">
               <button
                 onClick={onEnterApp}
-                className="bg-blue-600 text-white px-8 py-3 rounded-full font-medium hover:bg-blue-700 transition"
+                className="bg-blue-600 text-white px-8 py-3 rounded-full font-medium hover:bg-blue-700 transition-colors"
               >
                 Get Started
               </button>
               <button
                 onClick={onEnterApp}
-                className="border-2 border-gray-600 text-gray-400 px-8 py-3 rounded-full font-medium hover:border-gray-500 hover:text-gray-300 transition"
+                className="border-2 border-gray-600 dark:border-gray-700 text-gray-400 dark:text-gray-500 px-8 py-3 rounded-full font-medium hover:border-gray-500 dark:hover:border-gray-600 hover:text-gray-300 dark:hover:text-gray-400 transition-colors"
               >
                 Learn More
               </button>

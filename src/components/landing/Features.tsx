@@ -29,7 +29,7 @@ export const Features: React.FC = () => {
   ];
 
   return (
-    <section id="features" className="py-20 bg-gray-800">
+    <section id="features" className="py-20 bg-gray-800 dark:bg-gray-900 transition-colors duration-300">
       <div className="container mx-auto px-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

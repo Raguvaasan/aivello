@@ -1,12 +1,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-//import { motion } from 'framer-motion';
-import { FiMenu, 
-  // FiMoon, FiSun, 
-  FiHome } from 'react-icons/fi';
+import { motion } from 'framer-motion';
+import { FiMenu, FiMoon, FiSun, FiHome } from 'react-icons/fi';
 import { IconWrapper } from '../common/IconWrapper';
-//import { useTheme } from '../../hooks/useTheme';
+import { useTheme } from '../../context/ThemeContext';
 import { UserProfile } from '../auth/UserProfile';
+import { AivelloIcon } from '../common/AivelloLogo';
 
 interface HeaderProps {
   isSidebarOpen: boolean;
@@ -17,7 +16,7 @@ export const Header: React.FC<HeaderProps> = ({
   isSidebarOpen,
   setIsSidebarOpen,
 }) => {
- // const { darkMode, toggleDarkMode } = useTheme();
+  const { darkMode, toggleDarkMode } = useTheme();
 
   return (
     <header className="sticky top-0 z-50 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 h-16">
@@ -31,7 +30,8 @@ export const Header: React.FC<HeaderProps> = ({
               <IconWrapper icon={FiMenu} className="h-6 w-6" />
             </button>
             <div className="ml-4 flex items-center space-x-4">
-              <Link to="/" className="font-semibold text-xl text-gray-800 dark:text-white hover:text-gray-600 dark:hover:text-gray-300">
+              <Link to="/" className="flex items-center space-x-2 text-gray-800 dark:text-white hover:text-gray-600 dark:hover:text-gray-300">
+                <AivelloIcon width={24} height={24} />
                 <IconWrapper icon={FiHome} className="h-5 w-5" />
               </Link>
               <span className="font-semibold text-xl text-gray-800 dark:text-white">
@@ -41,18 +41,19 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
 
           <div className="flex items-center gap-4">
-            {/* <motion.button
+            <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={toggleDarkMode}
-              className="p-2 rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none"
+              className="p-2 rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none transition-colors"
+              title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
             >
               {darkMode ? (
                 <IconWrapper icon={FiSun} className="h-5 w-5" />
               ) : (
                 <IconWrapper icon={FiMoon} className="h-5 w-5" />
               )}
-            </motion.button> */}
+            </motion.button>
             <UserProfile />
           </div>
         </div>

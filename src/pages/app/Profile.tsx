@@ -1,11 +1,20 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { motion } from 'framer-motion';
+import { SEOHelmet } from '../../components/common/SEOHelmet';
+import { seoData } from '../../data/seoData';
 
 export const Profile: React.FC = () => {
   const { user } = useAuth();
 
   return (
+    <>
+      <SEOHelmet
+        title={seoData.pages.profile.title}
+        description={seoData.pages.profile.description}
+        keywords={seoData.pages.profile.keywords}
+        url="https://aivello.vercel.app/app/profile"
+      />
     <div className="max-w-4xl mx-auto p-6">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -83,5 +92,6 @@ export const Profile: React.FC = () => {
         </div>
       </motion.div>
     </div>
+    </>
   );
 };

@@ -1,7 +1,11 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { FiMoon, FiSun } from 'react-icons/fi';
 import { tools } from '../../data/tools';
+import { useTheme } from '../../context/ThemeContext';
+import { IconWrapper } from '../common/IconWrapper';
+import { AivelloIcon } from '../common/AivelloLogo';
 
 interface NavbarProps {
   onEnterApp: () => void;
@@ -9,6 +13,7 @@ interface NavbarProps {
 
 export const Navbar: React.FC<NavbarProps> = ({ onEnterApp }) => {
   const navigate = useNavigate();
+  const { darkMode, toggleDarkMode } = useTheme();
   return (
     <motion.nav
       initial={{ opacity: 0, y: -20 }}
@@ -17,7 +22,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onEnterApp }) => {
     >
       <div className="container mx-auto px-6">
         <div className="flex items-center justify-between h-20">
-          <div className="flex items-center">
+          <div className="flex items-center space-x-3">
+            <AivelloIcon width={40} height={40} />
             <h1 className="text-2xl font-bold text-white">Aivello</h1>
           </div>
           
@@ -57,6 +63,19 @@ export const Navbar: React.FC<NavbarProps> = ({ onEnterApp }) => {
                   </button>
                 </div>
               </div>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={toggleDarkMode}
+                className="p-2 rounded-full text-gray-300 hover:text-white hover:bg-gray-700 transition-colors"
+                title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+              >
+                {darkMode ? (
+                  <IconWrapper icon={FiSun} className="h-5 w-5" />
+                ) : (
+                  <IconWrapper icon={FiMoon} className="h-5 w-5" />
+                )}
+              </motion.button>
               <button
                 onClick={onEnterApp}
                 className="bg-blue-600 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition"
@@ -66,7 +85,21 @@ export const Navbar: React.FC<NavbarProps> = ({ onEnterApp }) => {
             </div>
           </div>
           
-          <div className="md:hidden">
+          <div className="md:hidden flex items-center space-x-2">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={toggleDarkMode}
+              className="p-2 rounded-full text-gray-300 hover:text-white hover:bg-gray-700 transition-colors"
+              title={darkMode ? 'Dark Mode' : 'Light Mode'}
+            >
+              {darkMode ? (
+                <IconWrapper icon={FiMoon} className="h-4 w-4" />
+              ) : (
+                <IconWrapper icon={FiSun} className="h-4 w-4" />
+                
+              )}
+            </motion.button>
             <button
               onClick={onEnterApp}
               className="bg-blue-600 text-white px-4 py-2 rounded-full text-sm hover:bg-blue-700 transition"

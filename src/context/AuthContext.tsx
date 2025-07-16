@@ -13,8 +13,8 @@ import { createUserDocument, updateUserLastLogin } from '../utils/firestore';
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  signInWithGoogle: () => Promise<void>;
-  signInWithGithub: () => Promise<void>;
+  signInWithGoogle: () => Promise<any>;
+  signInWithGithub: () => Promise<any>;
   logout: () => Promise<void>;
 }
 
@@ -34,8 +34,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user: User | null) => {
-      if (user) {
-        try {
+      try {
+        if (user) {
           // Create or update user document
           await createUserDocument({
             uid: user.uid,
@@ -44,12 +44,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             photoURL: user.photoURL
           });
           await updateUserLastLogin(user.uid);
-        } catch (error) {
-          console.error('Error updating user data:', error);
         }
+        setUser(user);
+      } catch (error) {
+        console.error('Error updating user data:', error);
+        setUser(user); // Still set the user even if Firestore operations fail
+      } finally {
+        setLoading(false);
       }
-      setUser(user);
-      setLoading(false);
     });
 
     return unsubscribe;
@@ -58,7 +60,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signInWithGoogle = async () => {
     try {
       const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
+      const result = await signInWithPopup(auth, provider);
+      // The user will be updated through onAuthStateChanged
+      return result;
     } catch (error: any) {
     if (error.code === 'auth/account-exists-with-different-credential') {
       toast.error("This email is already linked with GitHub login.")
@@ -69,13 +73,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     console.error("Error signing in with Google:", error)
+    throw error; // Re-throw so Login component can handle it
   }
   };
 
   const signInWithGithub = async () => {
   try {
     const provider = new GithubAuthProvider();
-    await signInWithPopup(auth, provider);
+    const result = await signInWithPopup(auth, provider);
+    // The user will be updated through onAuthStateChanged
+    return result;
   } catch (error: any) {
   if (error.code === 'auth/account-exists-with-different-credential') {
     toast.error("This email is already registered using a different provider.")
@@ -83,6 +90,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     toast.error("GitHub login failed. Try again.")
   }
   console.error("Error signing in with GitHub:", error)
+  throw error; // Re-throw so Login component can handle it
   }
 };
 
@@ -105,7 +113,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   return (
     <AuthContext.Provider value={value}>
-      {!loading && children}
+      {children}
     </AuthContext.Provider>
   );
 };

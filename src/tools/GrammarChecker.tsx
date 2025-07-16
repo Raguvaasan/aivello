@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { ToolWrapper } from '../components/common/ToolWrapper';
 
 export default function GrammarChecker() {
   const [text, setText] = useState('');
@@ -26,7 +27,13 @@ export default function GrammarChecker() {
   };
 
   return (
-    <div className="bg-white shadow-md p-4 rounded-xl">
+    <ToolWrapper
+      toolId="grammar-checker"
+      toolName="AI Grammar Checker"
+      toolDescription="Check and fix grammar, spelling, and punctuation errors instantly with our free AI-powered grammar checker"
+      toolCategory="Writing"
+    >
+    <div className="bg-white dark:bg-gray-800 shadow-md p-4 rounded-xl">
       <h2 className="text-xl font-semibold mb-4">Grammar Checker</h2>
       <textarea
         className="w-full p-2 border rounded mb-4 h-32"
@@ -56,5 +63,6 @@ export default function GrammarChecker() {
         </div>
       )}
     </div>
+    </ToolWrapper>
   );
 }

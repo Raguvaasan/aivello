@@ -1,8 +1,17 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { SEOHelmet } from '../../components/common/SEOHelmet';
+import { seoData } from '../../data/seoData';
 
 const PrivacyPolicy: React.FC = () => {
   return (
+    <>
+      <SEOHelmet
+        title={seoData.pages.privacy.title}
+        description={seoData.pages.privacy.description}
+        keywords={seoData.pages.privacy.keywords}
+        url="https://aivello.vercel.app/privacy"
+      />
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 py-12">
       <div className="container mx-auto px-4 max-w-3xl">
         <div className="bg-gray-800 rounded-2xl shadow-xl p-8">
@@ -47,6 +56,7 @@ const PrivacyPolicy: React.FC = () => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 

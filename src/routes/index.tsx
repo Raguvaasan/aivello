@@ -1,6 +1,6 @@
 import { createBrowserRouter } from 'react-router-dom';
 import { LandingPage } from '../components/landing/LandingPage';
-import { AppLayout } from '../pages/app';
+import { AppLayout } from '../pages/app/AppLayout';
 import { Login } from '../components/auth/Login';
 import { Profile } from '../pages/app/Profile';
 import History from '../pages/app/History';

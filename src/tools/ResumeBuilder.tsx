@@ -21,7 +21,9 @@ type Lang = { language: string; proficiency: string };
 const ResumeBuilder = () => {
   const previewRef = useRef<HTMLDivElement>(null);
   const [template, setTemplate] = useState<number>(1);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [theme, setTheme] = useState<string>('blue');
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [font, setFont] = useState<string>('sans');
   const [form, setForm] = useState({
     name: '',
@@ -42,6 +44,7 @@ const ResumeBuilder = () => {
     family: [{ relation: '', name: '', occupation: '' }],
     linkedin: '',
   });
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const [user, setUser] = useState<any>(null); // store current user
 
   // Listen for auth state

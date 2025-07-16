@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AiVello Logo PNG Generator</title>
+    <style>
+        body {
+            font-family: 'Inter', Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #1D4ED8;
+            margin-bottom: 30px;
+        }
+        .logo-section {
+            margin: 30px 0;
+            padding: 20px;
+            border: 2px dashed #e5e7eb;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .logo-preview {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 15px 0;
+            display: inline-block;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .download-btn {
+            background: linear-gradient(45deg, #3B82F6, #8B5CF6);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            margin: 5px;
+            transition: transform 0.2s;
+        }
+        .download-btn:hover {
+            transform: translateY(-2px);
+        }
+        .size-options {
+            margin: 15px 0;
+        }
+        .size-btn {
+            background: #f3f4f6;
+            border: 1px solid #d1d5db;
+            padding: 8px 16px;
+            margin: 2px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .size-btn:hover, .size-btn.active {
+            background: #3B82F6;
+            color: white;
+        }
+        .instructions {
+            background: #f0f9ff;
+            border: 1px solid #0ea5e9;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 AiVello Logo PNG Generator</h1>
+        
+        <div class="instructions">
+            <h3>📋 Instructions:</h3>
+            <ol>
+                <li>Choose the logo size you want</li>
+                <li>Click "Download PNG" to save the logo</li>
+                <li>Use different sizes for different purposes (favicon, website header, social media, etc.)</li>
+            </ol>
+        </div>
+
+        <!-- Main Logo -->
+        <div class="logo-section">
+            <h2>🏷️ Main Logo (AiVello Text)</h2>
+            <div class="logo-preview">
+                <svg id="mainLogo" width="400" height="120" viewBox="0 0 200 60" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="textGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" style="stop-color: #3B82F6; stop-opacity: 1" />
+                            <stop offset="50%" style="stop-color: #1D4ED8; stop-opacity: 1" />
+                            <stop offset="100%" style="stop-color: #8B5CF6; stop-opacity: 1" />
+                        </linearGradient>
+                    </defs>
+                    
+                    <!-- Main Text -->
+                    <text x="100" y="40" text-anchor="middle" fill="url(#textGradient)" 
+                          font-family="Inter, system-ui, sans-serif" font-size="32" font-weight="800" letter-spacing="-1px">
+                        AiVello
+                    </text>
+                    
+                    <!-- Subtitle -->
+                    <text x="100" y="55" text-anchor="middle" fill="#64748B" 
+                          font-family="Inter, system-ui, sans-serif" font-size="10" font-weight="500" letter-spacing="2px">
+                        AI TOOLS
+                    </text>
+                    
+                    <!-- Decorative AI Icon -->
+                    <circle cx="25" cy="30" r="12" fill="url(#textGradient)" opacity="0.1"/>
+                    <text x="25" y="35" text-anchor="middle" fill="url(#textGradient)" 
+                          font-family="Inter, system-ui, sans-serif" font-size="10" font-weight="700">
+                        AI
+                    </text>
+                </svg>
+            </div>
+            
+            <div class="size-options">
+                <button class="size-btn active" onclick="resizeMainLogo(400, 120)">Small (400x120)</button>
+                <button class="size-btn" onclick="resizeMainLogo(800, 240)">Medium (800x240)</button>
+                <button class="size-btn" onclick="resizeMainLogo(1200, 360)">Large (1200x360)</button>
+                <button class="size-btn" onclick="resizeMainLogo(1600, 480)">Extra Large (1600x480)</button>
+            </div>
+            
+            <button class="download-btn" onclick="downloadLogo('mainLogo', 'aivello-logo')">
+                📥 Download Main Logo PNG
+            </button>
+        </div>
+
+        <!-- Icon Logo -->
+        <div class="logo-section">
+            <h2>🔷 Icon Logo (Circle with AI)</h2>
+            <div class="logo-preview">
+                <svg id="iconLogo" width="128" height="128" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="iconGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color: #3B82F6; stop-opacity: 1" />
+                            <stop offset="50%" style="stop-color: #1D4ED8; stop-opacity: 1" />
+                            <stop offset="100%" style="stop-color: #1E3A8A; stop-opacity: 1" />
+                        </linearGradient>
+                    </defs>
+                    
+                    <!-- Background Circle -->
+                    <circle cx="32" cy="32" r="28" fill="url(#iconGradient)" />
+                    
+                    <!-- AI Core -->
+                    <g transform="translate(32, 32)">
+                        <!-- Central Core -->
+                        <circle cx="0" cy="0" r="6" fill="white" opacity="0.9"/>
+                        
+                        <!-- Simplified Neural Network -->
+                        <g stroke="white" stroke-width="1.5" opacity="0.7" fill="none">
+                            <line x1="0" y1="-6" x2="-12" y2="-18"/>
+                            <line x1="0" y1="-6" x2="0" y2="-20"/>
+                            <line x1="0" y1="-6" x2="12" y2="-18"/>
+                            
+                            <line x1="6" y1="0" x2="18" y2="-12"/>
+                            <line x1="6" y1="0" x2="20" y2="0"/>
+                            <line x1="6" y1="0" x2="18" y2="12"/>
+                            
+                            <line x1="0" y1="6" x2="-12" y2="18"/>
+                            <line x1="0" y1="6" x2="0" y2="20"/>
+                            <line x1="0" y1="6" x2="12" y2="18"/>
+                            
+                            <line x1="-6" y1="0" x2="-18" y2="-12"/>
+                            <line x1="-6" y1="0" x2="-20" y2="0"/>
+                            <line x1="-6" y1="0" x2="-18" y2="12"/>
+                        </g>
+                        
+                        <!-- Neural Nodes -->
+                        <g fill="white" opacity="0.8">
+                            <circle cx="-12" cy="-18" r="2"/>
+                            <circle cx="0" cy="-20" r="2"/>
+                            <circle cx="12" cy="-18" r="2"/>
+                            <circle cx="18" cy="-12" r="2"/>
+                            <circle cx="20" cy="0" r="2"/>
+                            <circle cx="18" cy="12" r="2"/>
+                            <circle cx="12" cy="18" r="2"/>
+                            <circle cx="0" cy="20" r="2"/>
+                            <circle cx="-12" cy="18" r="2"/>
+                            <circle cx="-18" cy="12" r="2"/>
+                            <circle cx="-20" cy="0" r="2"/>
+                            <circle cx="-18" cy="-12" r="2"/>
+                        </g>
+                        
+                        <!-- AI Text -->
+                        <text x="0" y="2" text-anchor="middle" fill="white" 
+                              font-family="Inter, Arial, sans-serif" font-size="8" font-weight="bold" opacity="0.9">
+                            AI
+                        </text>
+                    </g>
+                </svg>
+            </div>
+            
+            <div class="size-options">
+                <button class="size-btn" onclick="resizeIconLogo(32, 32)">Favicon (32x32)</button>
+                <button class="size-btn" onclick="resizeIconLogo(64, 64)">Small (64x64)</button>
+                <button class="size-btn active" onclick="resizeIconLogo(128, 128)">Medium (128x128)</button>
+                <button class="size-btn" onclick="resizeIconLogo(192, 192)">Large (192x192)</button>
+                <button class="size-btn" onclick="resizeIconLogo(512, 512)">Extra Large (512x512)</button>
+            </div>
+            
+            <button class="download-btn" onclick="downloadLogo('iconLogo', 'aivello-icon')">
+                📥 Download Icon PNG
+            </button>
+        </div>
+
+        <!-- Simple Circle Icon -->
+        <div class="logo-section">
+            <h2>⭕ Simple Circle Icon</h2>
+            <div class="logo-preview">
+                <svg id="simpleLogo" width="128" height="128" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="simpleGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color: #3B82F6; stop-opacity: 1" />
+                            <stop offset="50%" style="stop-color: #1D4ED8; stop-opacity: 1" />
+                            <stop offset="100%" style="stop-color: #8B5CF6; stop-opacity: 1" />
+                        </linearGradient>
+                    </defs>
+                    
+                    <!-- Background Circle -->
+                    <circle cx="16" cy="16" r="15" fill="url(#simpleGradient)" />
+                    
+                    <!-- AI Text -->
+                    <text x="16" y="20" text-anchor="middle" fill="white" 
+                          font-family="Inter, system-ui, sans-serif" font-size="10" font-weight="800" letter-spacing="-0.5px">
+                        Ai
+                    </text>
+                </svg>
+            </div>
+            
+            <div class="size-options">
+                <button class="size-btn" onclick="resizeSimpleLogo(32, 32)">Favicon (32x32)</button>
+                <button class="size-btn" onclick="resizeSimpleLogo(64, 64)">Small (64x64)</button>
+                <button class="size-btn active" onclick="resizeSimpleLogo(128, 128)">Medium (128x128)</button>
+                <button class="size-btn" onclick="resizeSimpleLogo(192, 192)">Large (192x192)</button>
+                <button class="size-btn" onclick="resizeSimpleLogo(512, 512)">Extra Large (512x512)</button>
+            </div>
+            
+            <button class="download-btn" onclick="downloadLogo('simpleLogo', 'aivello-simple-icon')">
+                📥 Download Simple Icon PNG
+            </button>
+        </div>
+
+        <div class="instructions">
+            <h3>💡 Usage Recommendations:</h3>
+            <ul>
+                <li><strong>Website Header:</strong> Use Main Logo (Medium or Large)</li>
+                <li><strong>Favicon:</strong> Use Simple Circle Icon (32x32)</li>
+                <li><strong>App Icons:</strong> Use Icon Logo (192x192 or 512x512)</li>
+                <li><strong>Social Media:</strong> Use any size depending on platform requirements</li>
+                <li><strong>Business Cards/Print:</strong> Use Extra Large sizes for best quality</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        function resizeMainLogo(width, height) {
+            const logo = document.getElementById('mainLogo');
+            logo.setAttribute('width', width);
+            logo.setAttribute('height', height);
+            
+            // Update active button
+            document.querySelectorAll('.logo-section:first-of-type .size-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+
+        function resizeIconLogo(width, height) {
+            const logo = document.getElementById('iconLogo');
+            logo.setAttribute('width', width);
+            logo.setAttribute('height', height);
+            
+            // Update active button
+            document.querySelectorAll('.logo-section:nth-of-type(2) .size-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+
+        function resizeSimpleLogo(width, height) {
+            const logo = document.getElementById('simpleLogo');
+            logo.setAttribute('width', width);
+            logo.setAttribute('height', height);
+            
+            // Update active button
+            document.querySelectorAll('.logo-section:nth-of-type(3) .size-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+
+        function downloadLogo(logoId, filename) {
+            const svg = document.getElementById(logoId);
+            const svgData = new XMLSerializer().serializeToString(svg);
+            
+            // Create canvas
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Set canvas size
+            canvas.width = svg.getAttribute('width');
+            canvas.height = svg.getAttribute('height');
+            
+            // Create image
+            const img = new Image();
+            const svgBlob = new Blob([svgData], {type: 'image/svg+xml;charset=utf-8'});
+            const url = URL.createObjectURL(svgBlob);
+            
+            img.onload = function() {
+                // Fill white background for transparency
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // Draw the SVG
+                ctx.drawImage(img, 0, 0);
+                
+                // Download
+                canvas.toBlob(function(blob) {
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(blob);
+                    a.download = `${filename}-${canvas.width}x${canvas.height}.png`;
+                    a.click();
+                    URL.revokeObjectURL(a.href);
+                });
+                
+                URL.revokeObjectURL(url);
+            };
+            
+            img.src = url;
+        }
+
+        // Auto-download all standard sizes for favicon/manifest
+        function downloadAllSizes() {
+            const sizes = [
+                {id: 'simpleLogo', name: 'favicon', size: 32},
+                {id: 'iconLogo', name: 'logo', size: 192},
+                {id: 'iconLogo', name: 'logo', size: 512}
+            ];
+            
+            sizes.forEach((item, index) => {
+                setTimeout(() => {
+                    if (item.id === 'simpleLogo') {
+                        resizeSimpleLogo(item.size, item.size);
+                    } else {
+                        resizeIconLogo(item.size, item.size);
+                    }
+                    setTimeout(() => {
+                        downloadLogo(item.id, item.name);
+                    }, 100);
+                }, index * 500);
+            });
+        }
+    </script>
+
+    <div style="text-align: center; margin-top: 30px;">
+        <button class="download-btn" onclick="downloadAllSizes()" style="background: linear-gradient(45deg, #10B981, #059669); font-size: 16px; padding: 15px 30px;">
+            🚀 Download All Standard Sizes (favicon, logo, logo)
+        </button>
+    </div>
+</body>
+</html>

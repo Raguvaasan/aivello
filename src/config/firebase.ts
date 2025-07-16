@@ -3,22 +3,22 @@ import { getAuth } from '@firebase/auth';
 import { getAnalytics } from '@firebase/analytics';
 import { getPerformance } from '@firebase/performance';
 import { getFirestore } from 'firebase/firestore';
+import config from './environment';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDy5QgDR6sFEACDVU4sVnoLwbIWUV994WA",
-  authDomain: "aivello.firebaseapp.com",
-  projectId: "aivello",
-  storageBucket: "aivello.firebasestorage.app",
-  messagingSenderId: "348938270936",
-  appId: "1:348938270936:web:d5926ccccd8fe63851ffad",
-  measurementId: "G-QVEN2BR2RS"
+  apiKey: config.firebase.apiKey,
+  authDomain: config.firebase.authDomain,
+  projectId: config.firebase.projectId,
+  storageBucket: config.firebase.storageBucket,
+  messagingSenderId: config.firebase.messagingSenderId,
+  appId: config.firebase.appId,
+  measurementId: config.firebase.measurementId
 };
 
-// const firestore = firebase.firestore();
-// export { firebase, firestore };
 export const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
-// Initialize Analytics and Performance Monitoring
-export const analytics = getAnalytics(app);
-export const performance = getPerformance(app);
+
+// Initialize Analytics and Performance Monitoring only in production
+export const analytics = config.env === 'production' ? getAnalytics(app) : null;
+export const performance = config.env === 'production' ? getPerformance(app) : null;

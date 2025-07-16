@@ -1,0 +1,128 @@
+<!-- Icon Generator HTML -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Aivello Icon Generator</title>
+    <style>
+        .icon-container {
+            display: inline-block;
+            margin: 20px;
+            text-align: center;
+        }
+        canvas {
+            border: 1px solid #ccc;
+            display: block;
+            margin: 10px auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Aivello Logo Generator</h1>
+    
+    <div class="icon-container">
+        <h3>16x16 Favicon</h3>
+        <canvas id="icon16" width="16" height="16"></canvas>
+        <button onclick="downloadCanvas('icon16', 'favicon-16.png')">Download</button>
+    </div>
+    
+    <div class="icon-container">
+        <h3>32x32 Favicon</h3>
+        <canvas id="icon32" width="32" height="32"></canvas>
+        <button onclick="downloadCanvas('icon32', 'favicon-32.png')">Download</button>
+    </div>
+    
+    <div class="icon-container">
+        <h3>192x192 Logo</h3>
+        <canvas id="logo" width="192" height="192"></canvas>
+        <button onclick="downloadCanvas('logo', 'logo.svg')">Download</button>
+    </div>
+    
+    <div class="icon-container">
+        <h3>512x512 Logo</h3>
+        <canvas id="logo" width="512" height="512"></canvas>
+        <button onclick="downloadCanvas('logo', 'logo.svg')">Download</button>
+    </div>
+
+    <script>
+        function drawIcon(canvas, size) {
+            const ctx = canvas.getContext('2d');
+            const center = size / 2;
+            const radius = size * 0.45;
+            
+            // Create gradient
+            const gradient = ctx.createLinearGradient(0, 0, size, size);
+            gradient.addColorStop(0, '#3B82F6');
+            gradient.addColorStop(0.5, '#1D4ED8');
+            gradient.addColorStop(1, '#1E3A8A');
+            
+            // Draw background circle
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(center, center, radius, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // Draw AI core
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+            ctx.beginPath();
+            ctx.arc(center, center, size * 0.12, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // Draw neural network lines
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+            ctx.lineWidth = size > 32 ? 2 : 1;
+            
+            const nodeRadius = size * 0.04;
+            const nodeDistance = size * 0.25;
+            
+            // Draw connections
+            ctx.beginPath();
+            for (let i = 0; i < 8; i++) {
+                const angle = (i * Math.PI) / 4;
+                const x1 = center + Math.cos(angle) * (size * 0.12);
+                const y1 = center + Math.sin(angle) * (size * 0.12);
+                const x2 = center + Math.cos(angle) * nodeDistance;
+                const y2 = center + Math.sin(angle) * nodeDistance;
+                
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(x2, y2);
+            }
+            ctx.stroke();
+            
+            // Draw neural nodes
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+            for (let i = 0; i < 8; i++) {
+                const angle = (i * Math.PI) / 4;
+                const x = center + Math.cos(angle) * nodeDistance;
+                const y = center + Math.sin(angle) * nodeDistance;
+                
+                ctx.beginPath();
+                ctx.arc(x, y, nodeRadius, 0, 2 * Math.PI);
+                ctx.fill();
+            }
+            
+            // Draw AI text (only for larger sizes)
+            if (size >= 32) {
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+                ctx.font = `bold ${size * 0.15}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('AI', center, center);
+            }
+        }
+        
+        function downloadCanvas(canvasId, filename) {
+            const canvas = document.getElementById(canvasId);
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = canvas.toDataURL();
+            link.click();
+        }
+        
+        // Generate all icons
+        drawIcon(document.getElementById('icon16'), 16);
+        drawIcon(document.getElementById('icon32'), 32);
+        drawIcon(document.getElementById('logo'), 192);
+        drawIcon(document.getElementById('logo'), 512);
+    </script>
+</body>
+</html>

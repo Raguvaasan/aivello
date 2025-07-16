@@ -54,7 +54,7 @@ const ImageCompressor = () => {
         createdAt: serverTimestamp(),
       });
 
-      console.log('Uploaded to Firestore + Storage:', dataUrl);
+     // console.log('Uploaded to Firestore + Storage:', dataUrl);
     } catch (err) {
       console.error('Upload failed:', err);
       alert('Upload failed');

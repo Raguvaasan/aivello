@@ -1,24 +1,35 @@
 {
     "short_name": "AiVello",
     "name": "AiVello - AI Powered Daily Tools",
-    "icons": [{
+    "description": "Free AI-powered tools for everyday productivity tasks",
+    "icons": [
+        {
+            "src": "favicon.svg",
+            "type": "image/svg+xml",
+            "sizes": "any"
+        },
+        {
             "src": "favicon.ico",
             "sizes": "64x64 32x32 24x24 16x16",
             "type": "image/x-icon"
         },
         {
-            "src": "logo192.png",
+            "src": "logo.svg",
             "type": "image/png",
-            "sizes": "192x192"
+            "sizes": "192x192",
+            "purpose": "any maskable"
         },
         {
-            "src": "logo512.png",
+            "src": "logo.svg",
             "type": "image/png",
-            "sizes": "512x512"
+            "sizes": "512x512",
+            "purpose": "any maskable"
         }
     ],
     "start_url": ".",
     "display": "standalone",
-    "theme_color": "#1e40af",
-    "background_color": "#ffffff"
+    "theme_color": "#1d4ed8",
+    "background_color": "#1e3a8a",
+    "orientation": "portrait-primary",
+    "categories": ["productivity", "utilities", "business"]
 }
