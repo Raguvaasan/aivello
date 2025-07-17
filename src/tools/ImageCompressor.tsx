@@ -72,26 +72,30 @@ const ImageCompressor = () => {
   };
 
   return (
-    <div className="bg-white p-6 rounded shadow max-w-md mx-auto">
-      <h2 className="text-xl font-bold mb-4">Image Compressor + Uploader</h2>
+    <div className="bg-white dark:bg-gray-800 p-6 rounded shadow max-w-md mx-auto">
+      <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">Image Compressor + Uploader</h2>
 
       <input
         ref={fileInputRef}
         type="file"
         accept="image/*"
         onChange={handleImageChange}
-        className="mb-4"
+        className="mb-4 w-full p-2 border border-gray-300 dark:border-gray-600 rounded
+                   bg-white dark:bg-gray-700 text-gray-900 dark:text-white
+                   file:mr-4 file:py-2 file:px-4 file:rounded file:border-0
+                   file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700
+                   hover:file:bg-blue-100 dark:file:bg-gray-600 dark:file:text-gray-200"
       />
 
-      {loading && <p className="text-blue-600">Compressing & Uploading...</p>}
+      {loading && <p className="text-blue-600 dark:text-blue-400">Compressing & Uploading...</p>}
 
       {compressedUrl && (
         <div className="mt-4">
-          <p className="font-semibold">Compressed Preview:</p>
+          <p className="font-semibold text-gray-900 dark:text-white">Compressed Preview:</p>
           <img src={compressedUrl} alt="Compressed" className="max-w-full rounded" />
           <button
             onClick={downloadImage}
-            className="mt-4 px-4 py-2 bg-green-600 text-white rounded"
+            className="mt-4 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
           >
             Download Image
           </button>

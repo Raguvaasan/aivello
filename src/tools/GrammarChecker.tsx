@@ -34,9 +34,12 @@ export default function GrammarChecker() {
       toolCategory="Writing"
     >
     <div className="bg-white dark:bg-gray-800 shadow-md p-4 rounded-xl">
-      <h2 className="text-xl font-semibold mb-4">Grammar Checker</h2>
+      <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Grammar Checker</h2>
       <textarea
-        className="w-full p-2 border rounded mb-4 h-32"
+        className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded mb-4 h-32 
+                   bg-white dark:bg-gray-700 text-gray-900 dark:text-white 
+                   placeholder-gray-500 dark:placeholder-gray-400
+                   focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         placeholder="Enter your text here..."
         value={text}
         onChange={(e) => setText(e.target.value)}
@@ -51,8 +54,8 @@ export default function GrammarChecker() {
 
       {result.length > 0 && (
         <div className="mt-4">
-          <h3 className="font-semibold mb-2">Suggestions:</h3>
-          <ul className="list-disc pl-5 space-y-1">
+          <h3 className="font-semibold mb-2 text-gray-900 dark:text-white">Suggestions:</h3>
+          <ul className="list-disc pl-5 space-y-1 text-gray-800 dark:text-gray-200">
             {result.map((item, index) => (
               <li key={index}>
                 <strong>Error:</strong> "{item.context.text.slice(item.context.offset, item.context.offset + item.context.length)}" → 
