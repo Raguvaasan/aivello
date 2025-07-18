@@ -31,6 +31,12 @@ const AIImageGenerator = lazy(() => import('../tools/AIImageGenerator'));
 const LanguageTranslator = lazy(() => import('../tools/LanguageTranslator'));
 const QRCodeScanner = lazy(() => import('../tools/QRCodeScanner'));
 const UnitConverter = lazy(() => import('../tools/UnitConverter'));
+const AICodeAssistant = lazy(() => import('../tools/AICodeAssistant'));
+const AIBusinessPlanGenerator = lazy(() => import('../tools/AIBusinessPlanGenerator'));
+const AIPersonalityAnalyzer = lazy(() => import('../tools/AIPersonalityAnalyzer'));
+const AIDreamInterpreter = lazy(() => import('../tools/AIDreamInterpreter'));
+const AIRelationshipCompatibility = lazy(() => import('../tools/AIRelationshipCompatibility'));
+const AICreativeStoryGenerator = lazy(() => import('../tools/AICreativeStoryGenerator'));
 
 // Wrapper component for lazy-loaded tools
 const LazyToolWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
@@ -70,6 +76,30 @@ export const router = createBrowserRouter([
       {
         path: 'history',
         element: <History />
+      },
+      {
+        path: 'ai-code-assistant',
+        element: <LazyToolWrapper><AICodeAssistant /></LazyToolWrapper>
+      },
+      {
+        path: 'ai-business-plan-generator',
+        element: <LazyToolWrapper><AIBusinessPlanGenerator /></LazyToolWrapper>
+      },
+      {
+        path: 'ai-personality-analyzer',
+        element: <LazyToolWrapper><AIPersonalityAnalyzer /></LazyToolWrapper>
+      },
+      {
+        path: 'ai-dream-interpreter',
+        element: <LazyToolWrapper><AIDreamInterpreter /></LazyToolWrapper>
+      },
+      {
+        path: 'ai-relationship-compatibility',
+        element: <LazyToolWrapper><AIRelationshipCompatibility /></LazyToolWrapper>
+      },
+      {
+        path: 'ai-creative-story-generator',
+        element: <LazyToolWrapper><AICreativeStoryGenerator /></LazyToolWrapper>
       },
       {
         path: 'grammar-checker',

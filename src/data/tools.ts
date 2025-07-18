@@ -19,9 +19,69 @@ import AIImageGenerator from '../tools/AIImageGenerator';
 import LanguageTranslator from '../tools/LanguageTranslator';
 import QRCodeScanner from '../tools/QRCodeScanner';
 import UnitConverter from '../tools/UnitConverter';
+import AICodeAssistant from '../tools/AICodeAssistant';
+import AIBusinessPlanGenerator from '../tools/AIBusinessPlanGenerator';
+import AIPersonalityAnalyzer from '../tools/AIPersonalityAnalyzer';
+import AIDreamInterpreter from '../tools/AIDreamInterpreter';
+import AIRelationshipCompatibility from '../tools/AIRelationshipCompatibility';
+import AICreativeStoryGenerator from '../tools/AICreativeStoryGenerator';
 
 
 export const tools: Tool[] = [
+  {
+    id: 'ai-code-assistant',
+    path: '/app/ai-code-assistant',
+    name: 'AI Code Assistant',
+    description: 'Generate, analyze, and optimize code with AI assistance',
+    icon: '🤖',
+    component: AICodeAssistant,
+    category: 'AI'
+  },
+  {
+    id: 'ai-business-plan-generator',
+    path: '/app/ai-business-plan-generator',
+    name: 'AI Business Plan Generator',
+    description: 'Create comprehensive business plans with AI assistance',
+    icon: '📊',
+    component: AIBusinessPlanGenerator,
+    category: 'AI'
+  },
+  {
+    id: 'ai-personality-analyzer',
+    path: '/app/ai-personality-analyzer',
+    name: 'AI Personality Analyzer',
+    description: 'Discover your personality type with AI-powered analysis',
+    icon: '🧠',
+    component: AIPersonalityAnalyzer,
+    category: 'AI'
+  },
+  {
+    id: 'ai-dream-interpreter',
+    path: '/app/ai-dream-interpreter',
+    name: 'AI Dream Interpreter',
+    description: 'Unlock hidden meanings in your dreams with AI analysis',
+    icon: '🌙',
+    component: AIDreamInterpreter,
+    category: 'AI'
+  },
+  {
+    id: 'ai-relationship-compatibility',
+    path: '/app/ai-relationship-compatibility',
+    name: 'AI Relationship Compatibility',
+    description: 'Analyze relationship compatibility with AI insights',
+    icon: '💖',
+    component: AIRelationshipCompatibility,
+    category: 'AI'
+  },
+  {
+    id: 'ai-creative-story-generator',
+    path: '/app/ai-creative-story-generator',
+    name: 'AI Story Generator',
+    description: 'Generate creative stories with AI assistance',
+    icon: '📚',
+    component: AICreativeStoryGenerator,
+    category: 'AI'
+  },
   {
     id: 'youtube-thumbnail',
     path: '/app/youtube-thumbnail',
