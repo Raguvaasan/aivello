@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { ToolWrapper } from '../components/common/ToolWrapper';
 
 export default function TextToSpeech() {
   const [text, setText] = useState('');
@@ -9,7 +10,13 @@ export default function TextToSpeech() {
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow">
+    <ToolWrapper
+      toolId="text-to-speech"
+      toolName="Text to Speech Converter"
+      toolDescription="Convert any text to natural speech audio. Free online text-to-speech tool with multiple voices"
+      toolCategory="Audio"
+    >
+      <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow">
       <h2 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white">Text to Speech</h2>
       <textarea
         value={text}
@@ -24,5 +31,6 @@ export default function TextToSpeech() {
         Speak
       </button>
     </div>
+    </ToolWrapper>
   );
 }

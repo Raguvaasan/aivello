@@ -1,3 +1,4 @@
+import React, { Suspense, lazy } from 'react';
 import { createBrowserRouter } from 'react-router-dom';
 import { LandingPage } from '../components/landing/LandingPage';
 import { AppLayout } from '../pages/app/AppLayout';
@@ -5,18 +6,38 @@ import { Login } from '../components/auth/Login';
 import { Profile } from '../pages/app/Profile';
 import History from '../pages/app/History';
 import { ProtectedRoute } from '../components/auth/ProtectedRoute';
-import GrammarChecker from '../tools/GrammarChecker';
-import PdfToWord from '../tools/PdfToWord';
-import QrCodeGenerator from '../tools/QrCodeGenerator';
-import TextToSpeech from '../tools/TextToSpeech';
-import ImageCompressor from '../tools/ImageCompressor';
-import ReadTimeEstimator from '../tools/ReadTimeEstimator';
-import WordCounter from '../tools/WordCounter';
-import BgRemover from '../tools/BgRemover';
-import ResumeBuilder from '../tools/ResumeBuilder';
-import YoutubeThumbnail from '../tools/YoutubeThumbnail';
+import { LoadingScreen } from '../components/common/LoadingScreen';
 import Terms from '../pages/legal/Terms';
 import PrivacyPolicy from '../pages/legal/PrivacyPolicy';
+
+// Lazy load tool components for better performance
+const GrammarChecker = lazy(() => import('../tools/GrammarChecker'));
+const PdfToWord = lazy(() => import('../tools/PdfToWord'));
+const QrCodeGenerator = lazy(() => import('../tools/QrCodeGenerator'));
+const TextToSpeech = lazy(() => import('../tools/TextToSpeech'));
+const ImageCompressor = lazy(() => import('../tools/ImageCompressor'));
+const ReadTimeEstimator = lazy(() => import('../tools/ReadTimeEstimator'));
+const WordCounter = lazy(() => import('../tools/WordCounter'));
+const BgRemover = lazy(() => import('../tools/BgRemover'));
+const ResumeBuilder = lazy(() => import('../tools/ResumeBuilder'));
+const YoutubeThumbnail = lazy(() => import('../tools/YoutubeThumbnail'));
+const AIEmailWriter = lazy(() => import('../tools/AIEmailWriter'));
+const PasswordGenerator = lazy(() => import('../tools/PasswordGenerator'));
+const ColorPaletteGenerator = lazy(() => import('../tools/ColorPaletteGenerator'));
+const URLShortener = lazy(() => import('../tools/URLShortener'));
+const InvoiceGenerator = lazy(() => import('../tools/InvoiceGenerator'));
+const AITextSummarizer = lazy(() => import('../tools/AITextSummarizer'));
+const AIImageGenerator = lazy(() => import('../tools/AIImageGenerator'));
+const LanguageTranslator = lazy(() => import('../tools/LanguageTranslator'));
+const QRCodeScanner = lazy(() => import('../tools/QRCodeScanner'));
+const UnitConverter = lazy(() => import('../tools/UnitConverter'));
+
+// Wrapper component for lazy-loaded tools
+const LazyToolWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <Suspense fallback={<LoadingScreen />}>
+    {children}
+  </Suspense>
+);
 
 export const router = createBrowserRouter([
   {
@@ -52,47 +73,91 @@ export const router = createBrowserRouter([
       },
       {
         path: 'grammar-checker',
-        element: <GrammarChecker />
+        element: <LazyToolWrapper><GrammarChecker /></LazyToolWrapper>
       },
       {
         path: 'pdf-to-word',
-        element: <PdfToWord />
+        element: <LazyToolWrapper><PdfToWord /></LazyToolWrapper>
       },
       {
         path: 'qr-generator',
-        element: <QrCodeGenerator />
+        element: <LazyToolWrapper><QrCodeGenerator /></LazyToolWrapper>
       },
       {
         path: 'text-to-speech',
-        element: <TextToSpeech />
+        element: <LazyToolWrapper><TextToSpeech /></LazyToolWrapper>
       },
       {
         path: 'image-compressor',
-        element: <ImageCompressor />
+        element: <LazyToolWrapper><ImageCompressor /></LazyToolWrapper>
       },
       {
         path: 'read-time',
-        element: <ReadTimeEstimator />
+        element: <LazyToolWrapper><ReadTimeEstimator /></LazyToolWrapper>
       },
       {
         path: 'word-counter',
-        element: <WordCounter />
+        element: <LazyToolWrapper><WordCounter /></LazyToolWrapper>
       },
       {
         path: 'bg-remover',
-        element: <BgRemover />
+        element: <LazyToolWrapper><BgRemover /></LazyToolWrapper>
       },
       {
         path: 'resume-builder',
-        element: <ResumeBuilder />
+        element: <LazyToolWrapper><ResumeBuilder /></LazyToolWrapper>
       },
       {
         path: 'youtube-thumbnail',
-        element: <YoutubeThumbnail />
+        element: <LazyToolWrapper><YoutubeThumbnail /></LazyToolWrapper>
+      },
+      {
+        path: 'ai-email-writer',
+        element: <LazyToolWrapper><AIEmailWriter /></LazyToolWrapper>
+      },
+      {
+        path: 'password-generator',
+        element: <LazyToolWrapper><PasswordGenerator /></LazyToolWrapper>
+      },
+      {
+        path: 'color-palette-generator',
+        element: <LazyToolWrapper><ColorPaletteGenerator /></LazyToolWrapper>
+      },
+      {
+        path: 'url-shortener',
+        element: <LazyToolWrapper><URLShortener /></LazyToolWrapper>
+      },
+      {
+        path: 'invoice-generator',
+        element: <LazyToolWrapper><InvoiceGenerator /></LazyToolWrapper>
+      },
+      {
+        path: 'ai-text-summarizer',
+        element: <LazyToolWrapper><AITextSummarizer /></LazyToolWrapper>
+      },
+      {
+        path: 'ai-image-generator',
+        element: <LazyToolWrapper><AIImageGenerator /></LazyToolWrapper>
+      },
+      {
+        path: 'language-translator',
+        element: <LazyToolWrapper><LanguageTranslator /></LazyToolWrapper>
+      },
+      {
+        path: 'qr-code-scanner',
+        element: <LazyToolWrapper><QRCodeScanner /></LazyToolWrapper>
+      },
+      {
+        path: 'unit-converter',
+        element: <LazyToolWrapper><UnitConverter /></LazyToolWrapper>
       },
       {
         path: 'profile',
         element: <Profile />
+      },
+      {
+        path: 'history',
+        element: <History />
       }
     ]
   }

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { FaDownload, FaYoutube, FaCopy } from 'react-icons/fa';
 import { IconWrapper } from '../components/common/IconWrapper';
+import { ToolWrapper } from '../components/common/ToolWrapper';
 
 interface ThumbnailOption {
   quality: string;
@@ -134,7 +135,13 @@ export default function YoutubeThumbnail() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <ToolWrapper
+      toolId="youtube-thumbnail-downloader"
+      toolName="YouTube Thumbnail Downloader"
+      toolDescription="Download YouTube video thumbnails in multiple resolutions. Extract high-quality thumbnails from any YouTube video"
+      toolCategory="Media"
+    >
+      <div className="max-w-4xl mx-auto">
       <div className="bg-white dark:bg-gray-800 shadow-lg rounded-xl p-6">
         <div className="flex items-center gap-3 mb-6">
           <IconWrapper icon={FaYoutube} className="text-3xl text-red-600" />
@@ -262,5 +269,6 @@ export default function YoutubeThumbnail() {
         </div>
       </div>
     </div>
+    </ToolWrapper>
   );
 }

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { ToolWrapper } from '../components/common/ToolWrapper';
 
 export default function ReadTimeEstimator() {
   const [text, setText] = useState('');
@@ -6,7 +7,13 @@ export default function ReadTimeEstimator() {
   const minutes = Math.ceil(words.length / 200);
 
   return (
-    <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow">
+    <ToolWrapper
+      toolId="read-time-estimator"
+      toolName="Reading Time Calculator"
+      toolDescription="Calculate reading time for any text. Perfect for blogs, articles, and content planning"
+      toolCategory="Writing"
+    >
+      <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow">
       <h2 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white">Read Time Estimator</h2>
       <textarea
         value={text}
@@ -19,5 +26,6 @@ export default function ReadTimeEstimator() {
       />
       <p className="text-gray-900 dark:text-white">Estimated read time: {minutes} min</p>
     </div>
+    </ToolWrapper>
   );
 }

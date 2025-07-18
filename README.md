@@ -2,44 +2,64 @@
 
 A comprehensive web application offering 10+ free AI-powered tools for everyday productivity tasks.
 
-## 🚀 Features
+## 🚀 Quick Start
 
-### Available Tools
-- **YouTube Thumbnail Generator** - Create engaging video thumbnails
-- **Grammar Checker** - Improve text grammar and readability
-- **PDF to Word Converter** - Convert PDF documents to Word format
-- **QR Code Generator** - Generate QR codes for any content
-- **Text to Speech** - Convert text to natural-sounding speech
-- **Background Remover** - AI-powered image background removal
-- **Image Compressor** - Quality-preserving image compression
-- **Resume Builder** - Professional resume creation tool
-- **Read Time Estimator** - Calculate content reading time
-- **Word Counter** - Comprehensive text analysis
-
-### Core Features
-- ✅ **No signup required** for basic usage
-- ✅ **Dark/Light theme** support
-- ✅ **Responsive design** for all devices
-- ✅ **Real-time processing** with progress indicators
-- ✅ **Secure file handling** with client-side processing
-- ✅ **Progressive Web App** capabilities
-
-## 🛠️ Tech Stack
-
-- **Frontend**: React 19.1.0 with TypeScript
-- **Styling**: Tailwind CSS 3.4.1
-- **Authentication**: Firebase Auth
-- **Database**: Firestore
-- **Routing**: React Router DOM 7.6.3
-- **Animations**: Framer Motion
-- **Build Tool**: Create React App
-
-## 📋 Prerequisites
-
-- Node.js 16+ 
+### Prerequisites
+- Node.js 18+ 
 - npm or yarn
-- Firebase project (for authentication and database)
-- Remove.bg API key (for background removal tool)
+- Firebase project (for authentication)
+- Remove.bg API key (for background removal)
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/Raguvaasan/aivello.git
+   cd aivello
+   ```
+
+2. **Setup development environment**
+   ```bash
+   ./scripts/setup-dev.sh
+   ```
+
+3. **Configure environment variables**
+   ```bash
+   # Edit .env.local with your API keys
+   cp .env.example .env.local
+   ```
+
+4. **Start development server**
+   ```bash
+   npm start
+   ```
+
+5. **Open your browser**
+   Navigate to `http://localhost:3000`
+
+## 📁 Project Structure
+
+```
+aivello/
+├── .github/                 # GitHub workflows and templates
+│   ├── workflows/          # CI/CD pipelines
+│   ├── ISSUE_TEMPLATE/     # Bug reports, feature requests
+│   └── copilot-instructions.md
+├── docs/                   # Comprehensive documentation
+│   ├── SECURITY.md         # Security guidelines
+│   ├── SEO_GUIDE.md        # SEO implementation
+│   └── README.md           # Documentation index
+├── public/                 # Static assets and PWA files
+├── src/                    # Source code
+│   ├── components/         # React components
+│   ├── tools/             # AI tool implementations
+│   ├── pages/             # Application pages
+│   ├── context/           # React contexts
+│   └── utils/             # Utility functions
+├── scripts/                # Development and build scripts
+├── tools/                  # Development tools (logo generators)
+└── README.md              # This file
+```
 
 ## 🚀 Quick Start
 

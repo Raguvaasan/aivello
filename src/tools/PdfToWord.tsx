@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { FaFilePdf, FaFileWord, FaDownload, FaTrash, FaSpinner } from 'react-icons/fa';
 import { IconWrapper } from '../components/common/IconWrapper';
+import { ToolWrapper } from '../components/common/ToolWrapper';
 import * as pdfjsLib from 'pdfjs-dist';
 import { Document, Packer, Paragraph, TextRun } from 'docx';
 import { saveAs } from 'file-saver';
@@ -144,7 +145,13 @@ export default function PdfToWord() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <ToolWrapper
+      toolId="pdf-to-word-converter"
+      toolName="PDF to Word Converter"
+      toolDescription="Convert PDF files to editable Word documents online. Extract text from PDF and create downloadable DOCX files"
+      toolCategory="Document"
+    >
+      <div className="max-w-4xl mx-auto">
       <div className="bg-white dark:bg-gray-800 shadow-lg rounded-xl p-6">
         <div className="flex items-center gap-3 mb-6">
           <IconWrapper icon={FaFilePdf} className="text-3xl text-red-600" />
@@ -303,5 +310,6 @@ export default function PdfToWord() {
         </div>
       </div>
     </div>
+    </ToolWrapper>
   );
 }

@@ -1,12 +1,18 @@
-// File: src/tools/QrCodeGenerator.tsx
 import React, { useState } from 'react';
 import { QRCode } from 'react-qrcode-logo';
+import { ToolWrapper } from '../components/common/ToolWrapper';
 
 export default function QrCodeGenerator() {
   const [text, setText] = useState('');
 
   return (
-    <div className="bg-white dark:bg-gray-800 shadow-md p-6 rounded-xl transition-colors duration-200">
+    <ToolWrapper
+      toolId="qr-code-generator"
+      toolName="QR Code Generator"
+      toolDescription="Generate QR codes instantly for any text or URL. Free, fast, and easy-to-use QR code generator tool"
+      toolCategory="Utilities"
+    >
+      <div className="bg-white dark:bg-gray-800 shadow-md p-6 rounded-xl transition-colors duration-200">
       <h2 className="text-2xl font-semibold mb-6 text-gray-800 dark:text-white">QR Code Generator</h2>
       <div className="mb-6">
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -34,5 +40,6 @@ export default function QrCodeGenerator() {
         </div>
       )}
     </div>
+    </ToolWrapper>
   );
 }

@@ -1,11 +1,18 @@
 import React, { useState } from 'react';
+import { ToolWrapper } from '../components/common/ToolWrapper';
 
 export default function WordCounter() {
   const [text, setText] = useState('');
   const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;
 
   return (
-    <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow">
+    <ToolWrapper
+      toolId="word-counter"
+      toolName="Word Counter Tool"
+      toolDescription="Count words, characters, paragraphs, and reading time instantly. Free online word counting tool"
+      toolCategory="Writing"
+    >
+      <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow">
       <h2 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white">Word Counter</h2>
       <textarea
         value={text}
@@ -18,5 +25,6 @@ export default function WordCounter() {
       />
       <p className="text-gray-900 dark:text-white">Words: {wordCount}</p>
     </div>
+    </ToolWrapper>
   );
 }

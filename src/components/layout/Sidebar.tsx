@@ -27,11 +27,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
   );
 
   return (
-    <div
-      className={`fixed md:sticky top-0 left-0 z-40 h-full w-72 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 shadow-lg md:shadow-none transition-transform duration-300 transform ${
-        isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-      } md:translate-x-0 overflow-y-auto`}
-    >
+    <>
+      {/* Mobile overlay */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+      
+      <div
+        className={`fixed md:sticky top-0 left-0 z-40 h-full w-72 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 shadow-lg md:shadow-none transition-transform duration-300 transform ${
+          isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        } md:translate-x-0 overflow-y-auto`}
+        role="navigation"
+        aria-label="Tools navigation"
+      >
       <div className="p-4">
         <div className="flex items-center justify-between md:justify-start mb-6">
           <div className="flex items-center space-x-2">
@@ -82,6 +94,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           ))}
         </nav>
       </div>
-    </div>
+      </div>
+    </>
   );
 };

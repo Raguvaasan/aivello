@@ -4,8 +4,6 @@
   "private": true,
   "dependencies": {
     "@firebase/auth": "^1.10.8",
-    "@tensorflow-models/body-pix": "^2.2.1",
-    "@tensorflow/tfjs": "^4.22.0",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",
@@ -42,7 +40,17 @@
     "lint": "eslint src --ext .ts,.tsx --max-warnings 0",
     "lint:fix": "eslint src --ext .ts,.tsx --fix",
     "type-check": "tsc --noEmit",
-    "build:analyze": "npm run build && npx serve -s build"
+    "build:analyze": "npm run build && npx serve -s build",
+    "bundle-analyzer": "npx webpack-bundle-analyzer build/static/js/*.js",
+    "audit:security": "npm audit --audit-level moderate",
+    "precommit": "npm run lint && npm run type-check",
+    "size-limit": "npx size-limit",
+    "setup": "./scripts/setup-dev.sh",
+    "analyze": "./scripts/analyze-bundle.sh",
+    "clean": "rm -rf build node_modules/.cache",
+    "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,json,css,md}\"",
+    "format:check": "prettier --check \"src/**/*.{js,jsx,ts,tsx,json,css,md}\"",
+    "docs:serve": "npx serve docs"
   },
   "eslintConfig": {
     "extends": [

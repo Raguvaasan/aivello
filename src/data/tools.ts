@@ -9,6 +9,16 @@ import ReadTimeEstimator from '../tools/ReadTimeEstimator';
 import WordCounter from '../tools/WordCounter';
 import BgRemover from '../tools/BgRemover';
 import ResumeBuilder from '../tools/ResumeBuilder';
+import AIEmailWriter from '../tools/AIEmailWriter';
+import PasswordGenerator from '../tools/PasswordGenerator';
+import ColorPaletteGenerator from '../tools/ColorPaletteGenerator';
+import URLShortener from '../tools/URLShortener';
+import InvoiceGenerator from '../tools/InvoiceGenerator';
+import AITextSummarizer from '../tools/AITextSummarizer';
+import AIImageGenerator from '../tools/AIImageGenerator';
+import LanguageTranslator from '../tools/LanguageTranslator';
+import QRCodeScanner from '../tools/QRCodeScanner';
+import UnitConverter from '../tools/UnitConverter';
 
 
 export const tools: Tool[] = [
@@ -102,6 +112,96 @@ export const tools: Tool[] = [
     icon: '📑',
     component: ResumeBuilder,
     category: 'Document'
+  },
+  {
+    id: 'ai-email-writer',
+    path: '/app/ai-email-writer',
+    name: 'AI Email Writer',
+    description: 'Generate professional emails with AI assistance',
+    icon: '✉️',
+    component: AIEmailWriter,
+    category: 'Communication'
+  },
+  {
+    id: 'password-generator',
+    path: '/app/password-generator',
+    name: 'Password Generator',
+    description: 'Generate secure passwords with custom options',
+    icon: '🔐',
+    component: PasswordGenerator,
+    category: 'Security'
+  },
+  {
+    id: 'color-palette-generator',
+    path: '/app/color-palette-generator',
+    name: 'Color Palette Generator',
+    description: 'Create beautiful color palettes for your designs',
+    icon: '🎨',
+    component: ColorPaletteGenerator,
+    category: 'Design'
+  },
+  {
+    id: 'url-shortener',
+    path: '/app/url-shortener',
+    name: 'URL Shortener',
+    description: 'Shorten long URLs and track clicks with analytics',
+    icon: '🔗',
+    component: URLShortener,
+    category: 'Marketing'
+  },
+  {
+    id: 'invoice-generator',
+    path: '/app/invoice-generator',
+    name: 'Invoice Generator',
+    description: 'Create professional invoices and download as PDF',
+    icon: '💼',
+    component: InvoiceGenerator,
+    category: 'Business'
+  },
+  {
+    id: 'ai-text-summarizer',
+    path: '/app/ai-text-summarizer',
+    name: 'AI Text Summarizer',
+    description: 'Summarize long articles and documents instantly with AI',
+    icon: '📄',
+    component: AITextSummarizer,
+    category: 'Writing'
+  },
+  {
+    id: 'ai-image-generator',
+    path: '/app/ai-image-generator',
+    name: 'AI Image Generator',
+    description: 'Create stunning images from text descriptions using AI',
+    icon: '🎨',
+    component: AIImageGenerator,
+    category: 'Design'
+  },
+  {
+    id: 'language-translator',
+    path: '/app/language-translator',
+    name: 'Language Translator',
+    description: 'Translate text between 20+ languages instantly',
+    icon: '🌐',
+    component: LanguageTranslator,
+    category: 'Productivity'
+  },
+  {
+    id: 'qr-code-scanner',
+    path: '/app/qr-code-scanner',
+    name: 'QR Code Scanner',
+    description: 'Scan QR codes using camera or upload images to decode',
+    icon: '📱',
+    component: QRCodeScanner,
+    category: 'Utility'
+  },
+  {
+    id: 'unit-converter',
+    path: '/app/unit-converter',
+    name: 'Unit Converter',
+    description: 'Convert between different units of measurement easily',
+    icon: '📏',
+    component: UnitConverter,
+    category: 'Utility'
   }
 ];
 
@@ -111,7 +211,13 @@ export const categories = [
   'Writing',
   'Document',
   'Utility',
-  'Audio'
+  'Audio',
+  'Communication',
+  'Security',
+  'Design',
+  'Marketing',
+  'Business',
+  'Productivity'
 ] as const;
 
 export type Category = typeof categories[number];

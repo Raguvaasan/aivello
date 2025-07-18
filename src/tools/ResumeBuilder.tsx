@@ -11,6 +11,7 @@ import { Input } from '../components/ui/input';
 import { Textarea } from '../components/ui/textarea';
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
+import { ToolWrapper } from '../components/common/ToolWrapper';
 import { doc, setDoc,getDoc } from 'firebase/firestore';
 import { db,auth } from '../config/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -354,7 +355,13 @@ const loadFromCloud = async () => {
 
 
   return (
-    <div className="p-6 space-y-6">
+    <ToolWrapper
+      toolId="resume-builder"
+      toolName="AI Resume Builder"
+      toolDescription="Create professional resumes with AI assistance. Build, customize, and download your resume in PDF or Word format"
+      toolCategory="Career"
+    >
+      <div className="p-6 space-y-6">
       <h2 className="text-2xl font-bold">AI Resume Builder</h2>
 
       <div className="flex gap-4 items-center">
@@ -732,6 +739,7 @@ const loadFromCloud = async () => {
         </CardContent>
       </Card>
     </div>
+    </ToolWrapper>
   );
 };
 

@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { db } from '../config/firebase';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { ToolWrapper } from '../components/common/ToolWrapper';
 
 const ImageCompressor = () => {
   const [compressedUrl, setCompressedUrl] = useState<string | null>(null);
@@ -72,7 +73,13 @@ const ImageCompressor = () => {
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 p-6 rounded shadow max-w-md mx-auto">
+    <ToolWrapper
+      toolId="image-compressor"
+      toolName="Image Compressor"
+      toolDescription="Compress and optimize images online. Reduce file size while maintaining quality for faster web loading"
+      toolCategory="Media"
+    >
+      <div className="bg-white dark:bg-gray-800 p-6 rounded shadow max-w-md mx-auto">
       <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">Image Compressor + Uploader</h2>
 
       <input
@@ -102,6 +109,7 @@ const ImageCompressor = () => {
         </div>
       )}
     </div>
+    </ToolWrapper>
   );
 };
 
