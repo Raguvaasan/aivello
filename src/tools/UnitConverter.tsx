@@ -3,22 +3,15 @@ import { ToolWrapper } from '../components/common/ToolWrapper';
 import { FaRuler, FaExchangeAlt, FaCalculator, FaThermometerHalf, FaWeight, FaClock } from 'react-icons/fa';
 import { IconWrapper } from '../components/common/IconWrapper';
 
-export default function UnitConverter() {
-  const [category, setCategory] = useState('length');
-  const [fromUnit, setFromUnit] = useState('');
-  const [toUnit, setToUnit] = useState('');
-  const [fromValue, setFromValue] = useState('');
-  const [toValue, setToValue] = useState('');
-
-  const conversionData: {
-    [key: string]: {
-      name: string;
-      icon: any;
-      units: {
-        [key: string]: { name: string; factor: number };
-      };
+const conversionData: {
+  [key: string]: {
+    name: string;
+    icon: any;
+    units: {
+      [key: string]: { name: string; factor: number };
     };
-  } = {
+  };
+} = {
     length: {
       name: 'Length',
       icon: FaRuler,
@@ -125,6 +118,13 @@ export default function UnitConverter() {
       }
     }
   };
+
+export default function UnitConverter() {
+  const [category, setCategory] = useState('length');
+  const [fromUnit, setFromUnit] = useState('');
+  const [toUnit, setToUnit] = useState('');
+  const [fromValue, setFromValue] = useState('');
+  const [toValue, setToValue] = useState('');
 
   useEffect(() => {
     const categoryData = conversionData[category];

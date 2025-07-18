@@ -192,7 +192,7 @@ export default function AIImageGenerator() {
                   <div key={index} className="relative group">
                     <img
                       src={image}
-                      alt={`Generated image ${index + 1}`}
+                      alt={`Generated artwork ${index + 1}`}
                       className="w-full h-48 object-cover rounded-lg border border-gray-200 dark:border-gray-600"
                     />
                     <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-lg flex items-center justify-center gap-2">
