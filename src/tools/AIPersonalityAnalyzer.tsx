@@ -202,17 +202,8 @@ const AIPersonalityAnalyzer = () => {
   };
 
   const determinePersonalityType = (scores: any) => {
-    const { openness, conscientiousness, extraversion, agreeableness, neuroticism } = scores;
+    const { openness, conscientiousness, extraversion, agreeableness } = scores;
     
-    // Determine dominant traits
-    const traits = [
-      { name: 'Creative', value: openness },
-      { name: 'Organized', value: conscientiousness },
-      { name: 'Outgoing', value: extraversion },
-      { name: 'Collaborative', value: agreeableness },
-      { name: 'Sensitive', value: neuroticism }
-    ];
-
     // Generate personality type based on traits
     if (extraversion > 70 && agreeableness > 70) {
       return {

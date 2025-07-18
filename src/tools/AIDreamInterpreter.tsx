@@ -32,12 +32,6 @@ const AIDreamInterpreter = () => {
   const [interpretation, setInterpretation] = useState<DreamInterpretation | null>(null);
   const [dreamHistory, setDreamHistory] = useState<any[]>([]);
 
-  const dreamCategories = [
-    'Lucid Dream', 'Nightmare', 'Recurring Dream', 'Prophetic Dream',
-    'Flying Dream', 'Chase Dream', 'Water Dream', 'Death Dream',
-    'Love Dream', 'Adventure Dream', 'Symbolic Dream', 'Memory Dream'
-  ];
-
   const moodOptions = [
     'Happy', 'Anxious', 'Confused', 'Peaceful', 'Excited',
     'Fearful', 'Sad', 'Curious', 'Nostalgic', 'Frustrated'
