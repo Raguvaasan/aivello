@@ -1,11 +1,11 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { 
-  User,
   signInWithPopup,
   GoogleAuthProvider,
   GithubAuthProvider,
   signOut
 } from '@firebase/auth';
+import { User } from '../types/user';
 import toast from 'react-hot-toast'
 import { auth } from '../config/firebase';
 import { createUserDocument, updateUserLastLogin } from '../utils/firestore';

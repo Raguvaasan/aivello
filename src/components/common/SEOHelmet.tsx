@@ -7,6 +7,7 @@ interface SEOHelmetProps {
   image?: string;
   url?: string;
   type?: 'website' | 'article' | 'product';
+  noindex?: boolean;
   article?: {
     author?: string;
     publishedTime?: string;

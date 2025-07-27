@@ -1,5 +1,17 @@
 # GitHub Copilot Instructions for Aivello Project
 
+## ⚠️ Critical Requirements
+- No empty files should be committed to the repository
+- All files must have proper implementation or documentation
+- Every component must have proper TypeScript types
+- All tools are free to use without restrictions
+- User activity must be tracked in Firestore
+- Performance scores must meet minimum thresholds:
+  * Mobile & Desktop Performance: > 85
+  * Accessibility: > 90
+  * Best Practices: > 90
+  * SEO: > 90
+
 ## 🎯 Project Overview
 Aivello is a React 19 + TypeScript web application providing 10+ free AI-powered productivity tools. The project emphasizes security, performance, and responsive design across all platforms.
 
@@ -60,11 +72,31 @@ src/
 
 ## ⚡ Performance Optimization
 
-### Bundle Size Management
-- **Critical**: Current bundle is 596KB - implement code splitting
+### Bundle Size and Performance Management
+- **Critical**: Current bundle must be optimized below 400KB through code splitting
 - Use React.lazy() and Suspense for tool components
 - Split vendor libraries from application code
 - Implement dynamic imports for large tools (TensorFlow.js, PDF libraries)
+- Optimize Core Web Vitals:
+  * First Contentful Paint (FCP) < 2s
+  * Largest Contentful Paint (LCP) < 2.5s
+  * First Input Delay (FID) < 100ms
+  * Cumulative Layout Shift (CLS) < 0.1
+- Image Optimization:
+  * Use WebP format with fallbacks
+  * Implement responsive images with srcset
+  * Lazy load images below the fold
+  * Optimize image quality/size ratio
+- Code Optimization:
+  * Minimize unused JavaScript
+  * Remove unused CSS
+  * Use tree shaking
+  * Implement route-based code splitting
+- Caching Strategy:
+  * Implement service worker for PWA
+  * Cache static assets
+  * Use HTTP caching headers
+  * Implement browser caching policies
 
 ### Component Optimization
 - Use React.memo for expensive components

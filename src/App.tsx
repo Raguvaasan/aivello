@@ -3,6 +3,7 @@ import { RouterProvider } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider } from './context/AuthContext';
+import AnalyticsProvider from './context/AnalyticsProvider';
 import { LoadingScreen } from './components/common/LoadingScreen';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { router } from './routes';
@@ -24,9 +25,10 @@ const App: React.FC = () => {
     <ErrorBoundary>
       <ThemeProvider>
         <AuthProvider>
-          <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-200">
-            <RouterProvider router={router} />
-            <Toaster
+          <AnalyticsProvider>
+            <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-200">
+              <RouterProvider router={router} />
+              <Toaster
               position="top-right"
               toastOptions={{
                 duration: 4000,
@@ -36,7 +38,8 @@ const App: React.FC = () => {
                 },
               }}
             />
-          </div>
+            </div>
+          </AnalyticsProvider>
         </AuthProvider>
       </ThemeProvider>
     </ErrorBoundary>

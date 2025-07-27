@@ -1,5 +1,5 @@
 import React, { Suspense, lazy } from 'react';
-import { createBrowserRouter } from 'react-router-dom';
+import { createBrowserRouter, RouteObject } from 'react-router-dom';
 import { LandingPage } from '../components/landing/LandingPage';
 import { AppLayout } from '../pages/app/AppLayout';
 import { Login } from '../components/auth/Login';
@@ -7,6 +7,7 @@ import { Profile } from '../pages/app/Profile';
 import History from '../pages/app/History';
 import { ProtectedRoute } from '../components/auth/ProtectedRoute';
 import { LoadingScreen } from '../components/common/LoadingScreen';
+import { ErrorBoundary } from '../components/error/ErrorBoundary';
 import Terms from '../pages/legal/Terms';
 import PrivacyPolicy from '../pages/legal/PrivacyPolicy';
 
@@ -45,7 +46,7 @@ const LazyToolWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) 
   </Suspense>
 );
 
-export const router = createBrowserRouter([
+const routes: RouteObject[] = [
   {
     path: '/',
     element: <LandingPage />
@@ -65,6 +66,7 @@ export const router = createBrowserRouter([
   {
     path: '/app',
     element: <ProtectedRoute><AppLayout /></ProtectedRoute>,
+    errorElement: <ErrorBoundary><div>Something went wrong.</div></ErrorBoundary>,
     children: [
       {
         path: '',
@@ -191,4 +193,6 @@ export const router = createBrowserRouter([
       }
     ]
   }
-]);
+];
+
+export const router = createBrowserRouter(routes);
