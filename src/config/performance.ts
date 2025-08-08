@@ -21,13 +21,19 @@ const reportWebVitals = (onPerfEntry?: ReportHandler) => {
 
 // Lazy loaded components
 export const lazyComponents: LazyComponents = {
-  // Tools - only include existing tools
-  AICodeAssistant: lazy(() => import('../tools/AICodeAssistant')),
+  // Existing Tools
   ImageCompressor: lazy(() => import('../tools/ImageCompressor')),
   PdfToWord: lazy(() => import('../tools/PdfToWord')),
   BgRemover: lazy(() => import('../tools/BgRemover')),
   QrCodeGenerator: lazy(() => import('../tools/QrCodeGenerator')),
-  TextToSpeech: lazy(() => import('../tools/TextToSpeech'))
+  TextToSpeech: lazy(() => import('../tools/TextToSpeech')),
+  
+  // New AI Tools
+  //AIResumeScanner: lazy(() => import('../tools/AIResumeScanner')),
+  AISpeechToText: lazy(() => import('../tools/AISpeechToText')),
+  AIVideoScriptGenerator: lazy(() => import('../tools/AIVideoScriptGenerator')),
+  AIStudyNotesGenerator: lazy(() => import('../tools/AIStudyNotesGenerator')),
+  AIInterviewPrep: lazy(() => import('../tools/AIInterviewPrep'))
 };
 
 // Performance monitoring

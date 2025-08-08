@@ -19,24 +19,29 @@ import AIImageGenerator from '../tools/AIImageGenerator';
 import LanguageTranslator from '../tools/LanguageTranslator';
 import QRCodeScanner from '../tools/QRCodeScanner';
 import UnitConverter from '../tools/UnitConverter';
-import AICodeAssistant from '../tools/AICodeAssistant';
+//import AICodeAssistant from '../tools/AICodeAssistant';
 import AIBusinessPlanGenerator from '../tools/AIBusinessPlanGenerator';
 import AIPersonalityAnalyzer from '../tools/AIPersonalityAnalyzer';
 import AIDreamInterpreter from '../tools/AIDreamInterpreter';
 import AIRelationshipCompatibility from '../tools/AIRelationshipCompatibility';
 import AICreativeStoryGenerator from '../tools/AICreativeStoryGenerator';
+//import AIResumeScanner from '../tools/AIResumeScanner';
+import AISpeechToText from '../tools/AISpeechToText';
+import AIVideoScriptGenerator from '../tools/AIVideoScriptGenerator';
+import AIStudyNotesGenerator from '../tools/AIStudyNotesGenerator';
+import AIInterviewPrep from '../tools/AIInterviewPrep';
 
 
 export const tools: Tool[] = [
-  {
-    id: 'ai-code-assistant',
-    path: '/app/ai-code-assistant',
-    name: 'AI Code Assistant',
-    description: 'Generate, analyze, and optimize code with AI assistance',
-    icon: '🤖',
-    component: AICodeAssistant,
-    category: 'AI'
-  },
+  // {
+  //   id: 'ai-code-assistant',
+  //   path: '/app/ai-code-assistant',
+  //   name: 'AI Code Assistant',
+  //   description: 'Generate, analyze, and optimize code with AI assistance',
+  //   icon: '🤖',
+  //   component: AICodeAssistant,
+  //   category: 'AI'
+  // },
   {
     id: 'ai-business-plan-generator',
     path: '/app/ai-business-plan-generator',
@@ -81,6 +86,51 @@ export const tools: Tool[] = [
     icon: '📚',
     component: AICreativeStoryGenerator,
     category: 'AI'
+  },
+  // {
+  //   id: 'ai-resume-scanner',
+  //   path: '/app/ai-resume-scanner',
+  //   name: 'AI Resume Scanner',
+  //   description: 'Optimize your resume for ATS systems and improve your chances of getting hired',
+  //   icon: '📄',
+  //   component: AIResumeScanner,
+  //   category: 'Career'
+  // }
+  {
+    id: 'ai-speech-to-text',
+    path: '/app/ai-speech-to-text',
+    name: 'AI Speech to Text',
+    description: 'Convert your spoken words into well-structured blog posts',
+    icon: '🎙️',
+    component: AISpeechToText,
+    category: 'Content Creation'
+  },
+  {
+    id: 'ai-video-script',
+    path: '/app/ai-video-script',
+    name: 'AI Video Script Generator',
+    description: 'Generate professional video scripts for YouTube, TikTok, and other platforms',
+    icon: '🎬',
+    component: AIVideoScriptGenerator,
+    category: 'Content Creation'
+  },
+  {
+    id: 'ai-study-notes',
+    path: '/app/ai-study-notes',
+    name: 'AI Study Notes Generator',
+    description: 'Transform your study material into organized, easy-to-learn notes',
+    icon: '📚',
+    component: AIStudyNotesGenerator,
+    category: 'Education'
+  },
+  {
+    id: 'ai-interview-prep',
+    path: '/app/ai-interview-prep',
+    name: 'AI Interview Preparation',
+    description: 'Practice interviews with AI feedback and improve your interview skills',
+    icon: '👥',
+    component: AIInterviewPrep,
+    category: 'Career'
   },
   {
     id: 'youtube-thumbnail',
@@ -263,6 +313,7 @@ export const tools: Tool[] = [
     component: UnitConverter,
     category: 'Utility'
   }
+  
 ];
 
 export const categories = [

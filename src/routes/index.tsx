@@ -32,12 +32,17 @@ const AIImageGenerator = lazy(() => import('../tools/AIImageGenerator'));
 const LanguageTranslator = lazy(() => import('../tools/LanguageTranslator'));
 const QRCodeScanner = lazy(() => import('../tools/QRCodeScanner'));
 const UnitConverter = lazy(() => import('../tools/UnitConverter'));
-const AICodeAssistant = lazy(() => import('../tools/AICodeAssistant'));
+//const AICodeAssistant = lazy(() => import('../tools/AICodeAssistant'));
 const AIBusinessPlanGenerator = lazy(() => import('../tools/AIBusinessPlanGenerator'));
 const AIPersonalityAnalyzer = lazy(() => import('../tools/AIPersonalityAnalyzer'));
 const AIDreamInterpreter = lazy(() => import('../tools/AIDreamInterpreter'));
 const AIRelationshipCompatibility = lazy(() => import('../tools/AIRelationshipCompatibility'));
 const AICreativeStoryGenerator = lazy(() => import('../tools/AICreativeStoryGenerator'));
+//const AIResumeScanner = lazy(() => import('../tools/AIResumeScanner'));
+const AISpeechToText = lazy(() => import('../tools/AISpeechToText'));
+const AIVideoScriptGenerator = lazy(() => import('../tools/AIVideoScriptGenerator'));
+const AIStudyNotesGenerator = lazy(() => import('../tools/AIStudyNotesGenerator'));
+const AIInterviewPrep = lazy(() => import('../tools/AIInterviewPrep'));
 
 // Wrapper component for lazy-loaded tools
 const LazyToolWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
@@ -79,10 +84,10 @@ const routes: RouteObject[] = [
         path: 'history',
         element: <History />
       },
-      {
-        path: 'ai-code-assistant',
-        element: <LazyToolWrapper><AICodeAssistant /></LazyToolWrapper>
-      },
+      // {
+      //   path: 'ai-code-assistant',
+      //   element: <LazyToolWrapper><AICodeAssistant /></LazyToolWrapper>
+      // },
       {
         path: 'ai-business-plan-generator',
         element: <LazyToolWrapper><AIBusinessPlanGenerator /></LazyToolWrapper>
@@ -98,6 +103,26 @@ const routes: RouteObject[] = [
       {
         path: 'ai-relationship-compatibility',
         element: <LazyToolWrapper><AIRelationshipCompatibility /></LazyToolWrapper>
+      },
+      // {
+      //   path: 'ai-resume-scanner',
+      //   element: <LazyToolWrapper><AIResumeScanner /></LazyToolWrapper>
+      // },
+      {
+        path: 'ai-speech-to-text',
+        element: <LazyToolWrapper><AISpeechToText /></LazyToolWrapper>
+      },
+      {
+        path: 'ai-video-script',
+        element: <LazyToolWrapper><AIVideoScriptGenerator /></LazyToolWrapper>
+      },
+      {
+        path: 'ai-study-notes',
+        element: <LazyToolWrapper><AIStudyNotesGenerator /></LazyToolWrapper>
+      },
+      {
+        path: 'ai-interview-prep',
+        element: <LazyToolWrapper><AIInterviewPrep /></LazyToolWrapper>
       },
       {
         path: 'ai-creative-story-generator',
@@ -183,6 +208,7 @@ const routes: RouteObject[] = [
         path: 'unit-converter',
         element: <LazyToolWrapper><UnitConverter /></LazyToolWrapper>
       },
+      
       {
         path: 'profile',
         element: <Profile />
