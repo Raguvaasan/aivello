@@ -36,7 +36,10 @@ export const analyzeAnswer = (
 
   // Structure analysis
   const hasIntro = sentences.length > 0 && sentences[0].toLowerCase().includes(question.category.toLowerCase());
-  const hasConclusion = sentences.length > 0 && sentences[sentences.length - 1].includes('Therefore') || sentences[sentences.length - 1].includes('In conclusion');
+  const hasConclusion = sentences.length > 0 && (
+    sentences[sentences.length - 1].includes('Therefore') || 
+    sentences[sentences.length - 1].includes('In conclusion')
+  );
 
   if (hasIntro) {
     strengths.push('Good introduction that addresses the question directly');
@@ -109,7 +112,7 @@ export const analyzeAnswer = (
 };
 
 const generateOverallSummary = (feedback: AnswerFeedback): string => {
-  const { content, delivery, keywords } = feedback;
+  const { content } = feedback;
   
   if (content.score >= 80) {
     return 'Excellent answer! You demonstrated strong understanding and provided comprehensive details.';

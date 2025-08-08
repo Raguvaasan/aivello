@@ -1,11 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ToolWrapper } from '../components/common/ToolWrapper';
 
-interface SpeechRecognitionResult {
-  transcript: string;
-  confidence: number;
-}
-
 interface TranscriptSegment {
   text: string;
   timestamp: number;
@@ -51,7 +46,6 @@ const AISpeechToText: React.FC = () => {
     };
 
     recognition.onresult = (event: any) => {
-      let interimTranscript = '';
       let finalTranscript = '';
 
       for (let i = event.resultIndex; i < event.results.length; i++) {
@@ -66,8 +60,6 @@ const AISpeechToText: React.FC = () => {
             timestamp: Date.now(),
             confidence: confidence
           }]);
-        } else {
-          interimTranscript += transcript;
         }
       }
 
@@ -85,6 +77,8 @@ const AISpeechToText: React.FC = () => {
     analyserRef.current = analyser;
 
     // Setup audio visualization
+    let visualizationAnimationFrame: number;
+
     navigator.mediaDevices.getUserMedia({ audio: true })
       .then(stream => {
         const source = audioContext.createMediaStreamSource(stream);
@@ -97,11 +91,11 @@ const AISpeechToText: React.FC = () => {
           const dataArray = new Uint8Array(analyser.frequencyBinCount);
           analyser.getByteFrequencyData(dataArray);
           
-          // Calculate average volume
-          const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
-          setAudioLevel(average);
+          // Calculate average volume - Commented out for now as it's not being used in UI
+          // const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
+          // setAudioLevel(average);
           
-          requestAnimationFrame(updateAudioLevel);
+          visualizationAnimationFrame = requestAnimationFrame(updateAudioLevel);
         };
         
         updateAudioLevel();
@@ -115,8 +109,11 @@ const AISpeechToText: React.FC = () => {
       if (audioContextRef.current) {
         audioContextRef.current.close();
       }
+      if (visualizationAnimationFrame) {
+        cancelAnimationFrame(visualizationAnimationFrame);
+      }
     };
-  }, []);
+  }, [isRecording]); // Added isRecording to dependency array
 
   const startRecording = () => {
     if (!recognitionRef.current) return;

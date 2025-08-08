@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef } from 'react';  // State will be used in future audio recording featureseState, useRef } from 'react';
 import { ToolWrapper } from '../components/common/ToolWrapper';
 import type { InterviewQuestion, AnswerFeedback } from '../types/interview';
 import { analyzeAnswer, generateQuestionsForRole } from '../utils/interviewAnalysis';
