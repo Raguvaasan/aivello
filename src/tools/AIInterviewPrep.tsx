@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';  // State will be used in future audio recording featureseState, useRef } from 'react';
+import React, { useState } from 'react';
 import { ToolWrapper } from '../components/common/ToolWrapper';
 import type { InterviewQuestion, AnswerFeedback } from '../types/interview';
 import { analyzeAnswer, generateQuestionsForRole } from '../utils/interviewAnalysis';
@@ -11,10 +11,6 @@ const AIInterviewPrep: React.FC = () => {
   const [currentAnswer, setCurrentAnswer] = useState('');
   const [feedback, setFeedback] = useState<AnswerFeedback | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [isRecording, setIsRecording] = useState(false);
-  const [transcription, setTranscription] = useState('');
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
 
   const generateQuestions = async () => {
     setIsGenerating(true);

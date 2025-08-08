@@ -14,7 +14,6 @@ const AISpeechToText: React.FC = () => {
   const [selectedLanguage, setSelectedLanguage] = useState('en-US');
   const [isPaused, setIsPaused] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [audioLevel, setAudioLevel] = useState(0);
   const recognitionRef = useRef<any>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
