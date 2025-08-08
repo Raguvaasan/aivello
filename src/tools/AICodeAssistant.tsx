@@ -861,7 +861,6 @@ if __name__ == "__main__":
             </CardContent>
           </Card>
         )}
-
         {/* Quick Actions */}
         <Card className="bg-gray-50 border-gray-200">
           <CardContent className="p-4">
@@ -902,8 +901,7 @@ if __name__ == "__main__":
         </Card>
       </div>
     </ToolWrapper>
-  );
-  
+  );  
 };
 
 export default AICodeAssistant;
