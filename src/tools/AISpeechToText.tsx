@@ -19,16 +19,61 @@ const AISpeechToText: React.FC = () => {
   const analyserRef = useRef<AnalyserNode | null>(null);
 
   useEffect(() => {
-    // Initialize speech recognition
-    if (!('webkitSpeechRecognition' in window)) {
-      setError('Speech recognition is not supported in your browser. Please use Chrome.');
+    // Check for secure context
+    if (!window.isSecureContext) {
+      setError('Speech recognition requires a secure connection. Please ensure you are using HTTPS.');
       return;
     }
+
+    // Check for browser support
+    if (!('webkitSpeechRecognition' in window)) {
+      setError('Speech recognition is not supported in your browser. Please use Chrome or Edge.');
+      return;
+    }
+
+    // Resume AudioContext if it's suspended (needed for some browsers)
+    if (audioContextRef.current?.state === 'suspended') {
+      audioContextRef.current.resume();
+    }
+
+    // Check for microphone permission
+    navigator.permissions.query({ name: 'microphone' as PermissionName })
+      .then(permissionStatus => {
+        if (permissionStatus.state === 'denied') {
+          setError('Microphone access is blocked. Please allow microphone access in your browser settings.');
+          return;
+        }
+        
+        permissionStatus.onchange = () => {
+          if (permissionStatus.state === 'denied') {
+            setError('Microphone access was blocked. Please allow microphone access in your browser settings.');
+            stopRecording();
+          } else if (permissionStatus.state === 'granted') {
+            setError(null);
+          }
+        };
+      })
+      .catch(err => {
+        console.error('Error checking microphone permission:', err);
+      });
 
     const recognition = new (window as any).webkitSpeechRecognition();
     recognition.continuous = true;
     recognition.interimResults = true;
-    recognition.lang = 'en-US';
+    recognition.lang = selectedLanguage;
+    
+    // Update language when it changes
+    if (recognitionRef.current) {
+      recognitionRef.current.lang = selectedLanguage;
+    }
+    
+    // Force the AudioContext to resume on user interaction
+    document.addEventListener('click', function resumeAudio() {
+      if (audioContextRef.current?.state === 'suspended') {
+        audioContextRef.current.resume();
+      }
+      document.removeEventListener('click', resumeAudio);
+    });
 
     recognition.onstart = () => {
       setError(null);
@@ -36,7 +81,27 @@ const AISpeechToText: React.FC = () => {
     };
 
     recognition.onerror = (event: any) => {
-      setError(`Error: ${event.error}`);
+      console.error('Speech recognition error:', event.error);
+      switch (event.error) {
+        case 'no-speech':
+          setError('No speech was detected. Please try again.');
+          break;
+        case 'audio-capture':
+          setError('No microphone was found or microphone is not working.');
+          break;
+        case 'not-allowed':
+          setError('Microphone access was denied. Please allow microphone access in your browser settings.');
+          break;
+        case 'network':
+          setError('Network error occurred. Please check your internet connection.');
+          break;
+        case 'aborted':
+          // Don't show error for user-initiated stops
+          setError(null);
+          break;
+        default:
+          setError(`Error: ${event.error}`);
+      }
       setIsRecording(false);
     };
 
@@ -84,23 +149,31 @@ const AISpeechToText: React.FC = () => {
         source.connect(analyser);
         analyser.fftSize = 256;
         
+        let isVisualizationActive = false;
+        
         const updateAudioLevel = () => {
-          if (!isRecording) return;
+          if (!isRecording || !isVisualizationActive) return;
           
           const dataArray = new Uint8Array(analyser.frequencyBinCount);
           analyser.getByteFrequencyData(dataArray);
-          
-          // Calculate average volume - Commented out for now as it's not being used in UI
-          // const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
-          // setAudioLevel(average);
-          
           visualizationAnimationFrame = requestAnimationFrame(updateAudioLevel);
         };
         
-        updateAudioLevel();
+        // Start or stop visualization based on isRecording
+        if (isRecording && !isVisualizationActive) {
+          isVisualizationActive = true;
+          updateAudioLevel();
+        }
       })
       .catch(err => {
-        setError('Please allow microphone access to use this feature.');
+        console.error('Microphone access error:', err);
+        if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+          setError('Microphone access was denied. Please allow microphone access in your browser settings and reload the page.');
+        } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+          setError('No microphone found. Please connect a microphone and reload the page.');
+        } else {
+          setError('Error accessing microphone. Please check your microphone settings and reload the page.');
+        }
       });
 
     return () => {
@@ -112,17 +185,49 @@ const AISpeechToText: React.FC = () => {
         cancelAnimationFrame(visualizationAnimationFrame);
       }
     };
-  }, [isRecording]); // Added isRecording to dependency array
+  }, [selectedLanguage, isRecording]); // Add isRecording as it's used in updateAudioLevel
 
-  const startRecording = () => {
+  const startRecording = async () => {
     if (!recognitionRef.current) return;
     
     try {
-      recognitionRef.current.start();
-      setError(null);
-    } catch (err) {
+      // Make sure we're in a secure context
+      if (!window.isSecureContext) {
+        setError('Speech recognition requires a secure connection. Please ensure you are using HTTPS.');
+        return;
+      }
+
+      // Resume AudioContext if suspended
+      if (audioContextRef.current?.state === 'suspended') {
+        await audioContextRef.current.resume();
+      }
+
+      // Check microphone permission status first
+      const permissionStatus = await navigator.permissions.query({ name: 'microphone' as PermissionName });
+      
+      if (permissionStatus.state === 'denied') {
+        setError('Microphone access is blocked. Please allow microphone access in your browser settings and reload the page.');
+        return;
+      }
+
+      // Request microphone access and wait for it to be ready
+      await navigator.mediaDevices.getUserMedia({ audio: true });
+      
+      // Make sure recognition is initialized with correct language
+      if (recognitionRef.current) {
+        recognitionRef.current.lang = selectedLanguage;
+        recognitionRef.current.start();
+        setError(null);
+      } else {
+        setError('Speech recognition failed to initialize. Please refresh the page.');
+      }
+    } catch (err: any) {
       console.error('Error starting recording:', err);
-      setError('Error starting recording. Please try again.');
+      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+        setError('Microphone access was denied. Please allow microphone access in your browser settings and reload the page.');
+      } else {
+        setError('Error starting recording. Please check your microphone settings and try again.');
+      }
     }
   };
 
