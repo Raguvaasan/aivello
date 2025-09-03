@@ -7,7 +7,6 @@ import { tools } from '../../data/tools';
 
 export const Features: React.FC = () => {
   const navigate = useNavigate();
-  const aiTools = tools.filter(tool => tool.category === 'AI').slice(0, 6);
   const popularTools = tools.slice(0, 8);
   
   const features = [
