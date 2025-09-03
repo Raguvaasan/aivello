@@ -1,134 +1,360 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
-        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"
+        xmlns:news="http://www.google.com/schemas/sitemap-news/0.9"
+        xmlns:video="http://www.google.com/schemas/sitemap-video/1.1">
   
-  <!-- Homepage -->
+  <!-- Homepage - Landing Page with Modern Hero Section -->
   <url>
     <loc>https://aivello.vercel.app/</loc>
-    <lastmod>2025-07-16</lastmod>
-    <changefreq>weekly</changefreq>
+    <lastmod>2025-09-03</lastmod>
+    <changefreq>daily</changefreq>
     <priority>1.0</priority>
     <image:image>
       <image:loc>https://aivello.vercel.app/og-image.png</image:loc>
-      <image:title>AiVello - Free AI Tools</image:title>
+      <image:title>AiVello - All-in-One AI Tools Platform | 20+ Free AI-Powered Tools</image:title>
+      <image:caption>Access powerful AI tools for content creation, productivity, business planning, and more. No sign-up required!</image:caption>
     </image:image>
   </url>
 
-  <!-- Login Page -->
+  <!-- Authentication Pages -->
   <url>
     <loc>https://aivello.vercel.app/login</loc>
-    <lastmod>2025-07-16</lastmod>
+    <lastmod>2025-09-03</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
+    <priority>0.6</priority>
   </url>
 
-  <!-- Legal Pages -->
+  <!-- Legal & Policy Pages -->
   <url>
     <loc>https://aivello.vercel.app/terms</loc>
-    <lastmod>2025-07-16</lastmod>
+    <lastmod>2025-09-03</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
+    <priority>0.4</priority>
   </url>
 
   <url>
     <loc>https://aivello.vercel.app/privacy</loc>
-    <lastmod>2025-07-16</lastmod>
+    <lastmod>2025-09-03</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
+    <priority>0.4</priority>
   </url>
 
-  <!-- App Dashboard -->
+  <!-- Main App Dashboard -->
   <url>
     <loc>https://aivello.vercel.app/app</loc>
-    <lastmod>2025-07-16</lastmod>
+    <lastmod>2025-09-03</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.95</priority>
+    <image:image>
+      <image:loc>https://aivello.vercel.app/og-image.png</image:loc>
+      <image:title>AiVello Dashboard - Access All AI Tools</image:title>
+    </image:image>
+  </url>
+
+  <!-- Pricing & Business Pages -->
+  <url>
+    <loc>https://aivello.vercel.app/pricing</loc>
+    <lastmod>2025-09-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- ===== AI-POWERED TOOLS SECTION ===== -->
+  
+  <!-- Business & AI Planning Tools -->
+  <url>
+    <loc>https://aivello.vercel.app/app/ai-business-plan-generator</loc>
+    <lastmod>2025-09-03</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
 
-  <!-- AI Tools -->
   <url>
-    <loc>https://aivello.vercel.app/app/grammar-checker</loc>
-    <lastmod>2025-07-16</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
-  </url>
-
-  <url>
-    <loc>https://aivello.vercel.app/app/pdf-to-word</loc>
-    <lastmod>2025-07-16</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
-  </url>
-
-  <url>
-    <loc>https://aivello.vercel.app/app/qr-generator</loc>
-    <lastmod>2025-07-16</lastmod>
+    <loc>https://aivello.vercel.app/app/invoice-generator</loc>
+    <lastmod>2025-09-03</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
 
+  <!-- AI Content Creation Tools -->
   <url>
-    <loc>https://aivello.vercel.app/app/text-to-speech</loc>
-    <lastmod>2025-07-16</lastmod>
+    <loc>https://aivello.vercel.app/app/ai-email-writer</loc>
+    <lastmod>2025-09-03</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
+    <loc>https://aivello.vercel.app/app/ai-creative-story-generator</loc>
+    <lastmod>2025-09-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+
+  <url>
+    <loc>https://aivello.vercel.app/app/ai-speech-to-text</loc>
+    <lastmod>2025-09-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
+    <loc>https://aivello.vercel.app/app/ai-video-script</loc>
+    <lastmod>2025-09-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
+    <loc>https://aivello.vercel.app/app/ai-text-summarizer</loc>
+    <lastmod>2025-09-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- AI Design & Media Tools -->
+  <url>
+    <loc>https://aivello.vercel.app/app/ai-image-generator</loc>
+    <lastmod>2025-09-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.95</priority>
   </url>
 
   <url>
     <loc>https://aivello.vercel.app/app/bg-remover</loc>
-    <lastmod>2025-07-16</lastmod>
+    <lastmod>2025-09-03</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
+    <priority>0.95</priority>
   </url>
 
   <url>
-    <loc>https://aivello.vercel.app/app/image-compressor</loc>
-    <lastmod>2025-07-16</lastmod>
+    <loc>https://aivello.vercel.app/app/color-palette-generator</loc>
+    <lastmod>2025-09-03</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <url>
+    <loc>https://aivello.vercel.app/app/image-compressor</loc>
+    <lastmod>2025-09-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+
+  <url>
+    <loc>https://aivello.vercel.app/app/youtube-thumbnail</loc>
+    <lastmod>2025-09-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+
+  <!-- AI Personal & Lifestyle Tools -->
+  <url>
+    <loc>https://aivello.vercel.app/app/ai-personality-analyzer</loc>
+    <lastmod>2025-09-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://aivello.vercel.app/app/ai-dream-interpreter</loc>
+    <lastmod>2025-09-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://aivello.vercel.app/app/ai-relationship-compatibility</loc>
+    <lastmod>2025-09-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- AI Education & Career Tools -->
+  <url>
+    <loc>https://aivello.vercel.app/app/ai-study-notes</loc>
+    <lastmod>2025-09-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
+    <loc>https://aivello.vercel.app/app/ai-interview-prep</loc>
+    <lastmod>2025-09-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
     <loc>https://aivello.vercel.app/app/resume-builder</loc>
-    <lastmod>2025-07-16</lastmod>
+    <lastmod>2025-09-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.95</priority>
+  </url>
+
+  <!-- ===== TRADITIONAL PRODUCTIVITY TOOLS ===== -->
+  
+  <!-- Writing & Grammar Tools -->
+  <url>
+    <loc>https://aivello.vercel.app/app/grammar-checker</loc>
+    <lastmod>2025-09-03</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
 
   <url>
     <loc>https://aivello.vercel.app/app/word-counter</loc>
-    <lastmod>2025-07-16</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-
-  <url>
-    <loc>https://aivello.vercel.app/app/read-time</loc>
-    <lastmod>2025-07-16</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-
-  <url>
-    <loc>https://aivello.vercel.app/app/youtube-thumbnail</loc>
-    <lastmod>2025-07-16</lastmod>
+    <lastmod>2025-09-03</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
 
-  <!-- User Pages -->
+  <url>
+    <loc>https://aivello.vercel.app/app/read-time</loc>
+    <lastmod>2025-09-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+
+  <!-- Document & File Tools -->
+  <url>
+    <loc>https://aivello.vercel.app/app/pdf-to-word</loc>
+    <lastmod>2025-09-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- Communication & Audio Tools -->
+  <url>
+    <loc>https://aivello.vercel.app/app/text-to-speech</loc>
+    <lastmod>2025-09-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+
+  <url>
+    <loc>https://aivello.vercel.app/app/language-translator</loc>
+    <lastmod>2025-09-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- Security & Utility Tools -->
+  <url>
+    <loc>https://aivello.vercel.app/app/password-generator</loc>
+    <lastmod>2025-09-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+
+  <url>
+    <loc>https://aivello.vercel.app/app/qr-generator</loc>
+    <lastmod>2025-09-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+
+  <url>
+    <loc>https://aivello.vercel.app/app/qr-code-scanner</loc>
+    <lastmod>2025-09-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://aivello.vercel.app/app/unit-converter</loc>
+    <lastmod>2025-09-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+
+  <!-- Marketing & Growth Tools -->
+  <url>
+    <loc>https://aivello.vercel.app/app/url-shortener</loc>
+    <lastmod>2025-09-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- ===== USER MANAGEMENT PAGES ===== -->
+  
+  <!-- User Profile & Settings -->
   <url>
     <loc>https://aivello.vercel.app/app/profile</loc>
-    <lastmod>2025-07-16</lastmod>
+    <lastmod>2025-09-03</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
 
+  <!-- User History & Analytics -->
   <url>
     <loc>https://aivello.vercel.app/app/history</loc>
-    <lastmod>2025-07-16</lastmod>
-    <changefreq>monthly</changefreq>
+    <lastmod>2025-09-03</lastmod>
+    <changefreq>weekly</changefreq>
     <priority>0.6</priority>
+  </url>
+
+  <!-- ===== CATEGORY & DISCOVERY PAGES ===== -->
+  
+  <!-- AI Tools Category Landing Pages -->
+  <url>
+    <loc>https://aivello.vercel.app/category/ai</loc>
+    <lastmod>2025-09-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://aivello.vercel.app/category/media</loc>
+    <lastmod>2025-09-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://aivello.vercel.app/category/writing</loc>
+    <lastmod>2025-09-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://aivello.vercel.app/category/business</loc>
+    <lastmod>2025-09-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://aivello.vercel.app/category/productivity</loc>
+    <lastmod>2025-09-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- ===== STATIC TOOL GENERATORS (External) ===== -->
+  
+  <!-- Static Logo & Brand Tools -->
+  <url>
+    <loc>https://aivello.vercel.app/logo-generator.html</loc>
+    <lastmod>2025-09-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://aivello.vercel.app/favicon-generator.html</loc>
+    <lastmod>2025-09-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://aivello.vercel.app/modern-logo-generator.html</loc>
+    <lastmod>2025-09-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>
 
 </urlset>

@@ -1,4 +1,35 @@
+# AiVello - All-in-One AI Tools Platform
+# Robots.txt for https://aivello.vercel.app
+
+# Allow all crawlers access to public content
 User-agent: *
 Allow: /
+Allow: /app/
+Allow: /category/
+Allow: /*.html
+Allow: /sitemap.xml
+Allow: /manifest.json
 
+# Disallow private/sensitive areas
+Disallow: /api/
+Disallow: /admin/
+Disallow: /_next/
+Disallow: /private/
+Disallow: /*.json$
+Disallow: /*.js$
+Disallow: /*.css$
+
+# Special rules for search engines
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 1
+
+User-agent: Bingbot
+Allow: /
+Crawl-delay: 1
+
+# Sitemaps
 Sitemap: https://aivello.vercel.app/sitemap.xml
+
+# Cache directive
+# Host: aivello.vercel.app
