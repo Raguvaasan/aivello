@@ -2,6 +2,7 @@ import React, { Suspense, lazy } from 'react';
 import { createBrowserRouter, RouteObject } from 'react-router-dom';
 import { LandingPage } from '../components/landing/LandingPage';
 import { AppLayout } from '../pages/app/AppLayout';
+import { AppHome } from '../pages/app/home';
 import { Login } from '../components/auth/Login';
 import { Profile } from '../pages/app/Profile';
 import History from '../pages/app/History';
@@ -10,6 +11,7 @@ import { LoadingScreen } from '../components/common/LoadingScreen';
 import { ErrorBoundary } from '../components/error/ErrorBoundary';
 import Terms from '../pages/legal/Terms';
 import PrivacyPolicy from '../pages/legal/PrivacyPolicy';
+import PricingPage from '../pages/PricingPage';
 
 // Lazy load tool components for better performance
 const GrammarChecker = lazy(() => import('../tools/GrammarChecker'));
@@ -61,6 +63,10 @@ const routes: RouteObject[] = [
     element: <Login />
   },
   {
+    path: '/pricing',
+    element: <PricingPage />
+  },
+  {
     path: '/terms',
     element: <Terms />
   },
@@ -75,10 +81,7 @@ const routes: RouteObject[] = [
     children: [
       {
         path: '',
-        element: <div className="p-6 text-center">
-          <h1 className="text-3xl font-bold mb-4">Welcome to Aivello</h1>
-          <p className="text-gray-600 dark:text-gray-300 mb-8">Choose a tool from the sidebar to get started</p>
-        </div>
+        element: <AppHome />
       },
       {
         path: 'history',
