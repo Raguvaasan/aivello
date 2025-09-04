@@ -196,7 +196,7 @@ export const LandingPage: React.FC = () => {
               <p className="text-gray-400 text-sm flex items-center gap-2">
                 © 2025 Aivello. Made with 
                 <IconWrapper icon={FiHeart} className="w-4 h-4 text-red-400" />
-                for creators worldwide.
+                for creators worldwide.— Raguvaasan
               </p>
               
               <div className="flex items-center gap-4 text-sm text-gray-400">
