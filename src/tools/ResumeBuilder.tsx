@@ -623,20 +623,20 @@ const loadFromCloud = async () => {
       toolDescription="Create professional resumes with AI assistance. Build, customize, and download your resume in PDF or Word format"
       toolCategory="Career"
     >
-      <div className="p-6 space-y-6">
+      <div className="min-h-screen bg-white dark:bg-gray-900 p-6 space-y-6">
         {/* Progress Steps */}
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold">AI-Powered Resume Builder</h2>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">AI-Powered Resume Builder</h2>
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
-              <span className="text-sm font-medium">Resume Score:</span>
-              <div className="w-16 h-2 bg-gray-200 rounded-full">
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Resume Score:</span>
+              <div className="w-16 h-2 bg-gray-200 dark:bg-gray-700 rounded-full">
                 <div 
-                  className="h-2 bg-green-500 rounded-full transition-all duration-300"
+                  className="h-2 bg-green-500 dark:bg-green-400 rounded-full transition-all duration-300"
                   style={{ width: `${resumeScore}%` }}
                 />
               </div>
-              <span className="text-sm font-bold">{resumeScore}%</span>
+              <span className="text-sm font-bold text-gray-900 dark:text-white">{resumeScore}%</span>
             </div>
           </div>
         </div>
@@ -649,8 +649,8 @@ const loadFromCloud = async () => {
               onClick={() => setCurrentStep(index + 1)}
               className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                 currentStep === index + 1
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  ? 'bg-blue-500 dark:bg-blue-600 text-white'
+                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
               }`}
             >
               {index + 1}. {step}
@@ -660,13 +660,13 @@ const loadFromCloud = async () => {
 
         {/* AI Analysis Panel */}
         {aiAnalysis && (
-          <Card className="bg-blue-50 border-blue-200">
+          <Card className="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-blue-800">AI Analysis & Suggestions</h3>
+                <h3 className="text-lg font-semibold text-blue-800 dark:text-blue-300">AI Analysis & Suggestions</h3>
                 <Button 
                   variant="outline" 
-                  
+                  className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
                   onClick={() => setShowAiSuggestions(!showAiSuggestions)}
                 >
                   {showAiSuggestions ? 'Hide' : 'Show'} Details
