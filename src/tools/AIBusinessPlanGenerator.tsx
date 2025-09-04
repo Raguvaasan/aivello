@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Textarea } from '../components/ui/textarea';
 import { Button } from '../components/ui/button';
-import { Card, CardContent } from '../components/ui/card';
 import { Input } from '../components/ui/input';
 import { ToolWrapper } from '../components/common/ToolWrapper';
 
@@ -402,186 +401,198 @@ ${businessPlan.fundingRequirements}
       toolDescription="Generate comprehensive business plans with AI assistance. Create professional business plans for startups and investors."
       toolCategory="AI"
     >
-      <div className="p-6 space-y-6">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold mb-4">🚀 AI Business Plan Generator</h2>
-          <p className="text-gray-600 dark:text-gray-300">
-            Transform your business idea into a comprehensive, investor-ready business plan
-          </p>
-        </div>
+      <div className="min-h-screen bg-gradient-to-br from-gray-950 via-purple-950/20 to-gray-950 p-6 space-y-6">
+        {/* Background Pattern */}
+        <div 
+          className="fixed inset-0 opacity-10 pointer-events-none"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'%3E%3Cg fill-rule='evenodd'%3E%3Cg fill='%23a855f7' fill-opacity='0.1'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+          }}
+        />
 
-        {/* Input Form */}
-        <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
-          <CardContent className="p-6">
-            <h3 className="text-xl font-semibold mb-4">📝 Business Information</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <div className="relative z-10 max-w-6xl mx-auto">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <h2 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-white via-purple-200 to-pink-200 bg-clip-text text-transparent mb-4">
+              🚀 AI Business Plan Generator
+            </h2>
+            <p className="text-xl text-gray-300 max-w-2xl mx-auto">
+              Transform your business idea into a comprehensive, investor-ready business plan
+            </p>
+          </div>
+
+          {/* Input Form */}
+          <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-6 mb-8">
+            <h3 className="text-2xl font-semibold text-white mb-6 flex items-center gap-2">
+              📝 Business Information
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               <div>
-                <label className="block text-sm font-medium mb-2">Business Name *</label>
+                <label className="block text-sm font-medium text-purple-300 mb-2">Business Name *</label>
                 <Input
                   placeholder="Enter your business name"
                   value={businessName}
                   onChange={(e) => setBusinessName(e.target.value)}
+                  className="bg-white/10 border-white/20 text-white placeholder-gray-400 focus:border-purple-500/50 focus:ring-purple-500/50"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2">Industry *</label>
+                <label className="block text-sm font-medium text-purple-300 mb-2">Industry *</label>
                 <select
                   value={industry}
                   onChange={(e) => setIndustry(e.target.value)}
-                  className="w-full p-2 border rounded-lg"
+                  className="w-full p-3 bg-white/10 border border-white/20 rounded-lg text-white focus:border-purple-500/50 focus:ring-purple-500/50 focus:outline-none"
                 >
-                  <option value="">Select Industry</option>
+                  <option value="" className="bg-gray-800 text-white">Select Industry</option>
                   {industries.map(ind => (
-                    <option key={ind} value={ind}>{ind}</option>
+                    <option key={ind} value={ind} className="bg-gray-800 text-white">{ind}</option>
                   ))}
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2">Target Market</label>
+                <label className="block text-sm font-medium text-purple-300 mb-2">Target Market</label>
                 <Input
                   placeholder="e.g., Small businesses, millennials, healthcare professionals"
                   value={targetMarket}
                   onChange={(e) => setTargetMarket(e.target.value)}
+                  className="bg-white/10 border-white/20 text-white placeholder-gray-400 focus:border-purple-500/50 focus:ring-purple-500/50"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2">Budget Range</label>
+                <label className="block text-sm font-medium text-purple-300 mb-2">Budget Range</label>
                 <select
                   value={budgetRange}
                   onChange={(e) => setBudgetRange(e.target.value)}
-                  className="w-full p-2 border rounded-lg"
+                  className="w-full p-3 bg-white/10 border border-white/20 rounded-lg text-white focus:border-purple-500/50 focus:ring-purple-500/50 focus:outline-none"
                 >
-                  <option value="">Select Budget</option>
-                  <option value="$0-$50K">$0 - $50K</option>
-                  <option value="$50K-$250K">$50K - $250K</option>
-                  <option value="$250K-$1M">$250K - $1M</option>
-                  <option value="$1M+">$1M+</option>
+                  <option value="" className="bg-gray-800 text-white">Select Budget</option>
+                  <option value="$0-$50K" className="bg-gray-800 text-white">$0 - $50K</option>
+                  <option value="$50K-$250K" className="bg-gray-800 text-white">$50K - $250K</option>
+                  <option value="$250K-$1M" className="bg-gray-800 text-white">$250K - $1M</option>
+                  <option value="$1M+" className="bg-gray-800 text-white">$1M+</option>
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2">Timeframe</label>
+                <label className="block text-sm font-medium text-purple-300 mb-2">Timeframe</label>
                 <select
                   value={timeframe}
                   onChange={(e) => setTimeframe(e.target.value)}
-                  className="w-full p-2 border rounded-lg"
+                  className="w-full p-3 bg-white/10 border border-white/20 rounded-lg text-white focus:border-purple-500/50 focus:ring-purple-500/50 focus:outline-none"
                 >
-                  <option value="">Select Timeframe</option>
-                  <option value="6 months">6 months</option>
-                  <option value="1 year">1 year</option>
-                  <option value="2 years">2 years</option>
-                  <option value="3+ years">3+ years</option>
+                  <option value="" className="bg-gray-800 text-white">Select Timeframe</option>
+                  <option value="6 months" className="bg-gray-800 text-white">6 months</option>
+                  <option value="1 year" className="bg-gray-800 text-white">1 year</option>
+                  <option value="2 years" className="bg-gray-800 text-white">2 years</option>
+                  <option value="3+ years" className="bg-gray-800 text-white">3+ years</option>
                 </select>
               </div>
             </div>
-            <div className="mb-4">
-              <label className="block text-sm font-medium mb-2">Business Idea Description *</label>
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-purple-300 mb-2">Business Idea Description *</label>
               <Textarea
                 placeholder="Describe your business idea in detail. What problem does it solve? What makes it unique? Who are your customers?"
                 value={businessIdea}
                 onChange={(e) => setBusinessIdea(e.target.value)}
-                className="min-h-[120px]"
+                className="min-h-[120px] bg-white/10 border-white/20 text-white placeholder-gray-400 focus:border-purple-500/50 focus:ring-purple-500/50"
               />
             </div>
             <Button
               onClick={generateBusinessPlan}
               disabled={isGenerating}
-              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
+              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white border-0 h-12 text-lg font-semibold shadow-lg shadow-purple-500/25"
             >
               {isGenerating ? '🤖 Generating Business Plan...' : '🚀 Generate Business Plan'}
             </Button>
-          </CardContent>
-        </Card>
+          </div>
 
         {/* Generated Business Plan */}
         {businessPlan && (
           <div className="space-y-6">
             {/* Section Navigation */}
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-xl font-semibold">📊 Business Plan Sections</h3>
-                  <Button
-                    onClick={downloadPlan}
-                    className="bg-green-600 hover:bg-green-700"
+            <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-2xl font-semibold text-white flex items-center gap-2">
+                  📊 Business Plan Sections
+                </h3>
+                <Button
+                  onClick={downloadPlan}
+                  className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white border-0 shadow-lg shadow-green-500/25"
+                >
+                  📄 Download Plan
+                </Button>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                {sections.map((section) => (
+                  <button
+                    key={section.id}
+                    onClick={() => setActiveSection(section.id)}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                      activeSection === section.id
+                        ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg shadow-purple-500/25'
+                        : 'bg-white/10 text-gray-300 hover:bg-white/20 hover:text-white border border-white/20'
+                    }`}
                   >
-                    📄 Download Plan
-                  </Button>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {sections.map((section) => (
-                    <button
-                      key={section.id}
-                      onClick={() => setActiveSection(section.id)}
-                      className={`px-3 py-2 rounded-lg text-sm transition-colors ${
-                        activeSection === section.id
-                          ? 'bg-blue-500 text-white'
-                          : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                      }`}
-                    >
-                      {section.title}
-                    </button>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+                    {section.title}
+                  </button>
+                ))}
+              </div>
+            </div>
 
             {/* Active Section Content */}
-            <Card>
-              <CardContent className="p-6">
-                <div className="mb-4">
-                  <h3 className="text-xl font-semibold mb-2">
-                    {sections.find(s => s.id === activeSection)?.title}
-                  </h3>
-                </div>
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <pre className="whitespace-pre-wrap text-sm leading-relaxed">
-                    {businessPlan[sections.find(s => s.id === activeSection)?.key as keyof BusinessPlan]}
-                  </pre>
-                </div>
-              </CardContent>
-            </Card>
+            <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-6">
+              <div className="mb-6">
+                <h3 className="text-2xl font-semibold text-white mb-4">
+                  {sections.find(s => s.id === activeSection)?.title}
+                </h3>
+              </div>
+              <div className="bg-gray-900/50 border border-white/10 rounded-xl p-6">
+                <pre className="whitespace-pre-wrap text-sm leading-relaxed text-gray-300">
+                  {businessPlan[sections.find(s => s.id === activeSection)?.key as keyof BusinessPlan]}
+                </pre>
+              </div>
+            </div>
           </div>
         )}
 
         {/* Features */}
-        <Card className="bg-gradient-to-r from-green-50 to-blue-50 border-green-200">
-          <CardContent className="p-6">
-            <h3 className="text-xl font-semibold mb-4">✨ Features</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div className="text-center">
-                <div className="text-3xl mb-2">🎯</div>
-                <h4 className="font-semibold">Market Analysis</h4>
-                <p className="text-sm text-gray-600">Comprehensive market research and analysis</p>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl mb-2">💰</div>
-                <h4 className="font-semibold">Financial Projections</h4>
-                <p className="text-sm text-gray-600">Detailed financial forecasts and metrics</p>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl mb-2">🏆</div>
-                <h4 className="font-semibold">Competitive Analysis</h4>
-                <p className="text-sm text-gray-600">In-depth competitor research and positioning</p>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl mb-2">📈</div>
-                <h4 className="font-semibold">Marketing Strategy</h4>
-                <p className="text-sm text-gray-600">Complete marketing and growth plans</p>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl mb-2">⚙️</div>
-                <h4 className="font-semibold">Operations Plan</h4>
-                <p className="text-sm text-gray-600">Operational structure and processes</p>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl mb-2">📊</div>
-                <h4 className="font-semibold">Risk Assessment</h4>
-                <p className="text-sm text-gray-600">Risk analysis and mitigation strategies</p>
-              </div>
+        <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-6">
+          <h3 className="text-2xl font-semibold text-white mb-6 flex items-center gap-2">
+            ✨ Features
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="text-center p-4 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-all">
+              <div className="text-3xl mb-3">🎯</div>
+              <h4 className="font-semibold text-white mb-2">Market Analysis</h4>
+              <p className="text-sm text-gray-400">Comprehensive market research and analysis</p>
             </div>
-          </CardContent>
-        </Card>
+            <div className="text-center p-4 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-all">
+              <div className="text-3xl mb-3">💰</div>
+              <h4 className="font-semibold text-white mb-2">Financial Projections</h4>
+              <p className="text-sm text-gray-400">Detailed financial forecasts and metrics</p>
+            </div>
+            <div className="text-center p-4 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-all">
+              <div className="text-3xl mb-3">🏆</div>
+              <h4 className="font-semibold text-white mb-2">Competitive Analysis</h4>
+              <p className="text-sm text-gray-400">In-depth competitor research and positioning</p>
+            </div>
+            <div className="text-center p-4 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-all">
+              <div className="text-3xl mb-3">📈</div>
+              <h4 className="font-semibold text-white mb-2">Marketing Strategy</h4>
+              <p className="text-sm text-gray-400">Complete marketing and growth plans</p>
+            </div>
+            <div className="text-center p-4 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-all">
+              <div className="text-3xl mb-3">⚙️</div>
+              <h4 className="font-semibold text-white mb-2">Operations Plan</h4>
+              <p className="text-sm text-gray-400">Operational structure and processes</p>
+            </div>
+            <div className="text-center p-4 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-all">
+              <div className="text-3xl mb-3">📊</div>
+              <h4 className="font-semibold text-white mb-2">Risk Assessment</h4>
+              <p className="text-sm text-gray-400">Risk analysis and mitigation strategies</p>
+            </div>
+          </div>
+        </div>
+        </div>
       </div>
     </ToolWrapper>
   );
