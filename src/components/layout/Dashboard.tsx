@@ -8,10 +8,9 @@ import { Sidebar } from './Sidebar';
 export const Dashboard: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const { darkMode } = useTheme();
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-200">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white">
       <Header
         isSidebarOpen={isSidebarOpen}
         setIsSidebarOpen={setIsSidebarOpen}
@@ -26,7 +25,7 @@ export const Dashboard: React.FC = () => {
           setIsSidebarOpen={setIsSidebarOpen}
         />
 
-        <main className="flex-1 p-6 overflow-y-auto bg-gray-50 dark:bg-gray-800 transition-colors duration-200">
+        <main className="flex-1 p-6 overflow-y-auto bg-white dark:bg-gray-800">
           <div className="max-w-3xl mx-auto">
             <Outlet />
           </div>
