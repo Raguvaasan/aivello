@@ -8,17 +8,24 @@ import { Sidebar } from '../../components/layout/Sidebar';
 export const AppLayout: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  // Theme is handled automatically via CSS classes
   useTheme(); // Initialize theme context
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-200">
+    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-purple-950/20 to-gray-950">
+      {/* Background Pattern */}
+      <div 
+        className="fixed inset-0 opacity-10 pointer-events-none"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'%3E%3Cg fill-rule='evenodd'%3E%3Cg fill='%23a855f7' fill-opacity='0.1'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+        }}
+      />
+      
       <Header
         isSidebarOpen={isSidebarOpen}
         setIsSidebarOpen={setIsSidebarOpen}
       />
       
-      <div className="flex h-[calc(100vh-4rem)]">
+      <div className="flex h-[calc(100vh-4rem)] relative">
         <Sidebar
           tools={tools}
           searchQuery={searchQuery}
@@ -27,8 +34,8 @@ export const AppLayout: React.FC = () => {
           setIsSidebarOpen={setIsSidebarOpen}
         />
 
-        <main className="flex-1 p-6 overflow-y-auto bg-gray-50 dark:bg-gray-800 transition-colors duration-200">
-          <div className="max-w-6xl mx-auto">
+        <main className="flex-1 overflow-y-auto bg-transparent relative z-10">
+          <div className="p-6">
             <Outlet />
           </div>
         </main>
