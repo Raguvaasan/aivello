@@ -11,7 +11,7 @@ export const Hero: React.FC<HeroProps> = ({ onEnterApp }) => {
   return (
     <section className="relative pt-20 sm:pt-24 pb-24 sm:pb-40 overflow-hidden">
       {/* Modern Gradient Background with Mesh */}
-      <div className="absolute inset-0 bg-gradient-to-br from-indigo-950 via-purple-900 to-pink-900 dark:from-gray-950 dark:via-indigo-950 dark:to-purple-950">
+      <div className="absolute inset-0 bg-gradient-to-br from-purple-100 via-pink-50 to-blue-100 dark:from-indigo-950 dark:via-purple-900 dark:to-pink-900">
         {/* Animated Background Mesh */}
         <div className="absolute inset-0 opacity-30">
           <div className="absolute top-0 -left-4 w-72 h-72 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl animate-blob"></div>
@@ -22,7 +22,7 @@ export const Hero: React.FC<HeroProps> = ({ onEnterApp }) => {
         {/* Grid Pattern */}
         <div className="absolute inset-0 opacity-40">
           <div className="absolute inset-0" style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Ccircle cx='7' cy='7' r='1'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='0.05' class='dark:fill-white'%3E%3Ccircle cx='7' cy='7' r='1'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
           }}></div>
         </div>
       </div>
@@ -48,21 +48,21 @@ export const Hero: React.FC<HeroProps> = ({ onEnterApp }) => {
 
             {/* Main Headline with Gradient Text */}
             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black mb-6 leading-[1.1]">
-              <span className="bg-gradient-to-r from-white via-purple-200 to-pink-200 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-purple-600 via-blue-600 to-pink-600 dark:from-white dark:via-purple-200 dark:to-pink-200 bg-clip-text text-transparent">
                 AI-Powered
               </span>
               <br />
-              <span className="text-white">
+              <span className="text-gray-900 dark:text-white">
                 Productivity
               </span>
               <br />
-              <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-yellow-400 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-purple-600 via-pink-600 to-yellow-500 dark:from-purple-400 dark:via-pink-400 dark:to-yellow-400 bg-clip-text text-transparent">
                 Revolution
               </span>
             </h1>
 
             {/* Modern Subtitle */}
-            <p className="text-lg sm:text-xl text-gray-300 mb-8 leading-relaxed max-w-2xl mx-auto lg:mx-0">
+            <p className="text-lg sm:text-xl text-gray-700 dark:text-gray-300 mb-8 leading-relaxed max-w-2xl mx-auto lg:mx-0">
               Transform your workflow with our suite of cutting-edge AI tools. From content creation to business automation — all in one platform, completely free.
             </p>
 

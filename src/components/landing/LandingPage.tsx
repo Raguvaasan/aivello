@@ -25,7 +25,7 @@ export const LandingPage: React.FC = () => {
         url="https://aivello.vercel.app/"
         structuredData={seoData.homepage.structuredData}
       />
-      <div className="min-h-screen bg-gradient-to-br from-gray-950 via-purple-950 to-gray-950 dark:from-gray-950 dark:via-indigo-950 dark:to-purple-950 transition-colors duration-300">
+      <div className="min-h-screen bg-gradient-to-br from-white via-purple-50 to-pink-50 dark:from-gray-950 dark:via-purple-950 dark:to-gray-950">
         <Navbar onEnterApp={handleNavigate} />
         <Hero onEnterApp={handleNavigate} />
         <Features />

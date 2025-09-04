@@ -23,7 +23,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onEnterApp }) => {
       <motion.nav
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="fixed w-full z-50 bg-gray-900/95 backdrop-blur-md border-b border-white/10"
+        className="fixed w-full z-50 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border-b border-gray-200/50 dark:border-white/10"
       >
         <div className="container mx-auto px-6">
           <div className="flex items-center justify-between h-20">
@@ -34,7 +34,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onEnterApp }) => {
               onClick={() => navigate('/')}
             >
               <AivelloIcon width={40} height={40} />
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-white to-purple-300 bg-clip-text text-transparent">
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 dark:from-white dark:to-purple-300 bg-clip-text text-transparent">
                 Aivello
               </h1>
             </motion.div>
@@ -93,12 +93,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onEnterApp }) => {
               </div>
               
               <button 
-                onClick={() => {
-                  const pricingSection = document.getElementById('pricing');
-                  if (pricingSection) {
-                    pricingSection.scrollIntoView({ behavior: 'smooth' });
-                  }
-                }}
+                onClick={() => navigate('/pricing')}
                 className="text-gray-300 hover:text-white transition-colors font-medium"
               >
                 Pricing
@@ -182,6 +177,16 @@ export const Navbar: React.FC<NavbarProps> = ({ onEnterApp }) => {
                   className="block w-full text-left text-gray-300 hover:text-white transition-colors font-medium py-2"
                 >
                   Features
+                </button>
+                
+                <button 
+                  onClick={() => {
+                    navigate('/pricing');
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="block w-full text-left text-gray-300 hover:text-white transition-colors font-medium py-2"
+                >
+                  Pricing
                 </button>
                 
                 <div className="space-y-2">
