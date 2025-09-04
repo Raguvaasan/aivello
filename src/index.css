@@ -2,15 +2,85 @@
 @tailwind components;
 @tailwind utilities;
 
-/* CSS Variables for theming */
+/* CSS Variables for comprehensive theming */
 :root {
+  /* Light theme variables */
+  --color-bg-primary: 255 255 255;
+  --color-bg-secondary: 249 250 251;
+  --color-bg-tertiary: 243 244 246;
+  --color-text-primary: 17 24 39;
+  --color-text-secondary: 75 85 99;
+  --color-text-tertiary: 107 114 128;
+  --color-border: 229 231 235;
+  --color-border-light: 243 244 246;
+  
+  /* Toast colors */
   --toast-bg: #ffffff;
   --toast-color: #1f2937;
+  
+  /* Accent colors */
+  --color-primary: 139 92 246;
+  --color-primary-hover: 124 58 237;
+  --color-success: 34 197 94;
+  --color-error: 239 68 68;
+  --color-warning: 245 158 11;
+  
+  /* Glassmorphism */
+  --glass-bg: rgba(255, 255, 255, 0.1);
+  --glass-border: rgba(255, 255, 255, 0.2);
+  --glass-backdrop: 10px;
 }
 
 .dark {
+  /* Dark theme variables */
+  --color-bg-primary: 17 24 39;
+  --color-bg-secondary: 31 41 55;
+  --color-bg-tertiary: 55 65 81;
+  --color-text-primary: 243 244 246;
+  --color-text-secondary: 209 213 219;
+  --color-text-tertiary: 156 163 175;
+  --color-border: 75 85 99;
+  --color-border-light: 55 65 81;
+  
+  /* Toast colors */
   --toast-bg: #374151;
   --toast-color: #f9fafb;
+  
+  /* Glassmorphism for dark */
+  --glass-bg: rgba(0, 0, 0, 0.2);
+  --glass-border: rgba(255, 255, 255, 0.1);
+}
+
+/* Smooth theme transition */
+.theme-transition,
+.theme-transition *,
+.theme-transition *:before,
+.theme-transition *:after {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease !important;
+  transition-delay: 0 !important;
+}
+
+/* Base layer styles with theme support */
+@layer base {
+  html {
+    color-scheme: light;
+  }
+  
+  html.dark {
+    color-scheme: dark;
+  }
+  
+  body {
+    background-color: rgb(var(--color-bg-primary));
+    color: rgb(var(--color-text-primary));
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+  
+  /* Improved focus styles */
+  *:focus-visible {
+    outline: 2px solid rgb(var(--color-primary));
+    outline-offset: 2px;
+  }
 }
 
 /* Modern Animation Keyframes */
@@ -131,4 +201,28 @@
 
 .dark::-webkit-scrollbar-thumb:hover {
   background: #9ca3af;
+}
+
+/* Sidebar Custom Scrollbar */
+.sidebar-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-scroll::-webkit-scrollbar-thumb {
+  background: rgba(107, 114, 128, 0.5);
+  border-radius: 3px;
+}
+
+.sidebar-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(107, 114, 128, 0.8);
+}
+
+/* Firefox scrollbar */
+.sidebar-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(107, 114, 128, 0.5) transparent;
 }

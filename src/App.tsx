@@ -26,18 +26,20 @@ const App: React.FC = () => {
       <ThemeProvider>
         <AuthProvider>
           <AnalyticsProvider>
-            <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-200">
+            <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
               <RouterProvider router={router} />
               <Toaster
-              position="top-right"
-              toastOptions={{
-                duration: 4000,
-                style: {
-                  background: 'var(--toast-bg)',
-                  color: 'var(--toast-color)',
-                },
-              }}
-            />
+                position="top-right"
+                toastOptions={{
+                  duration: 4000,
+                  style: {
+                    background: 'var(--toast-bg)',
+                    color: 'var(--toast-color)',
+                    border: '1px solid rgb(var(--color-border))',
+                  },
+                  className: 'dark:shadow-lg',
+                }}
+              />
             </div>
           </AnalyticsProvider>
         </AuthProvider>
