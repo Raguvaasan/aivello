@@ -8,7 +8,7 @@ import { Profile } from '../pages/app/Profile';
 import History from '../pages/app/History';
 import { ProtectedRoute } from '../components/auth/ProtectedRoute';
 import { LoadingScreen } from '../components/common/LoadingScreen';
-import { ErrorBoundary } from '../components/error/ErrorBoundary';
+import { ErrorBoundary } from '../components/common/ErrorBoundary';
 import Terms from '../pages/legal/Terms';
 import PrivacyPolicy from '../pages/legal/PrivacyPolicy';
 import PricingPage from '../pages/PricingPage';
@@ -215,10 +215,6 @@ const routes: RouteObject[] = [
       {
         path: 'profile',
         element: <Profile />
-      },
-      {
-        path: 'history',
-        element: <History />
       }
     ]
   }

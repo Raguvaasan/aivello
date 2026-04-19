@@ -10,14 +10,6 @@ export default function AIImageGenerator() {
   const [generatedImages, setGeneratedImages] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Sample placeholder images for demonstration
-  const placeholderImages = [
-    'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgdmlld0JveD0iMCAwIDUxMiA1MTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI1MTIiIGhlaWdodD0iNTEyIiBmaWxsPSJsaW5lYXItZ3JhZGllbnQoNDVkZWcsICNmZjc5OTEsICNmOTY4NGUpIi8+Cjx0ZXh0IHg9IjI1NiIgeT0iMjU2IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0iY2VudHJhbCIgZmlsbD0id2hpdGUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIyNCI+QUkgR2VuZXJhdGVkPC90ZXh0Pgo8L3N2Zz4=',
-    'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgdmlld0JveD0iMCAwIDUxMiA1MTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI1MTIiIGhlaWdodD0iNTEyIiBmaWxsPSJsaW5lYXItZ3JhZGllbnQoNDVkZWcsICM2ZGYxZmYsICM3Yzg5ZjApIi8+Cjx0ZXh0IHg9IjI1NiIgeT0iMjU2IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0iY2VudHJhbCIgZmlsbD0id2hpdGUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIyNCI+QUkgQXJ0PC90ZXh0Pgo8L3N2Zz4=',
-    'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgdmlld0JveD0iMCAwIDUxMiA1MTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI1MTIiIGhlaWdodD0iNTEyIiBmaWxsPSJsaW5lYXItZ3JhZGllbnQoNDVkZWcsICNhNzgzZmYsICNmZjkyOGIpIi8+Cjx0ZXh0IHg9IjI1NiIgeT0iMjU2IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0iY2VudHJhbCIgZmlsbD0id2hpdGUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIyNCI+Q3JlYXRpdmU8L3RleHQ+Cjwvc3ZnPg==',
-    'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgdmlld0JveD0iMCAwIDUxMiA1MTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI1MTIiIGhlaWdodD0iNTEyIiBmaWxsPSJsaW5lYXItZ3JhZGllbnQoNDVkZWcsICMzNGQzOTksICNmYWNjMTUpIi8+Cjx0ZXh0IHg9IjI1NiIgeT0iMjU2IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0iY2VudHJhbCIgZmlsbD0id2hpdGUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIyNCI+SW1hZ2luZTwvdGV4dD4KPC9zdmc+'
-  ];
-
   const generateImages = async () => {
     if (!prompt.trim()) {
       alert('Please enter a description for the image');
@@ -26,26 +18,26 @@ export default function AIImageGenerator() {
 
     setLoading(true);
 
-    // Simulate AI image generation
-    setTimeout(() => {
-      // In a real implementation, this would call an AI service like DALL-E, Midjourney, or Stable Diffusion
-      const numberOfImages = 4;
-      const images = [];
+    try {
+      // Use Pollinations.ai free API (no key needed) to generate real AI images
+      const stylePrompt = style !== 'realistic' ? `, ${style} style` : '';
+      const fullPrompt = encodeURIComponent(`${prompt}${stylePrompt}`);
+      const [w, h] = size.split('x').map(Number);
       
-      for (let i = 0; i < numberOfImages; i++) {
-        // Generate unique placeholder images based on prompt and style
-        const imageData = generatePlaceholderImage(prompt, style, i);
-        images.push(imageData);
+      // Generate 4 unique images with different seeds
+      const images: string[] = [];
+      for (let i = 0; i < 4; i++) {
+        const seed = Date.now() + i * 1000 + Math.floor(Math.random() * 10000);
+        images.push(`https://image.pollinations.ai/prompt/${fullPrompt}?width=${w}&height=${h}&seed=${seed}&nologo=true`);
       }
 
       setGeneratedImages(images);
+    } catch (error) {
+      console.error('Error generating images:', error);
+      alert('Failed to generate images. Please try again.');
+    } finally {
       setLoading(false);
-    }, 3000);
-  };
-
-  const generatePlaceholderImage = (prompt: string, style: string, index: number): string => {
-    // Return one of the placeholder images
-    return placeholderImages[index % placeholderImages.length];
+    }
   };
 
   const downloadImage = (imageUrl: string, index: number) => {
@@ -60,8 +52,13 @@ export default function AIImageGenerator() {
   const regenerateImage = (index: number) => {
     if (!prompt.trim()) return;
     
+    const stylePrompt = style !== 'realistic' ? `, ${style} style` : '';
+    const fullPrompt = encodeURIComponent(`${prompt}${stylePrompt}`);
+    const [w, h] = size.split('x').map(Number);
+    const seed = Date.now() + Math.floor(Math.random() * 100000);
+    
     const newImages = [...generatedImages];
-    newImages[index] = placeholderImages[(index + 2) % placeholderImages.length];
+    newImages[index] = `https://image.pollinations.ai/prompt/${fullPrompt}?width=${w}&height=${h}&seed=${seed}&nologo=true`;
     setGeneratedImages(newImages);
   };
 

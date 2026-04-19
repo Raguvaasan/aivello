@@ -109,31 +109,35 @@ export default function LanguageTranslator() {
 
     setLoading(true);
 
-    // Simulate translation API call
-    setTimeout(() => {
-      let result = '';
-      const lowerText = sourceText.toLowerCase().trim();
+    try {
+      // Use MyMemory free translation API (no key needed, 5000 chars/day)
+      const response = await fetch(
+        `https://api.mymemory.translated.net/get?q=${encodeURIComponent(sourceText)}&langpair=${sourceLang}|${targetLang}`
+      );
+      const data = await response.json();
       
-      // Check if we have a direct translation
-      if (translations[lowerText] && translations[lowerText][targetLang]) {
-        result = translations[lowerText][targetLang];
-      } else {
-        // Simple mock translation for demo
-        result = `[${getLanguageName(targetLang)} translation of: "${sourceText}"]`;
-        
-        // Add some realistic-looking translated text based on target language
-        if (targetLang === 'es') {
-          result = sourceText.replace(/hello/gi, 'hola').replace(/the/gi, 'el/la').replace(/and/gi, 'y');
-        } else if (targetLang === 'fr') {
-          result = sourceText.replace(/hello/gi, 'bonjour').replace(/the/gi, 'le/la').replace(/and/gi, 'et');
-        } else if (targetLang === 'de') {
-          result = sourceText.replace(/hello/gi, 'hallo').replace(/the/gi, 'der/die/das').replace(/and/gi, 'und');
+      if (data.responseStatus === 200 && data.responseData?.translatedText) {
+        let result = data.responseData.translatedText;
+        // MyMemory returns uppercase "TRANSLATED TEXT" for unknown pairs - fall back gracefully
+        if (result === sourceText.toUpperCase() || result.includes('IS AN INVALID TARGET LANGUAGE')) {
+          result = `[Translation not available for this language pair]`;
         }
+        setTranslatedText(result);
+      } else {
+        setTranslatedText(`[Translation failed: ${data.responseData?.translatedText || 'Unknown error'}]`);
       }
-
-      setTranslatedText(result);
+    } catch (error) {
+      console.error('Translation error:', error);
+      // Fallback to local dictionary
+      const lowerText = sourceText.toLowerCase().trim();
+      if (translations[lowerText] && translations[lowerText][targetLang]) {
+        setTranslatedText(translations[lowerText][targetLang]);
+      } else {
+        setTranslatedText('[Translation service unavailable. Please try again later.]');
+      }
+    } finally {
       setLoading(false);
-    }, 1500);
+    }
   };
 
   const getLanguageName = (code: string): string => {

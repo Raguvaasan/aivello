@@ -605,14 +605,14 @@ if __name__ == "__main__":
       <div className="p-6 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold">🤖 AI Code Assistant</h2>
+          <h2 className="text-2xl font-bold dark:text-white">🤖 AI Code Assistant</h2>
           <div className="flex items-center space-x-4">
             <div className="flex items-center gap-2">
-              <label className="text-sm font-medium">Language:</label>
+              <label className="text-sm font-medium dark:text-gray-300">Language:</label>
               <select 
                 value={codeLanguage} 
                 onChange={(e) => setCodeLanguage(e.target.value)}
-                className="border p-2 rounded"
+                className="border p-2 rounded dark:bg-gray-800 dark:border-gray-600 dark:text-white"
               >
                 {languages.map(lang => (
                   <option key={lang} value={lang}>
@@ -638,7 +638,7 @@ if __name__ == "__main__":
               className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                 activeTab === tab.id
                   ? 'bg-blue-500 text-white'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
               }`}
             >
               {tab.label}
@@ -649,12 +649,12 @@ if __name__ == "__main__":
         {/* Generate Code Tab */}
         {activeTab === 'generate' && (
           <div className="space-y-4">
-            <Card className="bg-blue-50 border-blue-200">
+            <Card className="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
               <CardContent className="p-4">
-                <h3 className="text-lg font-semibold text-blue-800 mb-4">🎯 AI Code Generator</h3>
+                <h3 className="text-lg font-semibold text-blue-800 dark:text-blue-300 mb-4">🎯 AI Code Generator</h3>
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium mb-2">Describe what you want to code:</label>
+                    <label className="block text-sm font-medium mb-2 dark:text-gray-300">Describe what you want to code:</label>
                     <Textarea
                       placeholder="e.g., Create a React component for user authentication, Write a Python function to sort array, Generate API endpoint for user registration..."
                       value={codePrompt}
@@ -683,10 +683,10 @@ if __name__ == "__main__":
 
             {/* Generated Code Display */}
             {generatedCode && (
-              <Card>
+              <Card className="dark:bg-gray-800">
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold">Generated Code</h3>
+                    <h3 className="text-lg font-semibold dark:text-white">Generated Code</h3>
                     <Button 
                       variant="outline"
                       onClick={() => copyToClipboard(generatedCode)}
@@ -694,8 +694,8 @@ if __name__ == "__main__":
                       📋 Copy Code
                     </Button>
                   </div>
-                  <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto">
-                    <code className={`language-${codeLanguage}`}>
+                  <pre className="bg-gray-100 dark:bg-gray-900 p-4 rounded-lg overflow-x-auto">
+                    <code className={`language-${codeLanguage} dark:text-gray-300`}>
                       {generatedCode}
                     </code>
                   </pre>
@@ -708,12 +708,12 @@ if __name__ == "__main__":
         {/* Analyze Code Tab */}
         {activeTab === 'analyze' && (
           <div className="space-y-4">
-            <Card className="bg-green-50 border-green-200">
+            <Card className="bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800">
               <CardContent className="p-4">
-                <h3 className="text-lg font-semibold text-green-800 mb-4">🔍 Code Analysis</h3>
+                <h3 className="text-lg font-semibold text-green-800 dark:text-green-300 mb-4">🔍 Code Analysis</h3>
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium mb-2">Paste your code here:</label>
+                    <label className="block text-sm font-medium mb-2 dark:text-gray-300">Paste your code here:</label>
                     <Textarea
                       ref={codeRef}
                       placeholder="Paste your code here for AI analysis..."
@@ -735,27 +735,27 @@ if __name__ == "__main__":
 
             {/* Analysis Results */}
             {analysisResult && (
-              <Card>
+              <Card className="dark:bg-gray-800">
                 <CardContent className="p-4">
-                  <h3 className="text-lg font-semibold mb-4">Analysis Results</h3>
+                  <h3 className="text-lg font-semibold mb-4 dark:text-white">Analysis Results</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-4">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium">Code Score:</span>
-                        <div className="w-20 h-2 bg-gray-200 rounded-full">
+                        <span className="text-sm font-medium dark:text-gray-300">Code Score:</span>
+                        <div className="w-20 h-2 bg-gray-200 dark:bg-gray-700 rounded-full">
                           <div 
                             className="h-2 bg-green-500 rounded-full transition-all duration-300"
                             style={{ width: `${analysisResult.score}%` }}
                           />
                         </div>
-                        <span className="text-sm font-bold">{analysisResult.score}/100</span>
+                        <span className="text-sm font-bold dark:text-white">{analysisResult.score}/100</span>
                       </div>
                       <div>
-                        <span className="text-sm font-medium">Complexity: </span>
+                        <span className="text-sm font-medium dark:text-gray-300">Complexity: </span>
                         <span className={`px-2 py-1 rounded text-xs ${
-                          analysisResult.complexity === 'High' ? 'bg-red-100 text-red-800' :
-                          analysisResult.complexity === 'Medium' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-green-100 text-green-800'
+                          analysisResult.complexity === 'High' ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300' :
+                          analysisResult.complexity === 'Medium' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300' :
+                          'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
                         }`}>
                           {analysisResult.complexity}
                         </span>
@@ -765,7 +765,7 @@ if __name__ == "__main__":
                   
                   {analysisResult.issues.length > 0 && (
                     <div className="mt-4">
-                      <h4 className="font-medium text-red-700 mb-2">⚠️ Issues Found:</h4>
+                      <h4 className="font-medium text-red-700 dark:text-red-400 mb-2">⚠️ Issues Found:</h4>
                       <ul className="list-disc list-inside text-sm text-red-600 space-y-1">
                         {analysisResult.issues.map((issue, index) => (
                           <li key={index}>{issue}</li>
@@ -776,7 +776,7 @@ if __name__ == "__main__":
                   
                   {analysisResult.suggestions.length > 0 && (
                     <div className="mt-4">
-                      <h4 className="font-medium text-blue-700 mb-2">💡 Suggestions:</h4>
+                      <h4 className="font-medium text-blue-700 dark:text-blue-400 mb-2">💡 Suggestions:</h4>
                       <ul className="list-disc list-inside text-sm text-blue-600 space-y-1">
                         {analysisResult.suggestions.map((suggestion, index) => (
                           <li key={index}>{suggestion}</li>
@@ -787,7 +787,7 @@ if __name__ == "__main__":
                   
                   {analysisResult.optimizations.length > 0 && (
                     <div className="mt-4">
-                      <h4 className="font-medium text-green-700 mb-2">⚡ Optimizations:</h4>
+                      <h4 className="font-medium text-green-700 dark:text-green-400 mb-2">⚡ Optimizations:</h4>
                       <ul className="list-disc list-inside text-sm text-green-600 space-y-1">
                         {analysisResult.optimizations.map((optimization, index) => (
                           <li key={index}>{optimization}</li>
@@ -804,20 +804,20 @@ if __name__ == "__main__":
         {/* Templates Tab */}
         {activeTab === 'templates' && (
           <div className="space-y-4">
-            <Card className="bg-purple-50 border-purple-200">
+            <Card className="bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800">
               <CardContent className="p-4">
-                <h3 className="text-lg font-semibold text-purple-800 mb-4">📝 Code Templates</h3>
+                <h3 className="text-lg font-semibold text-purple-800 dark:text-purple-300 mb-4">📝 Code Templates</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {Object.keys(codeTemplates).map(template => (
                     <div
                       key={template}
-                      className="p-4 border rounded-lg cursor-pointer hover:bg-purple-100 transition-colors"
+                      className="p-4 border dark:border-gray-600 rounded-lg cursor-pointer hover:bg-purple-100 dark:hover:bg-purple-900/20 transition-colors"
                       onClick={() => loadTemplate(template)}
                     >
-                      <h4 className="font-medium capitalize">
+                      <h4 className="font-medium capitalize dark:text-white">
                         {template.replace('-', ' ')}
                       </h4>
-                      <p className="text-sm text-gray-600 mt-2">
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
                         {template === 'react-component' && 'React functional component with hooks'}
                         {template === 'api-fetch' && 'API data fetching with error handling'}
                         {template === 'form-validation' && 'Form validation utility function'}
@@ -832,28 +832,28 @@ if __name__ == "__main__":
 
         {/* Code Suggestions */}
         {showSuggestions && codeSuggestions.length > 0 && (
-          <Card>
+          <Card className="dark:bg-gray-800">
             <CardContent className="p-4">
-              <h3 className="text-lg font-semibold mb-4">💡 Code Suggestions</h3>
+              <h3 className="text-lg font-semibold mb-4 dark:text-white">💡 Code Suggestions</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {codeSuggestions.map(suggestion => (
                   <div
                     key={suggestion.id}
-                    className="p-4 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
+                    className="p-4 border dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer"
                     onClick={() => {
                       setGeneratedCode(suggestion.code);
                       setCodeLanguage(suggestion.language);
                     }}
                   >
                     <div className="flex items-start justify-between mb-2">
-                      <h4 className="font-medium">{suggestion.title}</h4>
-                      <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">
+                      <h4 className="font-medium dark:text-white">{suggestion.title}</h4>
+                      <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded text-xs">
                         {suggestion.category}
                       </span>
                     </div>
-                    <p className="text-sm text-gray-600 mb-2">{suggestion.description}</p>
-                    <pre className="bg-gray-100 p-2 rounded text-xs overflow-x-auto">
-                      <code>{suggestion.code}</code>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{suggestion.description}</p>
+                    <pre className="bg-gray-100 dark:bg-gray-900 p-2 rounded text-xs overflow-x-auto">
+                      <code className="dark:text-gray-300">{suggestion.code}</code>
                     </pre>
                   </div>
                 ))}
@@ -862,9 +862,9 @@ if __name__ == "__main__":
           </Card>
         )}
         {/* Quick Actions */}
-        <Card className="bg-gray-50 border-gray-200">
+        <Card className="bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700">
           <CardContent className="p-4">
-            <h3 className="text-lg font-semibold mb-4">🚀 Quick Actions</h3>
+            <h3 className="text-lg font-semibold mb-4 dark:text-white">🚀 Quick Actions</h3>
             <div className="flex flex-wrap gap-2">
               <Button 
                 variant="outline"

@@ -11,10 +11,10 @@ export const AppLayout: React.FC = () => {
   useTheme(); // Initialize theme context
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-purple-950/20 to-gray-950">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-950 dark:via-purple-950/20 dark:to-gray-950 transition-colors duration-300">
       {/* Background Pattern */}
       <div 
-        className="fixed inset-0 opacity-10 pointer-events-none"
+        className="fixed inset-0 opacity-[0.03] dark:opacity-10 pointer-events-none"
         style={{
           backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'%3E%3Cg fill-rule='evenodd'%3E%3Cg fill='%23a855f7' fill-opacity='0.1'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
         }}
@@ -35,7 +35,7 @@ export const AppLayout: React.FC = () => {
         />
 
         <main className="flex-1 overflow-y-auto bg-transparent relative z-10">
-          <div className="p-6">
+          <div className="p-4 md:p-6">
             <Outlet />
           </div>
         </main>

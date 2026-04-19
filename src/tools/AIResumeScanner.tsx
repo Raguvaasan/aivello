@@ -300,7 +300,7 @@ const AIResumeScanner: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-2">Upload Resume</label>
+              <label className="block text-sm font-medium mb-2 dark:text-gray-300">Upload Resume</label>
               <div 
                 className={`flex flex-col items-center justify-center w-full h-32 px-4 transition bg-white border-2 border-gray-300 border-dashed rounded-lg appearance-none ${!isProcessing ? 'cursor-pointer hover:border-blue-500' : ''} focus:outline-none dark:bg-gray-800 dark:border-gray-600 dark:hover:border-blue-500`}
                 onClick={() => fileInputRef.current?.click()}
@@ -343,7 +343,7 @@ const AIResumeScanner: React.FC = () => {
                     </>
                   ) : (
                     <>
-                      <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 text-gray-600 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                       </svg>
                       <span className="font-medium text-gray-600 dark:text-gray-300">
@@ -353,7 +353,7 @@ const AIResumeScanner: React.FC = () => {
                   )}
                 </span>
                 {uploadedFile && (
-                  <span className="mt-2 text-sm text-gray-500">
+                  <span className="mt-2 text-sm text-gray-500 dark:text-gray-400">
                     File size: {(uploadedFile.size / 1024 / 1024).toFixed(2)}MB
                   </span>
                 )}
@@ -361,9 +361,9 @@ const AIResumeScanner: React.FC = () => {
             </div>
             
             <div>
-              <label className="block text-sm font-medium mb-2">Resume Content</label>
+              <label className="block text-sm font-medium mb-2 dark:text-gray-300">Resume Content</label>
               <textarea
-                className="w-full h-48 p-3 border rounded-lg"
+                className="w-full h-48 p-3 border rounded-lg bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-white"
                 placeholder="Or paste your resume content here..."
                 value={resumeText}
                 onChange={(e) => setResumeText(e.target.value)}
@@ -377,9 +377,9 @@ const AIResumeScanner: React.FC = () => {
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium mb-2">Job Description</label>
+            <label className="block text-sm font-medium mb-2 dark:text-gray-300">Job Description</label>
             <textarea
-              className="w-full h-64 p-3 border rounded-lg"
+              className="w-full h-64 p-3 border rounded-lg bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-white"
               placeholder="Paste the job description here..."
               value={jobDescription}
               onChange={(e) => setJobDescription(e.target.value)}
@@ -398,24 +398,24 @@ const AIResumeScanner: React.FC = () => {
         {analysis && (
           <div className="mt-8 space-y-6">
             <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-lg">
-              <h3 className="text-xl font-semibold mb-4">Analysis Results</h3>
+              <h3 className="text-xl font-semibold mb-4 dark:text-white">Analysis Results</h3>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <p className="text-sm font-medium">ATS Compatibility Score</p>
+                  <p className="text-sm font-medium dark:text-gray-300">ATS Compatibility Score</p>
                   <div className="text-3xl font-bold text-blue-600">{analysis.score}%</div>
                 </div>
                 <div>
-                  <p className="text-sm font-medium">Keyword Match</p>
+                  <p className="text-sm font-medium dark:text-gray-300">Keyword Match</p>
                   <div className="text-3xl font-bold text-green-600">{analysis.keywordMatch}%</div>
                 </div>
               </div>
 
               <div className="mt-6">
-                <h4 className="font-medium mb-2">Suggested Improvements</h4>
+                <h4 className="font-medium mb-2 dark:text-white">Suggested Improvements</h4>
                 <ul className="list-disc pl-5 space-y-2">
                   {analysis.suggestions.map((suggestion: string, index: number) => (
-                    <li key={index} className="text-sm">{suggestion}</li>
+                    <li key={index} className="text-sm dark:text-gray-300">{suggestion}</li>
                   ))}
                 </ul>
               </div>

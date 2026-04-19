@@ -694,7 +694,7 @@ const loadFromCloud = async () => {
                           <button
                             key={index}
                             onClick={() => add('skills', { name: skill, level: 3 })}
-                            className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm hover:bg-blue-200 transition-colors"
+                            className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-sm hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
                           >
                             + {skill}
                           </button>
@@ -720,9 +720,9 @@ const loadFromCloud = async () => {
         )}
 
         {/* Job Description Analyzer */}
-        <Card className="bg-green-50 border-green-200">
+        <Card className="bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800">
           <CardContent className="p-4">
-            <h3 className="text-lg font-semibold text-green-800 mb-4">Job Description Analyzer</h3>
+            <h3 className="text-lg font-semibold text-green-800 dark:text-green-300 mb-4">Job Description Analyzer</h3>
             <div className="space-y-4">
               <Textarea
                 placeholder="Paste the job description here to get AI-powered keyword suggestions..."
@@ -750,12 +750,12 @@ const loadFromCloud = async () => {
               </div>
               {keywords.length > 0 && (
                 <div>
-                  <h4 className="font-medium text-green-700 mb-2">Extracted Keywords:</h4>
+                  <h4 className="font-medium text-green-700 dark:text-green-300 mb-2">Extracted Keywords:</h4>
                   <div className="flex flex-wrap gap-2">
                     {keywords.map((keyword, index) => (
                       <span
                         key={index}
-                        className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm"
+                        className="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-full text-sm"
                       >
                         {keyword}
                       </span>
@@ -768,9 +768,9 @@ const loadFromCloud = async () => {
         </Card>
 
         {/* Template Selection */}
-        <Card>
+        <Card className="dark:bg-gray-800">
           <CardContent className="p-4">
-            <h3 className="text-lg font-semibold mb-4">Choose Template</h3>
+            <h3 className="text-lg font-semibold mb-4 dark:text-white">Choose Template</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
               {resumeTemplates.map((tmpl) => (
                 <div
@@ -778,13 +778,13 @@ const loadFromCloud = async () => {
                   onClick={() => setTemplate(tmpl.id)}
                   className={`p-4 border rounded-lg cursor-pointer transition-all ${
                     template === tmpl.id
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-gray-200 hover:border-gray-300'
+                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                      : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
                   }`}
                 >
                   <div className={`w-full h-20 rounded mb-2 bg-${tmpl.color}-100`} />
-                  <h4 className="font-medium text-sm">{tmpl.name}</h4>
-                  <p className="text-xs text-gray-600">{tmpl.description}</p>
+                  <h4 className="font-medium text-sm dark:text-white">{tmpl.name}</h4>
+                  <p className="text-xs text-gray-600 dark:text-gray-400">{tmpl.description}</p>
                 </div>
               ))}
             </div>
@@ -794,11 +794,11 @@ const loadFromCloud = async () => {
         {/* Industry & Role Selection */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label className="block text-sm font-medium mb-2">Target Industry</label>
+            <label className="block text-sm font-medium mb-2 dark:text-gray-300">Target Industry</label>
             <select
               value={form.industry}
               onChange={(e) => setForm(prev => ({ ...prev, industry: e.target.value }))}
-              className="w-full p-2 border rounded-lg"
+              className="w-full p-2 border rounded-lg dark:bg-gray-800 dark:border-gray-600 dark:text-white"
             >
               {industries.map(industry => (
                 <option key={industry} value={industry}>{industry}</option>
@@ -806,7 +806,7 @@ const loadFromCloud = async () => {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-2">Target Role</label>
+            <label className="block text-sm font-medium mb-2 dark:text-gray-300">Target Role</label>
             <Input
               name="targetRole"
               placeholder="e.g., Software Engineer"
@@ -815,11 +815,11 @@ const loadFromCloud = async () => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-2">Career Level</label>
+            <label className="block text-sm font-medium mb-2 dark:text-gray-300">Career Level</label>
             <select
               value={form.careerLevel}
               onChange={(e) => setForm(prev => ({ ...prev, careerLevel: e.target.value }))}
-              className="w-full p-2 border rounded-lg"
+              className="w-full p-2 border rounded-lg dark:bg-gray-800 dark:border-gray-600 dark:text-white"
             >
               <option value="entry">Entry Level</option>
               <option value="mid">Mid Level</option>
@@ -830,9 +830,9 @@ const loadFromCloud = async () => {
         </div>
 
         {/* AI Content Generation */}
-        <Card className="bg-purple-50 border-purple-200">
+        <Card className="bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800">
           <CardContent className="p-4">
-            <h3 className="text-lg font-semibold text-purple-800 mb-4">AI Content Assistant</h3>
+            <h3 className="text-lg font-semibold text-purple-800 dark:text-purple-300 mb-4">AI Content Assistant</h3>
             <div className="flex flex-wrap gap-2">
               <Button
                 onClick={() => generateContent('summary')}
@@ -869,8 +869,8 @@ const loadFromCloud = async () => {
         {/* Enhanced Controls */}
         <div className="flex flex-wrap gap-4 items-center">
           <div className="flex items-center gap-2">
-            <label className="text-sm font-medium">Theme:</label>
-            <select onChange={(e) => setTheme(e.target.value)} className="border p-2 rounded">
+            <label className="text-sm font-medium dark:text-gray-300">Theme:</label>
+            <select onChange={(e) => setTheme(e.target.value)} className="border p-2 rounded dark:bg-gray-800 dark:border-gray-600 dark:text-white">
               <option value="blue">Blue</option>
               <option value="green">Green</option>
               <option value="purple">Purple</option>
@@ -1338,7 +1338,7 @@ const loadFromCloud = async () => {
               {form.summary && (
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">Professional Summary</h3>
-                  <p className="text-gray-700">{form.summary}</p>
+                  <p className="text-gray-700 dark:text-gray-300">{form.summary}</p>
                 </div>
               )}
 
@@ -1346,7 +1346,7 @@ const loadFromCloud = async () => {
               {form.objective && (
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">Career Objective</h3>
-                  <p className="text-gray-700">{form.objective}</p>
+                  <p className="text-gray-700 dark:text-gray-300">{form.objective}</p>
                 </div>
               )}
 
@@ -1376,12 +1376,12 @@ const loadFromCloud = async () => {
                     <div key={i} className="mb-4 last:mb-0">
                       <div className="flex justify-between items-start mb-2">
                         <div>
-                          <h4 className="font-semibold text-gray-800">{exp.role}</h4>
+                          <h4 className="font-semibold text-gray-800 dark:text-gray-100">{exp.role}</h4>
                           <p className="text-gray-600">{exp.company}</p>
                         </div>
                         <span className="text-sm text-gray-500">{exp.duration}</span>
                       </div>
-                      <p className="text-gray-700">{exp.description}</p>
+                      <p className="text-gray-700 dark:text-gray-300">{exp.description}</p>
                     </div>
                   ))}
                 </div>
@@ -1395,7 +1395,7 @@ const loadFromCloud = async () => {
                     <div key={i} className="mb-2 last:mb-0">
                       <div className="flex justify-between items-start">
                         <div>
-                          <h4 className="font-semibold text-gray-800">{edu.degree}</h4>
+                          <h4 className="font-semibold text-gray-800 dark:text-gray-100">{edu.degree}</h4>
                           <p className="text-gray-600">{edu.institution}</p>
                         </div>
                         <span className="text-sm text-gray-500">{edu.year}</span>
@@ -1411,8 +1411,8 @@ const loadFromCloud = async () => {
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">Projects</h3>
                   {form.projects.map((project, i) => (
                     <div key={i} className="mb-4 last:mb-0">
-                      <h4 className="font-semibold text-gray-800">{project.title}</h4>
-                      <p className="text-gray-700">{project.description}</p>
+                      <h4 className="font-semibold text-gray-800 dark:text-gray-100">{project.title}</h4>
+                      <p className="text-gray-700 dark:text-gray-300">{project.description}</p>
                     </div>
                   ))}
                 </div>

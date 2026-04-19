@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 
 export const LoadingScreen: React.FC = () => {
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900">
+    <div className="fixed inset-0 flex items-center justify-center bg-gradient-to-br from-white via-purple-50 to-white dark:from-gray-900 dark:via-blue-900 dark:to-gray-900 transition-colors duration-300">
       <div className="text-center">
         <motion.div
           initial={{ scale: 0.8, opacity: 0 }}
@@ -11,8 +11,8 @@ export const LoadingScreen: React.FC = () => {
           transition={{ duration: 0.5 }}
           className="mb-8"
         >
-          <h1 className="text-4xl font-bold text-white mb-2">Aivello</h1>
-          <p className="text-blue-300">Loading your AI tools...</p>
+          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">Aivello</h1>
+          <p className="text-purple-600 dark:text-blue-300">Loading your AI tools...</p>
         </motion.div>
 
         <motion.div

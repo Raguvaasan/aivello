@@ -1,26 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { RouterProvider } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider } from './context/AuthContext';
 import AnalyticsProvider from './context/AnalyticsProvider';
-import { LoadingScreen } from './components/common/LoadingScreen';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { router } from './routes';
 
 const App: React.FC = () => {
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    // Simulate initial loading for app initialization
-    const timer = setTimeout(() => setIsLoading(false), 1500);
-    return () => clearTimeout(timer);
-  }, []);
-
-  if (isLoading) {
-    return <LoadingScreen />;
-  }
-
   return (
     <ErrorBoundary>
       <ThemeProvider>

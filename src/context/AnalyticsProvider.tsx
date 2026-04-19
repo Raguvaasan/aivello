@@ -1,5 +1,4 @@
 import React, { createContext, useContext, ReactNode } from 'react';
-import { useAuth } from './AuthContext';
 
 interface AnalyticsContextType {
   trackEvent: (eventName: string, properties?: Record<string, any>) => void;

@@ -48,11 +48,11 @@ export const Hero: React.FC<HeroProps> = ({ onEnterApp }) => {
 
             {/* Main Headline with Gradient Text */}
             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black mb-6 leading-[1.1]">
-              <span className="bg-gradient-to-r from-purple-600 via-blue-600 to-pink-600 dark:from-purple dark:via-purple-200 dark:to-pink-200 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-purple-600 via-blue-600 to-pink-600 dark:from-purple-400 dark:via-purple-200 dark:to-pink-200 bg-clip-text text-transparent">
                 AI-Powered
               </span>
               <br />
-              <span className="text-gray-900 dark:text-purple">
+              <span className="text-gray-900 dark:text-white">
                 Productivity
               </span>
               <br />
@@ -72,7 +72,7 @@ export const Hero: React.FC<HeroProps> = ({ onEnterApp }) => {
                 whileHover={{ scale: 1.05, y: -2 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={onEnterApp}
-                className="group relative overflow-hidden bg-gradient-to-r from-purple-600 to-pink-600 text-purple px-8 py-4 rounded-2xl font-semibold shadow-2xl shadow-purple-500/25 hover:shadow-purple-500/40 transition-all duration-300 min-w-[200px]"
+                className="group relative overflow-hidden bg-gradient-to-r from-purple-600 to-pink-600 text-white px-8 py-4 rounded-2xl font-semibold shadow-2xl shadow-purple-500/25 hover:shadow-purple-500/40 transition-all duration-300 min-w-[200px]"
               >
                 <span className="relative z-10 flex items-center gap-2">
                   <IconWrapper icon={FiZap} className="w-5 h-5" />
@@ -86,7 +86,7 @@ export const Hero: React.FC<HeroProps> = ({ onEnterApp }) => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={onEnterApp}
-                className="group flex items-center gap-2 text-gray-900 dark:text-purple-400 px-6 py-4 rounded-2xl font-medium border border-gray-300 dark:border-purple/20 hover:border-gray-400 dark:hover:border-purple/40 bg-purple/60 dark:bg-purple/5 hover:bg-purple/80 dark:hover:bg-purple/10 backdrop-blur-sm transition-all duration-300 min-w-[200px] justify-center"
+                className="group flex items-center gap-2 text-gray-900 dark:text-purple-400 px-6 py-4 rounded-2xl font-medium border border-gray-300 dark:border-purple-500/20 hover:border-gray-400 dark:hover:border-purple-500/40 bg-white/60 dark:bg-white/5 hover:bg-white/80 dark:hover:bg-white/10 backdrop-blur-sm transition-all duration-300 min-w-[200px] justify-center"
               >
                 <IconWrapper icon={FiPlay} className="w-4 h-4" />
                 Watch Demo
@@ -102,9 +102,9 @@ export const Hero: React.FC<HeroProps> = ({ onEnterApp }) => {
             >
               <div className="flex items-center gap-2">
                 <div className="flex -space-x-2">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-r from-purple-400 to-pink-400 border-2 border-purple dark:border-gray-900"></div>
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-400 to-purple-400 border-2 border-purple dark:border-gray-900"></div>
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-r from-green-400 to-blue-400 border-2 border-purple dark:border-gray-900"></div>
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-r from-purple-400 to-pink-400 border-2 border-white dark:border-gray-900"></div>
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-400 to-purple-400 border-2 border-white dark:border-gray-900"></div>
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-r from-green-400 to-blue-400 border-2 border-white dark:border-gray-900"></div>
                 </div>
                 <span>10K+ Users</span>
               </div>
@@ -127,14 +127,14 @@ export const Hero: React.FC<HeroProps> = ({ onEnterApp }) => {
               <motion.div
                 animate={{ y: [0, -10, 0] }}
                 transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                className="absolute top-0 left-4 bg-purple/80 dark:bg-gradient-to-r dark:from-purple-500/20 dark:to-pink-500/20 backdrop-blur-sm border border-gray-200 dark:border-purple/10 rounded-2xl p-4 w-48 shadow-lg dark:shadow-none"
+                className="absolute top-0 left-4 bg-white/80 dark:bg-gradient-to-r dark:from-purple-500/20 dark:to-pink-500/20 backdrop-blur-sm border border-gray-200 dark:border-purple-500/10 rounded-2xl p-4 w-48 shadow-lg dark:shadow-none"
               >
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
                     🤖
                   </div>
                   <div>
-                    <h4 className="text-gray-900 dark:text-purple font-medium text-sm">AI Content</h4>
+                    <h4 className="text-gray-900 dark:text-white font-medium text-sm">AI Content</h4>
                     <p className="text-gray-600 dark:text-gray-400 text-xs">Generate instantly</p>
                   </div>
                 </div>
@@ -143,14 +143,14 @@ export const Hero: React.FC<HeroProps> = ({ onEnterApp }) => {
               <motion.div
                 animate={{ y: [0, 10, 0] }}
                 transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-                className="absolute top-20 right-0 bg-purple/80 dark:bg-gradient-to-r dark:from-blue-500/20 dark:to-purple-500/20 backdrop-blur-sm border border-gray-200 dark:border-purple/10 rounded-2xl p-4 w-44 shadow-lg dark:shadow-none"
+                className="absolute top-20 right-0 bg-white/80 dark:bg-gradient-to-r dark:from-blue-500/20 dark:to-purple-500/20 backdrop-blur-sm border border-gray-200 dark:border-purple-500/10 rounded-2xl p-4 w-44 shadow-lg dark:shadow-none"
               >
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl flex items-center justify-center">
                     🎨
                   </div>
                   <div>
-                    <h4 className="text-gray-900 dark:text-purple font-medium text-sm">Design Tools</h4>
+                    <h4 className="text-gray-900 dark:text-white font-medium text-sm">Design Tools</h4>
                     <p className="text-gray-600 dark:text-gray-400 text-xs">Create amazing</p>
                   </div>
                 </div>
@@ -159,14 +159,14 @@ export const Hero: React.FC<HeroProps> = ({ onEnterApp }) => {
               <motion.div
                 animate={{ y: [0, -15, 0] }}
                 transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-                className="absolute top-40 left-12 bg-purple/80 dark:bg-gradient-to-r dark:from-green-500/20 dark:to-blue-500/20 backdrop-blur-sm border border-gray-200 dark:border-purple/10 rounded-2xl p-4 w-52 shadow-lg dark:shadow-none"
+                className="absolute top-40 left-12 bg-white/80 dark:bg-gradient-to-r dark:from-green-500/20 dark:to-blue-500/20 backdrop-blur-sm border border-gray-200 dark:border-purple-500/10 rounded-2xl p-4 w-52 shadow-lg dark:shadow-none"
               >
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-blue-500 rounded-xl flex items-center justify-center">
                     📊
                   </div>
                   <div>
-                    <h4 className="text-gray-900 dark:text-purple font-medium text-sm">Business Tools</h4>
+                    <h4 className="text-gray-900 dark:text-white font-medium text-sm">Business Tools</h4>
                     <p className="text-gray-600 dark:text-gray-400 text-xs">Scale efficiently</p>
                   </div>
                 </div>
