@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 
 interface SEOHelmetProps {
   title?: string;
@@ -18,42 +18,48 @@ interface SEOHelmetProps {
   structuredData?: object;
 }
 
+const ARTICLE_TAG_ATTR = 'data-seo-article-tag';
+
 export const SEOHelmet: React.FC<SEOHelmetProps> = ({
-  title = 'AiVello - Free AI-Powered Daily Tools',
-  description = 'AiVello offers 10+ free AI tools like PDF to Word, Thumbnail Grabber, QR Code Generator, and more. No signup needed!',
+  title = 'Aivello - 40+ Free AI-Powered Tools, No Signup Needed',
+  description = 'Aivello offers 40+ free tools like PDF to Word, PDF merge, image converter, QR code generator and more. No signup needed.',
   keywords = 'AI tools, free PDF converter, YouTube thumbnail, grammar checker, text to speech, resume builder',
   image = 'https://aivello.vercel.app/og-image.png',
   url = 'https://aivello.vercel.app/',
   type = 'website',
+  noindex = false,
   article,
-  structuredData
+  structuredData,
 }) => {
-  const fullTitle = title.includes('AiVello') ? title : `${title} | AiVello`;
+  const fullTitle = /aivello/i.test(title) ? title : `${title} | Aivello`;
+
+  // Callers pass `article` and `structuredData` as inline object literals, so their
+  // identity changes on every render. Serialising them gives the effect a stable
+  // primitive dependency; without this the effect re-ran constantly and appended a
+  // fresh set of meta tags each time.
+  const articleKey = useMemo(() => (article ? JSON.stringify(article) : ''), [article]);
+  const structuredDataKey = useMemo(
+    () => (structuredData ? JSON.stringify(structuredData) : ''),
+    [structuredData]
+  );
 
   useEffect(() => {
-    // Update document title
     document.title = fullTitle;
 
-    // Function to update or create meta tag
     const updateMetaTag = (name: string, content: string, isProperty = false) => {
       const selector = isProperty ? `meta[property="${name}"]` : `meta[name="${name}"]`;
-      let meta = document.querySelector(selector) as HTMLMetaElement;
-      
+      let meta = document.querySelector(selector) as HTMLMetaElement | null;
+
       if (!meta) {
         meta = document.createElement('meta');
-        if (isProperty) {
-          meta.setAttribute('property', name);
-        } else {
-          meta.setAttribute('name', name);
-        }
+        meta.setAttribute(isProperty ? 'property' : 'name', name);
         document.head.appendChild(meta);
       }
       meta.setAttribute('content', content);
     };
 
-    // Function to update or create link tag
     const updateLinkTag = (rel: string, href: string) => {
-      let link = document.querySelector(`link[rel="${rel}"]`) as HTMLLinkElement;
+      let link = document.querySelector(`link[rel="${rel}"]`) as HTMLLinkElement | null;
       if (!link) {
         link = document.createElement('link');
         link.setAttribute('rel', rel);
@@ -62,19 +68,25 @@ export const SEOHelmet: React.FC<SEOHelmetProps> = ({
       link.setAttribute('href', href);
     };
 
-    // Primary Meta Tags
+    // Primary
     updateMetaTag('title', fullTitle);
     updateMetaTag('description', description);
     updateMetaTag('keywords', keywords);
     updateLinkTag('canonical', url);
 
-    // Open Graph / Facebook
+    // The noindex prop was previously declared but ignored, so gated and utility
+    // pages advertised themselves as indexable.
+    const robots = noindex ? 'noindex, nofollow' : 'index, follow';
+    updateMetaTag('robots', robots);
+    updateMetaTag('googlebot', robots);
+
+    // Open Graph
     updateMetaTag('og:type', type, true);
     updateMetaTag('og:url', url, true);
     updateMetaTag('og:title', fullTitle, true);
     updateMetaTag('og:description', description, true);
     updateMetaTag('og:image', image, true);
-    updateMetaTag('og:site_name', 'AiVello', true);
+    updateMetaTag('og:site_name', 'Aivello', true);
     updateMetaTag('og:locale', 'en_US', true);
 
     // Twitter
@@ -85,37 +97,32 @@ export const SEOHelmet: React.FC<SEOHelmetProps> = ({
     updateMetaTag('twitter:image', image);
     updateMetaTag('twitter:creator', '@aivello');
 
-    // Additional meta tags
-    updateMetaTag('robots', 'index, follow');
-    updateMetaTag('googlebot', 'index, follow');
-    updateMetaTag('viewport', 'width=device-width, initial-scale=1');
-    updateMetaTag('theme-color', '#1d4ed8');
+    // Note: theme-color and viewport are intentionally NOT set here. They are static
+    // and already declared in public/index.html; overwriting theme-color per route
+    // made the mobile browser chrome change colour during navigation.
 
-    // Article meta tags (if article type)
+    // Article tags. Marked with a data attribute so this component removes exactly
+    // the nodes it created instead of leaking a new set on every run.
+    document.querySelectorAll(`meta[${ARTICLE_TAG_ATTR}]`).forEach((el) => el.remove());
+
     if (article && type === 'article') {
       if (article.author) updateMetaTag('article:author', article.author, true);
       if (article.publishedTime) updateMetaTag('article:published_time', article.publishedTime, true);
       if (article.modifiedTime) updateMetaTag('article:modified_time', article.modifiedTime, true);
       if (article.section) updateMetaTag('article:section', article.section, true);
-      if (article.tags) {
-        article.tags.forEach(tag => {
-          const meta = document.createElement('meta');
-          meta.setAttribute('property', 'article:tag');
-          meta.setAttribute('content', tag);
-          document.head.appendChild(meta);
-        });
-      }
+
+      article.tags?.forEach((tag) => {
+        const meta = document.createElement('meta');
+        meta.setAttribute('property', 'article:tag');
+        meta.setAttribute('content', tag);
+        meta.setAttribute(ARTICLE_TAG_ATTR, '');
+        document.head.appendChild(meta);
+      });
     }
 
-    // Structured Data
+    // Structured data
+    document.querySelector('#structured-data')?.remove();
     if (structuredData) {
-      // Remove existing structured data
-      const existingScript = document.querySelector('#structured-data');
-      if (existingScript) {
-        existingScript.remove();
-      }
-
-      // Add new structured data
       const script = document.createElement('script');
       script.id = 'structured-data';
       script.type = 'application/ld+json';
@@ -123,16 +130,13 @@ export const SEOHelmet: React.FC<SEOHelmetProps> = ({
       document.head.appendChild(script);
     }
 
-    // Cleanup function
     return () => {
-      // Remove structured data script when component unmounts
-      const script = document.querySelector('#structured-data');
-      if (script) {
-        script.remove();
-      }
+      document.querySelector('#structured-data')?.remove();
+      document.querySelectorAll(`meta[${ARTICLE_TAG_ATTR}]`).forEach((el) => el.remove());
     };
-  }, [fullTitle, description, keywords, image, url, type, article, structuredData]);
+    // article/structuredData are tracked via their serialised keys above.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fullTitle, description, keywords, image, url, type, noindex, articleKey, structuredDataKey]);
 
-  // This component doesn't render anything
   return null;
 };

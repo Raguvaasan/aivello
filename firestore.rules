@@ -1,0 +1,98 @@
+rules_version = '2';
+
+// Aivello Firestore security rules.
+//
+// Default posture: deny everything, then open the narrowest path each feature needs.
+// Every collection here is written directly from the browser, so these rules are the
+// only thing standing between one user's data and another's - and the only schema
+// validation there is.
+//
+// Deploy with:  firebase deploy --only firestore:rules
+// Test with:    firebase emulators:start --only firestore
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isShortString(value, max) {
+      return value is string && value.size() > 0 && value.size() <= max;
+    }
+
+    function isValidPreferences(prefs) {
+      return prefs is map
+          && prefs.keys().hasOnly(['theme'])
+          && (!('theme' in prefs) || prefs.theme in ['light', 'dark', 'system']);
+    }
+
+    // ---------------------------------------------------------------------
+    // users/{uid} - profile document, keyed by Firebase Auth uid.
+    // ---------------------------------------------------------------------
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+
+      // The client seeds the document on first sign-in. Pin uid to the caller so a
+      // user cannot create a profile document under someone else's id.
+      allow create: if isOwner(userId)
+                    && request.resource.data.uid == userId
+                    && request.resource.data.keys().hasOnly(
+                         ['uid', 'displayName', 'email', 'photoURL', 'createdAt', 'lastLogin', 'preferences'])
+                    && (!('preferences' in request.resource.data)
+                        || isValidPreferences(request.resource.data.preferences));
+
+      // Only lastLogin, profile display fields and preferences may change; uid,
+      // email and createdAt are immutable from the client.
+      allow update: if isOwner(userId)
+                    && request.resource.data.diff(resource.data).affectedKeys()
+                         .hasOnly(['lastLogin', 'preferences', 'displayName', 'photoURL'])
+                    && (!('preferences' in request.resource.data)
+                        || isValidPreferences(request.resource.data.preferences));
+
+      // Account deletion runs server-side, never from the browser.
+      allow delete: if false;
+    }
+
+    // ---------------------------------------------------------------------
+    // toolUsage/{docId} - one record per completed tool action, written by
+    // src/utils/toolUsage.ts and read by the History page.
+    //
+    // Metadata only: the key allowlist below is what guarantees tool input and
+    // output (resumes, passwords, dream journals...) can never be stored.
+    // Append-only: usage records are an audit trail, so no client may rewrite
+    // or erase history.
+    // ---------------------------------------------------------------------
+    match /toolUsage/{docId} {
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+
+      allow create: if isSignedIn()
+                    && request.resource.data.userId == request.auth.uid
+                    && request.resource.data.keys().hasOnly(
+                         ['userId', 'toolId', 'toolName', 'action', 'timestamp', 'durationMs'])
+                    && isShortString(request.resource.data.toolId, 64)
+                    && isShortString(request.resource.data.toolName, 80)
+                    && request.resource.data.action in
+                         ['use', 'generate', 'convert', 'analyze', 'download', 'copy']
+                    && request.resource.data.timestamp == request.time
+                    && (!('durationMs' in request.resource.data)
+                        || (request.resource.data.durationMs is int
+                            && request.resource.data.durationMs >= 0
+                            && request.resource.data.durationMs < 86400000));
+
+      allow update, delete: if false;
+    }
+
+    // ---------------------------------------------------------------------
+    // Anything not matched above is denied. The legacy usage_events and
+    // usage_history collections are no longer written by the app.
+    // ---------------------------------------------------------------------
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

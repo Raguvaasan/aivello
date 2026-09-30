@@ -1,156 +1,185 @@
-import React from 'react';
+import React, { useId, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { FiTrendingUp, FiZap, FiStar, FiArrowRight } from 'react-icons/fi';
-import { tools } from '../../data/tools';
+import { FiSearch, FiStar, FiArrowRight } from 'react-icons/fi';
+import { tools, categories as categoryOrder } from '../../data/tools';
 import { IconWrapper } from '../../components/common/IconWrapper';
+import { SEOHelmet } from '../../components/common/SEOHelmet';
+import type { Tool } from '../../types';
+
+const FEATURED_IDS = ['pdf-to-word', 'resume-builder', 'grammar-checker', 'image-compressor', 'qr-generator', 'ai-text-summarizer'];
+
+const ToolCard: React.FC<{ tool: Tool; featured?: boolean }> = ({ tool, featured }) => (
+  <Link
+    to={tool.path}
+    className="group flex h-full flex-col bg-white/80 dark:bg-gray-800/40 border border-gray-200 dark:border-gray-700/50 rounded-2xl p-5 hover:border-purple-300 dark:hover:border-purple-500/50 hover:shadow-lg hover:shadow-purple-500/10 hover:-translate-y-0.5 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/60"
+  >
+    <span className="flex items-center gap-3 mb-3">
+      <span
+        className="w-12 h-12 shrink-0 rounded-xl bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-600/20 dark:to-pink-600/20 flex items-center justify-center text-2xl"
+        aria-hidden="true"
+      >
+        {tool.icon}
+      </span>
+      <span className="flex-1 min-w-0">
+        <span className="block font-semibold text-gray-900 dark:text-white group-hover:text-purple-700 dark:group-hover:text-purple-300 transition-colors truncate">
+          {tool.name}
+        </span>
+        <span className="flex items-center gap-2 mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+          {featured && (
+            <span className="inline-flex items-center gap-1">
+              <IconWrapper icon={FiStar} className="w-3 h-3 text-yellow-500" /> Popular
+            </span>
+          )}
+          {tool.isNew && (
+            <span className="px-1.5 py-0.5 rounded-md bg-pink-100 text-pink-700 dark:bg-pink-500/20 dark:text-pink-300 font-semibold">
+              New
+            </span>
+          )}
+          {!featured && !tool.isNew && tool.category}
+        </span>
+      </span>
+      <IconWrapper
+        icon={FiArrowRight}
+        className="w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all"
+      />
+    </span>
+    <span className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed line-clamp-2">{tool.description}</span>
+  </Link>
+);
 
 export const AppHome: React.FC = () => {
-  const categories = Array.from(new Set(tools.map(tool => tool.category)));
-  const featuredTools = tools.slice(0, 6);
+  const [query, setQuery] = useState('');
+  const [category, setCategory] = useState<string>('All');
+  const searchId = useId();
+
+  // Registry order, limited to categories that actually have tools.
+  const categories = useMemo(
+    () => categoryOrder.filter((cat) => cat === 'All' || tools.some((tool) => tool.category === cat)),
+    []
+  );
+  const featured = useMemo(
+    () => FEATURED_IDS.map((id) => tools.find((tool) => tool.id === id)).filter((tool): tool is Tool => Boolean(tool)),
+    []
+  );
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return tools.filter(
+      (tool) =>
+        (category === 'All' || tool.category === category) &&
+        (!q ||
+          tool.name.toLowerCase().includes(q) ||
+          tool.description.toLowerCase().includes(q) ||
+          tool.category.toLowerCase().includes(q))
+    );
+  }, [query, category]);
+
+  const isFiltering = query.trim() !== '' || category !== 'All';
 
   return (
-    <div className="min-h-screen p-2 sm:p-4 md:p-6">
-      <div className="relative z-10 max-w-7xl mx-auto">
-        {/* Header Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-10 md:mb-12"
-        >
-          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-purple-600 via-pink-500 to-purple-600 dark:from-white dark:via-purple-200 dark:to-pink-200 bg-clip-text text-transparent mb-4">
-            Welcome to AiVello
+    <>
+      <SEOHelmet
+        title={`All ${tools.length} Free Tools - Aivello`}
+        description="Browse every free Aivello tool: PDF, image, writing, developer, design and AI tools. No signup needed."
+        url="https://aivello.vercel.app/app"
+      />
+
+      <div className="max-w-7xl mx-auto">
+        <header className="text-center mb-8 md:mb-10">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold bg-gradient-to-r from-purple-700 via-pink-600 to-purple-700 dark:from-white dark:via-purple-200 dark:to-pink-200 bg-clip-text text-transparent mb-3">
+            Welcome to Aivello
           </h1>
-          <p className="text-base sm:text-lg md:text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-            Transform your productivity with our comprehensive suite of AI-powered tools
+          <p className="text-base sm:text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+            {tools.length} free tools for documents, images, writing, code and more. No signup needed.
           </p>
-        </motion.div>
+        </header>
 
-        {/* Featured Tools Section */}
-        {featuredTools.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="mb-12 md:mb-16"
-          >
-            <div className="flex items-center gap-3 mb-6 md:mb-8">
-              <div className="bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-600/20 dark:to-pink-600/20 p-3 rounded-2xl">
-                <IconWrapper icon={FiTrendingUp} className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600 dark:text-purple-400" />
-              </div>
-              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
-                Featured Tools
-              </h2>
-              <div className="bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-600/20 dark:to-pink-600/20 px-3 py-1 rounded-full">
-                <span className="text-purple-700 dark:text-purple-300 text-xs sm:text-sm font-medium">🔥 Top Picks</span>
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-              {featuredTools.map((tool, index) => (
-                <motion.div
-                  key={tool.id}
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.3 + index * 0.1 }}
-                >
-                  <Link
-                    to={tool.path}
-                    className="group block h-full"
-                  >
-                    <div className="h-full bg-white/80 dark:bg-gray-800/40 backdrop-blur-sm border border-gray-200/80 dark:border-gray-700/50 rounded-2xl p-5 md:p-6 hover:bg-purple-50/80 dark:hover:bg-gray-700/40 hover:border-purple-300 dark:hover:border-purple-500/50 transition-all duration-300 hover:scale-[1.03] hover:shadow-xl hover:shadow-purple-500/10 dark:hover:shadow-purple-500/20">
-                      <div className="flex items-center mb-4">
-                        <div className="bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-600/20 dark:to-pink-600/20 p-3 rounded-xl mr-4 group-hover:from-purple-200 group-hover:to-pink-200 dark:group-hover:from-purple-500/30 dark:group-hover:to-pink-500/30 transition-all">
-                          <span className="text-2xl">{tool.icon}</span>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-gray-900 dark:text-white group-hover:text-purple-700 dark:group-hover:text-purple-300 transition-colors truncate">
-                            {tool.name}
-                          </h3>
-                          <div className="flex items-center gap-1 mt-1">
-                            <IconWrapper icon={FiStar} className="w-3 h-3 text-yellow-500" />
-                            <span className="text-xs text-gray-500 dark:text-gray-400">Featured</span>
-                          </div>
-                        </div>
-                        <IconWrapper icon={FiArrowRight} className="w-4 h-4 text-gray-400 dark:text-gray-500 group-hover:text-purple-500 group-hover:translate-x-1 transition-all opacity-0 group-hover:opacity-100" />
-                      </div>
-                      <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed line-clamp-2">
-                        {tool.description}
-                      </p>
-                    </div>
-                  </Link>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
-        )}
+        <div className="max-w-2xl mx-auto mb-5 relative">
+          <label htmlFor={searchId} className="sr-only">
+            Search tools
+          </label>
+          <IconWrapper icon={FiSearch} className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+          <input
+            id={searchId}
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder={`Search ${tools.length} tools...`}
+            className="w-full pl-12 pr-4 py-3.5 rounded-2xl bg-white dark:bg-gray-800/60 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+          />
+        </div>
 
-        {/* All Categories */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.4 }}
-        >
-          {categories.map((category, categoryIndex) => (
-            <motion.div
-              key={category}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.5 + categoryIndex * 0.1 }}
-              className="mb-10 md:mb-12"
+        <div className="flex gap-2 overflow-x-auto pb-2 mb-8 -mx-1 px-1 justify-start md:flex-wrap md:justify-center" role="group" aria-label="Filter by category">
+          {categories.map((cat) => (
+            <button
+              key={cat}
+              type="button"
+              onClick={() => setCategory(cat)}
+              aria-pressed={category === cat}
+              className={`shrink-0 min-h-[40px] px-4 rounded-full text-sm font-medium border transition-colors ${
+                category === cat
+                  ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white border-transparent'
+                  : 'bg-white dark:bg-gray-800/60 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-500/50'
+              }`}
             >
-              <div className="flex items-center gap-3 mb-5 md:mb-6">
-                <div className="bg-gray-100 dark:bg-gradient-to-br dark:from-gray-700/50 dark:to-gray-800/50 p-3 rounded-2xl">
-                  <IconWrapper icon={FiZap} className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600 dark:text-gray-300" />
-                </div>
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
-                  {category}
-                </h2>
-                <div className="bg-gray-100 dark:bg-gray-700/30 px-3 py-1 rounded-full">
-                  <span className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm">
-                    {tools.filter(tool => tool.category === category).length} tools
-                  </span>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-                {tools
-                  .filter(tool => tool.category === category)
-                  .map((tool, toolIndex) => (
-                    <motion.div
-                      key={tool.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.4, delay: 0.6 + categoryIndex * 0.1 + toolIndex * 0.05 }}
-                    >
-                      <Link
-                        to={tool.path}
-                        className="group block h-full"
-                      >
-                        <div className="h-full bg-white/60 dark:bg-gray-800/30 backdrop-blur-sm border border-gray-200/60 dark:border-gray-700/30 rounded-2xl p-5 md:p-6 hover:bg-purple-50/60 dark:hover:bg-gray-700/30 hover:border-purple-200 dark:hover:border-gray-600/50 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg">
-                          <div className="flex items-center mb-4">
-                            <div className="bg-gray-100 dark:bg-gray-700/40 p-3 rounded-xl mr-4 group-hover:bg-purple-100 dark:group-hover:bg-gray-600/40 transition-colors">
-                              <span className="text-2xl">{tool.icon}</span>
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <h3 className="font-semibold text-gray-900 dark:text-white group-hover:text-purple-700 dark:group-hover:text-gray-200 transition-colors truncate">
-                                {tool.name}
-                              </h3>
-                            </div>
-                          </div>
-                          <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed group-hover:text-gray-700 dark:group-hover:text-gray-300 transition-colors line-clamp-2">
-                            {tool.description}
-                          </p>
-                        </div>
-                      </Link>
-                    </motion.div>
-                  ))}
-              </div>
-            </motion.div>
+              {cat}
+            </button>
           ))}
-        </motion.div>
+        </div>
+
+        {isFiltering ? (
+          <section aria-live="polite">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              {filtered.length} {filtered.length === 1 ? 'tool' : 'tools'}
+              {category !== 'All' && <span className="text-gray-500 dark:text-gray-400 font-normal"> in {category}</span>}
+            </h2>
+            {filtered.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filtered.map((tool) => (
+                  <ToolCard key={tool.id} tool={tool} />
+                ))}
+              </div>
+            ) : (
+              <p className="text-center py-16 text-gray-600 dark:text-gray-400">No tools match your search. Try another word.</p>
+            )}
+          </section>
+        ) : (
+          <>
+            <section className="mb-12" aria-labelledby="popular-heading">
+              <h2 id="popular-heading" className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-5">
+                Popular tools
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {featured.map((tool) => (
+                  <ToolCard key={tool.id} tool={tool} featured />
+                ))}
+              </div>
+            </section>
+
+            {categories.slice(1).map((cat) => {
+              const inCategory = tools.filter((tool) => tool.category === cat);
+              const headingId = `category-${cat.toLowerCase().replace(/\W+/g, '-')}`;
+              return (
+                <section key={cat} className="mb-10" aria-labelledby={headingId}>
+                  <div className="flex items-center gap-3 mb-4">
+                    <h2 id={headingId} className="text-xl font-bold text-gray-900 dark:text-white">
+                      {cat}
+                    </h2>
+                    <span className="px-2.5 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700/40 text-xs text-gray-600 dark:text-gray-400">
+                      {inCategory.length}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {inCategory.map((tool) => (
+                      <ToolCard key={tool.id} tool={tool} />
+                    ))}
+                  </div>
+                </section>
+              );
+            })}
+          </>
+        )}
       </div>
-    </div>
+    </>
   );
 };

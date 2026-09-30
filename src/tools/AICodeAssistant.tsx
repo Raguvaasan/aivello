@@ -1,907 +1,681 @@
-import React, { useState, useRef } from 'react';
+import React, { useDeferredValue, useId, useMemo, useRef, useState } from 'react';
+import toast from 'react-hot-toast';
 import { Textarea } from '../components/ui/textarea';
 import { Button } from '../components/ui/button';
-import { Card, CardContent } from '../components/ui/card';
 import { ToolWrapper } from '../components/common/ToolWrapper';
+import { useToolTracking } from '../hooks/useToolTracking';
+import {
+  CODE_SNIPPETS,
+  CODE_TEMPLATES,
+  CodeTemplate,
+  GeneratedCode,
+  LANGUAGES,
+  LanguageId,
+  PROMPT_MAX_LENGTH,
+  PROMPT_MIN_LENGTH,
+  QUICK_ACTIONS,
+  QuickAction,
+  downloadCodeFile,
+  generateCode,
+  isLanguageId,
+  languageLabel,
+} from './lib/aiCodeAssistant';
+import {
+  CodeAnalysis,
+  OPTIMIZE_OPTIONS,
+  OptimizeOptionId,
+  OptimizeResult,
+  Severity,
+  analyzeCode,
+  detectLanguage,
+  optimizeCode,
+  optionAppliesTo,
+} from './lib/aiCodeAssistantAnalysis';
 
-interface CodeSuggestion {
-  id: string;
-  title: string;
-  description: string;
-  code: string;
-  language: string;
-  category: string;
-}
+const TOOL_ID = 'ai-code-assistant';
+const TOOL_NAME = 'AI Code Assistant';
+const MAX_CODE_LENGTH = 100_000;
 
-interface CodeAnalysis {
-  issues: string[];
-  suggestions: string[];
-  complexity: 'Low' | 'Medium' | 'High';
-  score: number;
-  optimizations: string[];
-}
+type TabId = 'generate' | 'analyze' | 'optimize' | 'templates';
+
+const TABS: { id: TabId; label: string; icon: string }[] = [
+  { id: 'generate', label: 'Generate', icon: '🎯' },
+  { id: 'analyze', label: 'Analyze', icon: '🔍' },
+  { id: 'optimize', label: 'Optimize', icon: '⚡' },
+  { id: 'templates', label: 'Templates', icon: '📝' },
+];
+
+const cardClass = 'bg-white/80 dark:bg-white/10 border border-gray-200 dark:border-white/20 rounded-2xl p-4 sm:p-6';
+const subCardClass = 'bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl';
+const labelClass = 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2';
+const selectClass =
+  'min-h-[44px] px-3 py-2 rounded-xl bg-white dark:bg-gray-800/60 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50';
+const optionClass = 'bg-white dark:bg-gray-800';
+const errorTextClass = 'mt-1 text-sm text-red-600 dark:text-red-400';
+const codeBlockClass =
+  'bg-gray-50 dark:bg-gray-950/60 border border-gray-200 dark:border-white/10 text-gray-800 dark:text-gray-200 p-4 rounded-xl overflow-auto max-h-[32rem] text-sm leading-relaxed font-mono whitespace-pre';
+const chipClass = 'inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium';
+
+const SEVERITY_STYLE: Record<Severity, string> = {
+  error: 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-300',
+  warning: 'bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300',
+  info: 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300',
+};
+
+const COMPLEXITY_STYLE: Record<CodeAnalysis['complexity'], string> = {
+  High: 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-300',
+  Medium: 'bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300',
+  Low: 'bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-300',
+};
+
+const scoreColor = (score: number) => (score >= 80 ? 'bg-green-500' : score >= 60 ? 'bg-amber-500' : 'bg-red-500');
 
 const AICodeAssistant = () => {
+  const track = useToolTracking(TOOL_ID, TOOL_NAME);
+  const uid = useId();
+  const tabId = (id: TabId) => `${uid}-tab-${id}`;
+  const panelId = (id: TabId) => `${uid}-panel-${id}`;
+
+  const [language, setLanguage] = useState<LanguageId>('javascript');
+  const [activeTab, setActiveTab] = useState<TabId>('generate');
+  const [prompt, setPrompt] = useState('');
+  const [promptError, setPromptError] = useState('');
+  const [output, setOutput] = useState<GeneratedCode | null>(null);
+  const [showSnippets, setShowSnippets] = useState(false);
+
   const [userCode, setUserCode] = useState('');
-  const [codeLanguage, setCodeLanguage] = useState('javascript');
-  const [generatedCode, setGeneratedCode] = useState('');
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [codePrompt, setCodePrompt] = useState('');
-  const [analysisResult, setAnalysisResult] = useState<CodeAnalysis | null>(null);
-  const [activeTab, setActiveTab] = useState('generate');
-  const [codeSuggestions, setCodeSuggestions] = useState<CodeSuggestion[]>([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const codeRef = useRef<HTMLTextAreaElement>(null);
-
-  // Programming languages supported
-  const languages = [
-    'javascript', 'typescript', 'python', 'java', 'cpp', 'csharp', 'go', 'rust',
-    'php', 'ruby', 'swift', 'kotlin', 'dart', 'html', 'css', 'sql', 'bash'
-  ];
-
-  // Code templates for different use cases
-  const codeTemplates: Record<string, Record<string, string>> = {
-    'react-component': {
-      javascript: `import React, { useState } from 'react';
-
-const MyComponent = () => {
-  const [count, setCount] = useState(0);
-
-  return (
-    <div>
-      <h1>Counter: {count}</h1>
-      <button onClick={() => setCount(count + 1)}>
-        Increment
-      </button>
-    </div>
+  const [codeError, setCodeError] = useState('');
+  const [analysis, setAnalysis] = useState<CodeAnalysis | null>(null);
+  const [analyzedCode, setAnalyzedCode] = useState('');
+  const [optimizeOptions, setOptimizeOptions] = useState<Set<OptimizeOptionId>>(
+    () => new Set(OPTIMIZE_OPTIONS.filter((o) => o.defaultOn).map((o) => o.id))
   );
-};
+  const [optimized, setOptimized] = useState<OptimizeResult | null>(null);
+  const [status, setStatus] = useState('');
 
-export default MyComponent;`,
-      typescript: `import React, { useState } from 'react';
+  const tabRefs = useRef<Record<TabId, HTMLButtonElement | null>>({ generate: null, analyze: null, optimize: null, templates: null });
+  const promptRef = useRef<HTMLTextAreaElement>(null);
 
-interface MyComponentProps {
-  initialCount?: number;
-}
+  const deferredCode = useDeferredValue(userCode);
+  const detected = useMemo(() => detectLanguage(deferredCode), [deferredCode]);
+  const showDetectHint =
+    detected !== null && detected !== language && !(detected === 'javascript' && language === 'typescript');
 
-const MyComponent: React.FC<MyComponentProps> = ({ initialCount = 0 }) => {
-  const [count, setCount] = useState<number>(initialCount);
+  const snippets = useMemo(() => {
+    const own = CODE_SNIPPETS.filter((s) => s.language === language || (language === 'typescript' && s.language === 'javascript'));
+    return own.length ? own : CODE_SNIPPETS;
+  }, [language]);
 
-  return (
-    <div>
-      <h1>Counter: {count}</h1>
-      <button onClick={() => setCount(count + 1)}>
-        Increment
-      </button>
-    </div>
-  );
-};
+  const applicableOptions = useMemo(() => OPTIMIZE_OPTIONS.filter((o) => optionAppliesTo(o, language)), [language]);
 
-export default MyComponent;`
-    },
-    'api-fetch': {
-      javascript: `// Fetch data from API
-const fetchData = async (url) => {
-  try {
-    const response = await fetch(url);
-    
-    if (!response.ok) {
-      throw new Error(\`HTTP error! status: \${response.status}\`);
-    }
-    
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.error('Error fetching data:', error);
-    throw error;
-  }
-};
-
-// Usage
-fetchData('https://api.example.com/data')
-  .then(data => console.log(data))
-  .catch(error => console.error(error));`,
-      python: `import requests
-import json
-
-def fetch_data(url):
-    """Fetch data from API with error handling"""
-    try:
-        response = requests.get(url)
-        response.raise_for_status()  # Raises an HTTPError for bad responses
-        
-        return response.json()
-    except requests.exceptions.RequestException as e:
-        print(f"Error fetching data: {e}")
-        raise
-
-# Usage
-try:
-    data = fetch_data('https://api.example.com/data')
-    print(json.dumps(data, indent=2))
-except Exception as e:
-    print(f"Failed to fetch data: {e}")`
-    },
-    'form-validation': {
-      javascript: `// Form validation utility
-const validateForm = (formData) => {
-  const errors = {};
-  
-  // Email validation
-  if (!formData.email) {
-    errors.email = 'Email is required';
-  } else if (!/\\S+@\\S+\\.\\S+/.test(formData.email)) {
-    errors.email = 'Email is invalid';
-  }
-  
-  // Password validation
-  if (!formData.password) {
-    errors.password = 'Password is required';
-  } else if (formData.password.length < 8) {
-    errors.password = 'Password must be at least 8 characters';
-  }
-  
-  // Name validation
-  if (!formData.name || formData.name.trim().length < 2) {
-    errors.name = 'Name must be at least 2 characters';
-  }
-  
-  return {
-    isValid: Object.keys(errors).length === 0,
-    errors
+  const selectTab = (id: TabId, focus = false) => {
+    setActiveTab(id);
+    if (focus) tabRefs.current[id]?.focus();
   };
-};
 
-// Usage
-const formData = {
-  email: 'user@example.com',
-  password: 'password123',
-  name: 'John Doe'
-};
-
-const validation = validateForm(formData);
-if (!validation.isValid) {
-  console.log('Form errors:', validation.errors);
-}`
+  const onTabKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
+    const index = TABS.findIndex((t) => t.id === activeTab);
+    let next = -1;
+    if (e.key === 'ArrowRight') next = (index + 1) % TABS.length;
+    else if (e.key === 'ArrowLeft') next = (index - 1 + TABS.length) % TABS.length;
+    else if (e.key === 'Home') next = 0;
+    else if (e.key === 'End') next = TABS.length - 1;
+    if (next >= 0) {
+      e.preventDefault();
+      selectTab(TABS[next].id, true);
     }
   };
 
-  // AI Code Generation
-  const generateCode = async () => {
-    if (!codePrompt.trim()) {
-      alert('Please enter a code prompt');
+  const copyText = async (text: string, what: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success(`${what} copied to clipboard`);
+    } catch {
+      toast.error('Could not access the clipboard. Select the code and copy it manually.');
+    }
+  };
+
+  const download = (code: string, lang: LanguageId, name: string) => {
+    try {
+      downloadCodeFile(code, lang, name);
+      toast.success('File downloaded');
+    } catch {
+      toast.error('Download failed. Please try again.');
+    }
+  };
+
+  // --- Generate -------------------------------------------------------------
+  const handleGenerate = (e?: React.FormEvent<HTMLFormElement>) => {
+    e?.preventDefault();
+    const text = prompt.trim();
+    if (text.length < PROMPT_MIN_LENGTH) {
+      setPromptError(`Describe what you want in at least ${PROMPT_MIN_LENGTH} characters.`);
+      promptRef.current?.focus();
       return;
     }
-
-    setIsGenerating(true);
+    setPromptError('');
     try {
-      // Simulate AI code generation
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      let generated = '';
-      const prompt = codePrompt.toLowerCase();
-      
-      // Smart code generation based on prompt
-      if (prompt.includes('react') && prompt.includes('component')) {
-        generated = codeTemplates['react-component']?.[codeLanguage] || 
-                   codeTemplates['react-component']?.['javascript'] || '';
-      } else if (prompt.includes('api') || prompt.includes('fetch')) {
-        generated = codeTemplates['api-fetch']?.[codeLanguage] || 
-                   codeTemplates['api-fetch']?.['javascript'] || '';
-      } else if (prompt.includes('form') || prompt.includes('validation')) {
-        generated = codeTemplates['form-validation']?.[codeLanguage] || 
-                   codeTemplates['form-validation']?.['javascript'] || '';
-      } else if (prompt.includes('function') || prompt.includes('method')) {
-        generated = generateFunctionCode(prompt, codeLanguage);
-      } else if (prompt.includes('class') || prompt.includes('object')) {
-        generated = generateClassCode(prompt, codeLanguage);
-      } else {
-        generated = generateGenericCode(prompt, codeLanguage);
-      }
-      
-      setGeneratedCode(generated);
-      alert('✨ Code generated successfully! Check the Generated Code section.');
-    } catch (error) {
-      console.error('Error generating code:', error);
-      alert('❌ Failed to generate code. Please try again.');
-    } finally {
-      setIsGenerating(false);
+      const result = generateCode(text, language);
+      setOutput(result);
+      setStatus(`${result.title} generated in ${languageLabel(result.language)}.`);
+      track('generate');
+    } catch {
+      setPromptError('Something went wrong while generating code. Try rephrasing your request.');
     }
   };
 
-  // Generate function code
-  const generateFunctionCode = (prompt: string, language: string) => {
-    const funcName = extractFunctionName(prompt);
-    
-    if (language === 'javascript' || language === 'typescript') {
-      return `// AI Generated Function based on: "${prompt}"
-const ${funcName} = (${generateParameters(prompt)}) => {
-  // TODO: Implement function logic
-  try {
-    // Your implementation here
-    console.log('Function ${funcName} called with:', arguments);
-    
-    // Example implementation
-    return { success: true, data: null };
-  } catch (error) {
-    console.error('Error in ${funcName}:', error);
-    throw error;
-  }
-};
-
-// Usage example
-const result = ${funcName}();
-console.log(result);`;
-    } else if (language === 'python') {
-      return `# AI Generated Function based on: "${prompt}"
-def ${funcName}(${generateParameters(prompt, 'python')}):
-    """
-    ${prompt}
-    """
-    try:
-        # TODO: Implement function logic
-        print(f"Function ${funcName} called")
-        
-        # Example implementation
-        return {"success": True, "data": None}
-    except Exception as e:
-        print(f"Error in ${funcName}: {e}")
-        raise
-
-# Usage example
-result = ${funcName}()
-print(result)`;
-    }
-    return `// Generated code for ${language}`;
+  const runTemplate = (template: CodeTemplate) => {
+    const result = generateCode(template.prompt, language);
+    setPrompt(template.prompt);
+    setPromptError('');
+    setOutput(result);
+    setStatus(`${template.title} template loaded in ${languageLabel(result.language)}.`);
+    selectTab('generate');
+    track('generate');
   };
 
-  // Generate class code
-  const generateClassCode = (prompt: string, language: string) => {
-    const className = extractClassName(prompt);
-    
-    if (language === 'javascript' || language === 'typescript') {
-      return `// AI Generated Class based on: "${prompt}"
-class ${className} {
-  constructor(${generateParameters(prompt)}) {
-    // Initialize properties
-    this.id = Math.random().toString(36).substr(2, 9);
-    this.createdAt = new Date();
-    
-    // TODO: Add your properties here
-  }
-  
-  // Method example
-  performAction() {
-    console.log(\`\${this.constructor.name} performing action\`);
-    // TODO: Implement action logic
-  }
-  
-  // Getter example
-  get info() {
-    return {
-      id: this.id,
-      className: this.constructor.name,
-      createdAt: this.createdAt
-    };
-  }
-}
-
-// Usage example
-const instance = new ${className}();
-console.log(instance.info);
-instance.performAction();`;
-    } else if (language === 'python') {
-      return `# AI Generated Class based on: "${prompt}"
-class ${className}:
-    def __init__(self, ${generateParameters(prompt, 'python')}):
-        """Initialize ${className}"""
-        self.id = self._generate_id()
-        self.created_at = datetime.now()
-        
-        # TODO: Add your properties here
-    
-    def _generate_id(self):
-        """Generate unique ID"""
-        import random
-        import string
-        return ''.join(random.choices(string.ascii_letters + string.digits, k=9))
-    
-    def perform_action(self):
-        """Perform action"""
-        print(f"{self.__class__.__name__} performing action")
-        # TODO: Implement action logic
-    
-    def __str__(self):
-        return f"${className}(id={self.id})"
-
-# Usage example
-instance = ${className}()
-print(instance)
-instance.perform_action()`;
-    }
-    return `// Generated class for ${language}`;
+  const runQuickAction = (action: QuickAction) => {
+    setLanguage(action.language);
+    setPrompt(action.prompt);
+    setPromptError('');
+    selectTab('generate');
+    window.requestAnimationFrame(() => promptRef.current?.focus());
   };
 
-  // Generate generic code
-  const generateGenericCode = (prompt: string, language: string) => {
-    if (language === 'javascript' || language === 'typescript') {
-      return `// AI Generated Code based on: "${prompt}"
-// TODO: Implement your logic here
-
-console.log('Starting implementation for: ${prompt}');
-
-// Example implementation
-const implementation = {
-  init: function() {
-    console.log('Initializing...');
-    // Your initialization code
-  },
-  
-  execute: function() {
-    console.log('Executing...');
-    // Your main logic
-  },
-  
-  cleanup: function() {
-    console.log('Cleaning up...');
-    // Your cleanup code
-  }
-};
-
-// Run the implementation
-implementation.init();
-implementation.execute();
-implementation.cleanup();`;
-    } else if (language === 'python') {
-      return `# AI Generated Code based on: "${prompt}"
-# TODO: Implement your logic here
-
-print("Starting implementation for: ${prompt}")
-
-# Example implementation
-def main():
-    """Main function"""
-    print("Initializing...")
-    # Your initialization code
-    
-    print("Executing...")
-    # Your main logic
-    
-    print("Cleaning up...")
-    # Your cleanup code
-
-if __name__ == "__main__":
-    main()`;
-    }
-    
-    return `// Generated code for ${language}\n// TODO: Implement logic for: ${prompt}`;
-  };
-
-  // Helper functions
-  const extractFunctionName = (prompt: string) => {
-    const words = prompt.toLowerCase().split(' ');
-    const functionWords = words.filter(word => 
-      !['create', 'make', 'generate', 'build', 'a', 'an', 'the', 'function', 'method'].includes(word)
-    );
-    return functionWords.length > 0 ? toCamelCase(functionWords.join(' ')) : 'myFunction';
-  };
-
-  const extractClassName = (prompt: string) => {
-    const words = prompt.toLowerCase().split(' ');
-    const classWords = words.filter(word => 
-      !['create', 'make', 'generate', 'build', 'a', 'an', 'the', 'class', 'object'].includes(word)
-    );
-    return classWords.length > 0 ? toPascalCase(classWords.join(' ')) : 'MyClass';
-  };
-
-  const generateParameters = (prompt: string, language: string = 'javascript') => {
-    // Simple parameter generation based on common patterns
-    if (prompt.includes('user') || prompt.includes('person')) {
-      return language === 'python' ? 'name, email' : 'name, email';
-    } else if (prompt.includes('data') || prompt.includes('item')) {
-      return language === 'python' ? 'data' : 'data';
-    } else if (prompt.includes('id')) {
-      return language === 'python' ? 'id' : 'id';
-    }
-    return '';
-  };
-
-  const toCamelCase = (str: string) => {
-    return str.replace(/(?:^\\w|[A-Z]|\\b\\w)/g, (word, index) => {
-      return index === 0 ? word.toLowerCase() : word.toUpperCase();
-    }).replace(/\\s+/g, '');
-  };
-
-  const toPascalCase = (str: string) => {
-    return str.replace(/(?:^\\w|[A-Z]|\\b\\w)/g, (word) => {
-      return word.toUpperCase();
-    }).replace(/\\s+/g, '');
-  };
-
-  // Code Analysis
-  const analyzeCode = async () => {
+  // --- Analyze / Optimize ---------------------------------------------------
+  const validateCode = (): boolean => {
     if (!userCode.trim()) {
-      alert('Please enter some code to analyze');
-      return;
+      setCodeError('Paste some code first.');
+      return false;
     }
+    if (userCode.length > MAX_CODE_LENGTH) {
+      setCodeError(`That is more than ${MAX_CODE_LENGTH.toLocaleString()} characters - analyse one file or function at a time.`);
+      return false;
+    }
+    setCodeError('');
+    return true;
+  };
 
-    setIsAnalyzing(true);
+  const handleAnalyze = () => {
+    if (!validateCode()) return;
     try {
-      // Simulate AI analysis
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      const analysis: CodeAnalysis = {
-        issues: [],
-        suggestions: [],
-        complexity: 'Low',
-        score: 0,
-        optimizations: []
-      };
-
-      // Basic code analysis
-      const lines = userCode.split('\\n');
-      
-      // Calculate complexity
-      const complexityIndicators = ['for', 'while', 'if', 'switch', 'try', 'catch', 'function', 'class'];
-      const complexityCount = complexityIndicators.reduce((count, indicator) => {
-        return count + (userCode.match(new RegExp(indicator, 'g')) || []).length;
-      }, 0);
-      
-      if (complexityCount > 10) {
-        analysis.complexity = 'High';
-      } else if (complexityCount > 5) {
-        analysis.complexity = 'Medium';
-      }
-
-      // Score calculation
-      let score = 100;
-      
-      // Check for common issues
-      if (userCode.includes('console.log')) {
-        analysis.issues.push('Remove console.log statements from production code');
-        score -= 5;
-      }
-      
-      if (userCode.includes('var ')) {
-        analysis.issues.push('Use let/const instead of var');
-        score -= 10;
-      }
-      
-      if (lines.length > 50) {
-        analysis.issues.push('Function/file is too long, consider breaking it down');
-        score -= 5;
-      }
-      
-      if (!userCode.includes('try') && userCode.includes('fetch')) {
-        analysis.issues.push('Add error handling for async operations');
-        score -= 15;
-      }
-
-      // Generate suggestions
-      analysis.suggestions = [
-        'Add proper error handling',
-        'Use meaningful variable names',
-        'Add code comments for complex logic',
-        'Consider code reusability',
-        'Follow consistent formatting'
-      ];
-
-      // Optimization suggestions
-      analysis.optimizations = [
-        'Use async/await for better readability',
-        'Implement caching for expensive operations',
-        'Use array methods like map/filter/reduce',
-        'Consider using TypeScript for better type safety',
-        'Break down large functions into smaller ones'
-      ];
-
-      analysis.score = Math.max(0, score);
-      setAnalysisResult(analysis);
-      
-      alert(`🔍 Code analysis complete! Score: ${analysis.score}/100`);
-    } catch (error) {
-      console.error('Error analyzing code:', error);
-      alert('❌ Failed to analyze code. Please try again.');
-    } finally {
-      setIsAnalyzing(false);
+      const result = analyzeCode(userCode, language);
+      setAnalysis(result);
+      setAnalyzedCode(`${language}:${userCode}`);
+      setStatus(`Analysis complete. Score ${result.score} out of 100, ${result.issues.length} issue${result.issues.length === 1 ? '' : 's'} found.`);
+      track('analyze');
+    } catch {
+      setCodeError('The analyser could not process this code. Check the selected language and try again.');
     }
   };
 
-  // Copy code to clipboard
-  const copyToClipboard = (code: string) => {
-    navigator.clipboard.writeText(code).then(() => {
-      alert('📋 Code copied to clipboard!');
-    }).catch(err => {
-      console.error('Failed to copy code:', err);
+  const handleOptimize = () => {
+    if (!validateCode()) return;
+    const result = optimizeCode(userCode, language, optimizeOptions);
+    setOptimized(result);
+    setStatus(result.changes.length ? `${result.changes.length} kind${result.changes.length === 1 ? '' : 's'} of change applied.` : 'No changes were needed.');
+    track('convert');
+  };
+
+  const toggleOption = (id: OptimizeOptionId) => {
+    setOptimizeOptions((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
     });
   };
 
-  // Load code template
-  const loadTemplate = (template: string) => {
-    const templateCode = codeTemplates[template]?.[codeLanguage] || 
-                        codeTemplates[template]?.['javascript'] || '';
-    if (templateCode) {
-      setGeneratedCode(templateCode);
-      alert('📝 Template loaded successfully!');
-    } else {
-      alert('❌ Template not found for the selected language.');
-    }
-  };
+  const analysisStale = analysis !== null && analyzedCode !== `${language}:${userCode}`;
 
-  // Get code suggestions
-  const getCodeSuggestions = async () => {
-    setShowSuggestions(true);
-    
-    const suggestions: CodeSuggestion[] = [
-      {
-        id: '1',
-        title: 'React Hook useState',
-        description: 'State management in functional components',
-        code: `const [state, setState] = useState(initialValue);`,
-        language: 'javascript',
-        category: 'React'
-      },
-      {
-        id: '2',
-        title: 'Async/Await Pattern',
-        description: 'Modern asynchronous JavaScript',
-        code: `const fetchData = async () => {
-  try {
-    const response = await fetch(url);
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.error('Error:', error);
-  }
-};`,
-        language: 'javascript',
-        category: 'JavaScript'
-      },
-      {
-        id: '3',
-        title: 'Array Methods',
-        description: 'Functional programming with arrays',
-        code: `const result = array
-  .filter(item => item.active)
-  .map(item => item.name)
-  .reduce((acc, name) => acc + name, '');`,
-        language: 'javascript',
-        category: 'JavaScript'
-      },
-      {
-        id: '4',
-        title: 'Python List Comprehension',
-        description: 'Elegant list creation in Python',
-        code: `result = [x**2 for x in range(10) if x % 2 == 0]`,
-        language: 'python',
-        category: 'Python'
-      },
-      {
-        id: '5',
-        title: 'TypeScript Interface',
-        description: 'Type definitions for better code',
-        code: `interface User {
-  id: number;
-  name: string;
-  email: string;
-  isActive: boolean;
-}`,
-        language: 'typescript',
-        category: 'TypeScript'
-      }
-    ];
-    
-    setCodeSuggestions(suggestions);
-  };
+  const codeInput = (id: string, hintId: string) => (
+    <div>
+      <label className={labelClass} htmlFor={id}>
+        Paste your {languageLabel(language)} code
+      </label>
+      <Textarea
+        id={id}
+        placeholder={`Paste ${languageLabel(language)} code here…`}
+        value={userCode}
+        spellCheck={false}
+        aria-invalid={Boolean(codeError)}
+        aria-describedby={codeError ? `${id}-error` : hintId}
+        onChange={(e) => {
+          setUserCode(e.target.value);
+          if (codeError) setCodeError('');
+        }}
+        className="min-h-[220px] font-mono text-sm resize-y"
+      />
+      {codeError ? (
+        <p id={`${id}-error`} role="alert" className={errorTextClass}>
+          {codeError}
+        </p>
+      ) : (
+        <p id={hintId} className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+          {userCode.length.toLocaleString()} characters · processed locally in your browser, never uploaded
+        </p>
+      )}
+      {showDetectHint && detected && (
+        <div className="mt-2 flex flex-wrap items-center gap-2 rounded-lg border border-purple-200 dark:border-purple-500/30 bg-purple-50 dark:bg-purple-500/10 px-3 py-2 text-sm text-purple-800 dark:text-purple-200">
+          <span>This looks like {languageLabel(detected)}.</span>
+          <button
+            type="button"
+            onClick={() => setLanguage(detected)}
+            className="min-h-[36px] px-3 rounded-md font-medium text-purple-700 dark:text-purple-300 underline hover:no-underline focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+          >
+            Switch to {languageLabel(detected)}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+
+  const codeOutput = (code: string, lang: LanguageId, title: string, fileName: string) => (
+    <div className={cardClass}>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex flex-wrap items-center gap-2">
+          {title}
+          <span className={`${chipClass} bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-300`}>{languageLabel(lang)}</span>
+        </h3>
+        <div className="flex flex-wrap gap-2">
+          <Button type="button" variant="outline" className="min-h-[44px]" onClick={() => copyText(code, 'Code')}>
+            📋 Copy
+          </Button>
+          <Button type="button" variant="outline" className="min-h-[44px]" onClick={() => download(code, lang, fileName)}>
+            💾 Download
+          </Button>
+        </div>
+      </div>
+      <pre className={codeBlockClass}>
+        <code className={`language-${lang}`}>{code}</code>
+      </pre>
+    </div>
+  );
 
   return (
     <ToolWrapper
-      toolId="ai-code-assistant"
-      toolName="AI Code Assistant"
+      toolId={TOOL_ID}
+      toolName={TOOL_NAME}
       toolDescription="Generate, analyze, and optimize code with AI assistance. Support for multiple programming languages."
       toolCategory="Development"
     >
-      <div className="p-6 space-y-6">
+      <div className="relative max-w-6xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold dark:text-white">🤖 AI Code Assistant</h2>
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center gap-2">
-              <label className="text-sm font-medium dark:text-gray-300">Language:</label>
-              <select 
-                value={codeLanguage} 
-                onChange={(e) => setCodeLanguage(e.target.value)}
-                className="border p-2 rounded dark:bg-gray-800 dark:border-gray-600 dark:text-white"
-              >
-                {languages.map(lang => (
-                  <option key={lang} value={lang}>
-                    {lang.toUpperCase()}
-                  </option>
-                ))}
-              </select>
-            </div>
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+          <div>
+            <h2 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-gray-900 via-purple-700 to-pink-600 dark:from-white dark:via-purple-200 dark:to-pink-200 bg-clip-text text-transparent">
+              🤖 AI Code Assistant
+            </h2>
+            <p className="mt-2 text-gray-600 dark:text-gray-300">
+              Generate starter code, review it for common issues, and apply safe clean-ups - all in your browser.
+            </p>
           </div>
-        </div>
-
-        {/* Tab Navigation */}
-        <div className="flex items-center space-x-4 mb-6">
-          {[
-            { id: 'generate', label: '🎯 Generate Code', icon: '🎯' },
-            { id: 'analyze', label: '🔍 Analyze Code', icon: '🔍' },
-            { id: 'optimize', label: '⚡ Optimize', icon: '⚡' },
-            { id: 'templates', label: '📝 Templates', icon: '📝' }
-          ].map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                activeTab === tab.id
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
-              }`}
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300" htmlFor={`${uid}-language`}>
+              Language
+            </label>
+            <select
+              id={`${uid}-language`}
+              value={language}
+              onChange={(e) => {
+                if (isLanguageId(e.target.value)) setLanguage(e.target.value);
+              }}
+              className={selectClass}
             >
-              {tab.label}
-            </button>
-          ))}
+              {LANGUAGES.map((lang) => (
+                <option key={lang.id} value={lang.id} className={optionClass}>
+                  {lang.label}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
-        {/* Generate Code Tab */}
+        {/* Tabs */}
+        <div role="tablist" aria-label="Code assistant modes" className="flex flex-wrap gap-2">
+          {TABS.map((tab) => {
+            const selected = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                ref={(el) => {
+                  tabRefs.current[tab.id] = el;
+                }}
+                type="button"
+                role="tab"
+                id={tabId(tab.id)}
+                aria-selected={selected}
+                aria-controls={panelId(tab.id)}
+                tabIndex={selected ? 0 : -1}
+                onClick={() => selectTab(tab.id)}
+                onKeyDown={onTabKeyDown}
+                className={`min-h-[44px] px-4 py-2 rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500/50 ${
+                  selected
+                    ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg shadow-purple-500/25'
+                    : 'bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/20 border border-gray-200 dark:border-white/20'
+                }`}
+              >
+                <span aria-hidden="true">{tab.icon}</span> {tab.label}
+              </button>
+            );
+          })}
+        </div>
+
+        <p className="sr-only" aria-live="polite">{status}</p>
+
+        {/* Generate */}
         {activeTab === 'generate' && (
-          <div className="space-y-4">
-            <Card className="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
-              <CardContent className="p-4">
-                <h3 className="text-lg font-semibold text-blue-800 dark:text-blue-300 mb-4">🎯 AI Code Generator</h3>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2 dark:text-gray-300">Describe what you want to code:</label>
-                    <Textarea
-                      placeholder="e.g., Create a React component for user authentication, Write a Python function to sort array, Generate API endpoint for user registration..."
-                      value={codePrompt}
-                      onChange={(e) => setCodePrompt(e.target.value)}
-                      className="min-h-[100px]"
-                    />
-                  </div>
-                  <div className="flex gap-2">
-                    <Button 
-                      onClick={generateCode}
-                      disabled={isGenerating}
-                      className="bg-blue-600 hover:bg-blue-700"
-                    >
-                      {isGenerating ? '🤖 Generating...' : '🤖 Generate Code'}
-                    </Button>
-                    <Button 
-                      variant="outline"
-                      onClick={getCodeSuggestions}
-                    >
-                      💡 Get Suggestions
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+          <div role="tabpanel" id={panelId('generate')} aria-labelledby={tabId('generate')} tabIndex={0} className="space-y-6 focus:outline-none">
+            <form className={cardClass} onSubmit={handleGenerate} noValidate>
+              <h3 className="text-lg font-semibold text-purple-700 dark:text-purple-300 mb-4">🎯 Code Generator</h3>
+              <label className={labelClass} htmlFor={`${uid}-prompt`}>
+                Describe what you want to code
+              </label>
+              <Textarea
+                id={`${uid}-prompt`}
+                ref={promptRef}
+                placeholder="e.g., Create a User class with name, email and age · fetch products from an API · validate a signup form · sort orders by total descending"
+                value={prompt}
+                maxLength={PROMPT_MAX_LENGTH}
+                aria-invalid={Boolean(promptError)}
+                aria-describedby={promptError ? `${uid}-prompt-error` : `${uid}-prompt-hint`}
+                onChange={(e) => {
+                  setPrompt(e.target.value);
+                  if (promptError) setPromptError('');
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                    e.preventDefault();
+                    handleGenerate();
+                  }
+                }}
+                className="min-h-[100px]"
+              />
+              {promptError ? (
+                <p id={`${uid}-prompt-error`} role="alert" className={errorTextClass}>
+                  {promptError}
+                </p>
+              ) : (
+                <p id={`${uid}-prompt-hint`} className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  Generating {languageLabel(language)} · Ctrl/⌘ + Enter to generate · {prompt.length}/{PROMPT_MAX_LENGTH}
+                </p>
+              )}
+              <div className="mt-4 flex flex-col sm:flex-row gap-2">
+                <Button type="submit" className="min-h-[44px]">
+                  🤖 Generate Code
+                </Button>
+                <Button type="button" variant="outline" className="min-h-[44px]" aria-expanded={showSnippets} onClick={() => setShowSnippets((v) => !v)}>
+                  💡 {showSnippets ? 'Hide' : 'Show'} Snippets
+                </Button>
+              </div>
 
-            {/* Generated Code Display */}
-            {generatedCode && (
-              <Card className="dark:bg-gray-800">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold dark:text-white">Generated Code</h3>
-                    <Button 
-                      variant="outline"
-                      onClick={() => copyToClipboard(generatedCode)}
+              <div className="mt-5">
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Try an example</p>
+                <div className="flex flex-wrap gap-2">
+                  {QUICK_ACTIONS.map((action) => (
+                    <button
+                      key={action.label}
+                      type="button"
+                      onClick={() => runQuickAction(action)}
+                      className="min-h-[40px] px-3 py-1.5 rounded-full text-sm bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-500/30 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
                     >
-                      📋 Copy Code
-                    </Button>
-                  </div>
-                  <pre className="bg-gray-100 dark:bg-gray-900 p-4 rounded-lg overflow-x-auto">
-                    <code className={`language-${codeLanguage} dark:text-gray-300`}>
-                      {generatedCode}
-                    </code>
-                  </pre>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        )}
-
-        {/* Analyze Code Tab */}
-        {activeTab === 'analyze' && (
-          <div className="space-y-4">
-            <Card className="bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800">
-              <CardContent className="p-4">
-                <h3 className="text-lg font-semibold text-green-800 dark:text-green-300 mb-4">🔍 Code Analysis</h3>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2 dark:text-gray-300">Paste your code here:</label>
-                    <Textarea
-                      ref={codeRef}
-                      placeholder="Paste your code here for AI analysis..."
-                      value={userCode}
-                      onChange={(e) => setUserCode(e.target.value)}
-                      className="min-h-[200px] font-mono"
-                    />
-                  </div>
-                  <Button 
-                    onClick={analyzeCode}
-                    disabled={isAnalyzing}
-                    className="bg-green-600 hover:bg-green-700"
-                  >
-                    {isAnalyzing ? '🔍 Analyzing...' : '🔍 Analyze Code'}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Analysis Results */}
-            {analysisResult && (
-              <Card className="dark:bg-gray-800">
-                <CardContent className="p-4">
-                  <h3 className="text-lg font-semibold mb-4 dark:text-white">Analysis Results</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium dark:text-gray-300">Code Score:</span>
-                        <div className="w-20 h-2 bg-gray-200 dark:bg-gray-700 rounded-full">
-                          <div 
-                            className="h-2 bg-green-500 rounded-full transition-all duration-300"
-                            style={{ width: `${analysisResult.score}%` }}
-                          />
-                        </div>
-                        <span className="text-sm font-bold dark:text-white">{analysisResult.score}/100</span>
-                      </div>
-                      <div>
-                        <span className="text-sm font-medium dark:text-gray-300">Complexity: </span>
-                        <span className={`px-2 py-1 rounded text-xs ${
-                          analysisResult.complexity === 'High' ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300' :
-                          analysisResult.complexity === 'Medium' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300' :
-                          'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
-                        }`}>
-                          {analysisResult.complexity}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {analysisResult.issues.length > 0 && (
-                    <div className="mt-4">
-                      <h4 className="font-medium text-red-700 dark:text-red-400 mb-2">⚠️ Issues Found:</h4>
-                      <ul className="list-disc list-inside text-sm text-red-600 space-y-1">
-                        {analysisResult.issues.map((issue, index) => (
-                          <li key={index}>{issue}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                  
-                  {analysisResult.suggestions.length > 0 && (
-                    <div className="mt-4">
-                      <h4 className="font-medium text-blue-700 dark:text-blue-400 mb-2">💡 Suggestions:</h4>
-                      <ul className="list-disc list-inside text-sm text-blue-600 space-y-1">
-                        {analysisResult.suggestions.map((suggestion, index) => (
-                          <li key={index}>{suggestion}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                  
-                  {analysisResult.optimizations.length > 0 && (
-                    <div className="mt-4">
-                      <h4 className="font-medium text-green-700 dark:text-green-400 mb-2">⚡ Optimizations:</h4>
-                      <ul className="list-disc list-inside text-sm text-green-600 space-y-1">
-                        {analysisResult.optimizations.map((optimization, index) => (
-                          <li key={index}>{optimization}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        )}
-
-        {/* Templates Tab */}
-        {activeTab === 'templates' && (
-          <div className="space-y-4">
-            <Card className="bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800">
-              <CardContent className="p-4">
-                <h3 className="text-lg font-semibold text-purple-800 dark:text-purple-300 mb-4">📝 Code Templates</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {Object.keys(codeTemplates).map(template => (
-                    <div
-                      key={template}
-                      className="p-4 border dark:border-gray-600 rounded-lg cursor-pointer hover:bg-purple-100 dark:hover:bg-purple-900/20 transition-colors"
-                      onClick={() => loadTemplate(template)}
-                    >
-                      <h4 className="font-medium capitalize dark:text-white">
-                        {template.replace('-', ' ')}
-                      </h4>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                        {template === 'react-component' && 'React functional component with hooks'}
-                        {template === 'api-fetch' && 'API data fetching with error handling'}
-                        {template === 'form-validation' && 'Form validation utility function'}
-                      </p>
-                    </div>
+                      {action.label}
+                    </button>
                   ))}
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </form>
+
+            {output ? (
+              <div className="space-y-3">
+                {output.note && (
+                  <p className="rounded-lg border border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 px-3 py-2 text-sm text-amber-800 dark:text-amber-300">
+                    {output.note}
+                  </p>
+                )}
+                {codeOutput(output.code, output.language, output.title, output.title)}
+              </div>
+            ) : (
+              <p className="text-center text-sm text-gray-500 dark:text-gray-400">
+                Your generated code will appear here.
+              </p>
+            )}
+
+            {showSnippets && (
+              <div className={cardClass}>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">💡 Snippets for {languageLabel(language)}</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {snippets.map((snippet) => (
+                    <button
+                      key={snippet.id}
+                      type="button"
+                      onClick={() => {
+                        setOutput({ code: snippet.code, language: snippet.language, title: snippet.title });
+                        setStatus(`${snippet.title} snippet loaded.`);
+                      }}
+                      className={`${subCardClass} text-left p-4 hover:border-purple-400 dark:hover:border-purple-400/60 transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500/50`}
+                    >
+                      <span className="flex items-start justify-between gap-2 mb-2">
+                        <span className="font-medium text-gray-900 dark:text-white">{snippet.title}</span>
+                        <span className={`${chipClass} bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-300`}>{snippet.category}</span>
+                      </span>
+                      <span className="block text-sm text-gray-600 dark:text-gray-400 mb-2">{snippet.description}</span>
+                      <code className="block bg-white dark:bg-gray-950/60 border border-gray-200 dark:border-white/10 p-2 rounded text-xs overflow-hidden whitespace-pre text-gray-800 dark:text-gray-300 max-h-24">
+                        {snippet.code}
+                      </code>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
-        {/* Code Suggestions */}
-        {showSuggestions && codeSuggestions.length > 0 && (
-          <Card className="dark:bg-gray-800">
-            <CardContent className="p-4">
-              <h3 className="text-lg font-semibold mb-4 dark:text-white">💡 Code Suggestions</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {codeSuggestions.map(suggestion => (
-                  <div
-                    key={suggestion.id}
-                    className="p-4 border dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer"
-                    onClick={() => {
-                      setGeneratedCode(suggestion.code);
-                      setCodeLanguage(suggestion.language);
-                    }}
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <h4 className="font-medium dark:text-white">{suggestion.title}</h4>
-                      <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded text-xs">
-                        {suggestion.category}
-                      </span>
-                    </div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{suggestion.description}</p>
-                    <pre className="bg-gray-100 dark:bg-gray-900 p-2 rounded text-xs overflow-x-auto">
-                      <code className="dark:text-gray-300">{suggestion.code}</code>
-                    </pre>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-        {/* Quick Actions */}
-        <Card className="bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700">
-          <CardContent className="p-4">
-            <h3 className="text-lg font-semibold mb-4 dark:text-white">🚀 Quick Actions</h3>
-            <div className="flex flex-wrap gap-2">
-              <Button 
-                variant="outline"
-                onClick={() => setCodePrompt('Create a React component with state')}
-              >
-                React Component
-              </Button>
-              <Button 
-                variant="outline"
-                onClick={() => setCodePrompt('Write a Python function to process data')}
-              >
-                Python Function
-              </Button>
-              <Button 
-                variant="outline"
-                onClick={() => setCodePrompt('Generate API endpoint with Express.js')}
-              >
-                API Endpoint
-              </Button>
-              <Button 
-                variant="outline"
-                onClick={() => setCodePrompt('Create a database query with SQL')}
-              >
-                SQL Query
-              </Button>
-              <Button 
-                variant="outline"
-                onClick={() => setCodePrompt('Build a responsive CSS layout')}
-              >
-                CSS Layout
+        {/* Analyze */}
+        {activeTab === 'analyze' && (
+          <div role="tabpanel" id={panelId('analyze')} aria-labelledby={tabId('analyze')} tabIndex={0} className="space-y-6 focus:outline-none">
+            <div className={cardClass}>
+              <h3 className="text-lg font-semibold text-purple-700 dark:text-purple-300 mb-4">🔍 Code Analysis</h3>
+              {codeInput(`${uid}-analyze-code`, `${uid}-analyze-hint`)}
+              <Button type="button" onClick={handleAnalyze} className="mt-4 min-h-[44px]">
+                🔍 Analyze Code
               </Button>
             </div>
-          </CardContent>
-        </Card>
+
+            {analysis ? (
+              <div className={cardClass}>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Analysis Results ({languageLabel(analysis.language)})</h3>
+                  {analysisStale && (
+                    <span className="text-sm text-amber-700 dark:text-amber-300">Code or language changed - re-run the analysis.</span>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                  <div className={`${subCardClass} p-4`}>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Score</p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                      {analysis.score}/100 <span className="text-base font-semibold text-gray-500 dark:text-gray-400">({analysis.grade})</span>
+                    </p>
+                    <div className="mt-2 h-2 w-full rounded-full bg-gray-200 dark:bg-gray-700" aria-hidden="true">
+                      <div className={`h-2 rounded-full ${scoreColor(analysis.score)}`} style={{ width: `${analysis.score}%` }} />
+                    </div>
+                  </div>
+                  <div className={`${subCardClass} p-4`}>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Complexity</p>
+                    <p className="mt-1">
+                      <span className={`${chipClass} text-sm ${COMPLEXITY_STYLE[analysis.complexity]}`}>{analysis.complexity}</span>
+                    </p>
+                    <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                      {analysis.metrics.decisionPoints} branches · {analysis.metrics.functions} function{analysis.metrics.functions === 1 ? '' : 's'} · max depth {analysis.metrics.maxNesting}
+                    </p>
+                  </div>
+                  <div className={`${subCardClass} p-4`}>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Lines</p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{analysis.metrics.totalLines}</p>
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                      {analysis.metrics.codeLines} code · {analysis.metrics.commentLines} comment · {analysis.metrics.blankLines} blank
+                    </p>
+                  </div>
+                </div>
+
+                <h4 className="font-medium text-gray-900 dark:text-white mb-2">
+                  {analysis.issues.length ? `⚠️ Issues found (${analysis.issues.length})` : '✅ No common issues found'}
+                </h4>
+                {analysis.issues.length > 0 && (
+                  <ul className="space-y-2 mb-6">
+                    {analysis.issues.map((issue) => (
+                      <li key={issue.id} className={`${subCardClass} p-3`}>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className={`${chipClass} uppercase ${SEVERITY_STYLE[issue.severity]}`}>{issue.severity}</span>
+                          <span className="text-sm font-medium text-gray-900 dark:text-white">{issue.message}</span>
+                          {issue.count > 1 && <span className="text-xs text-gray-500 dark:text-gray-400">×{issue.count}</span>}
+                        </div>
+                        {issue.lines.length > 0 && (
+                          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                            Line{issue.lines.length === 1 ? '' : 's'} {issue.lines.join(', ')}
+                            {issue.count > issue.lines.length ? '…' : ''}
+                          </p>
+                        )}
+                        {issue.fix && <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">💡 {issue.fix}</p>}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <h4 className="font-medium text-purple-700 dark:text-purple-300 mb-2">💡 Suggestions</h4>
+                    <ul className="list-disc pl-5 text-sm text-gray-600 dark:text-gray-300 space-y-1">
+                      {analysis.suggestions.map((s) => (
+                        <li key={s}>{s}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  {analysis.strengths.length > 0 && (
+                    <div>
+                      <h4 className="font-medium text-green-700 dark:text-green-400 mb-2">✅ Strengths</h4>
+                      <ul className="list-disc pl-5 text-sm text-gray-600 dark:text-gray-300 space-y-1">
+                        {analysis.strengths.map((s) => (
+                          <li key={s}>{s}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+                <p className="mt-4 text-xs text-gray-500 dark:text-gray-400">
+                  Heuristic, pattern-based review - it catches common problems but is not a substitute for a linter, tests or a human code review.
+                </p>
+              </div>
+            ) : (
+              <p className="text-center text-sm text-gray-500 dark:text-gray-400">Paste code and click Analyze to see a score, issues with line numbers and suggestions.</p>
+            )}
+          </div>
+        )}
+
+        {/* Optimize */}
+        {activeTab === 'optimize' && (
+          <div role="tabpanel" id={panelId('optimize')} aria-labelledby={tabId('optimize')} tabIndex={0} className="space-y-6 focus:outline-none">
+            <div className={cardClass}>
+              <h3 className="text-lg font-semibold text-purple-700 dark:text-purple-300 mb-4">⚡ Safe Clean-ups</h3>
+              {codeInput(`${uid}-optimize-code`, `${uid}-optimize-hint`)}
+              <fieldset className="mt-4 min-w-0">
+                <legend className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Changes to apply</legend>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {applicableOptions.map((option) => {
+                    const id = `${uid}-opt-${option.id}`;
+                    return (
+                      <div key={option.id} className={`${subCardClass} flex items-start gap-3 p-3`}>
+                        <input
+                          id={id}
+                          type="checkbox"
+                          checked={optimizeOptions.has(option.id)}
+                          onChange={() => toggleOption(option.id)}
+                          className="mt-0.5 h-5 w-5 shrink-0 accent-purple-600"
+                          aria-describedby={`${id}-desc`}
+                        />
+                        <div>
+                          <label htmlFor={id} className="text-sm font-medium text-gray-900 dark:text-white cursor-pointer">
+                            {option.label}
+                          </label>
+                          <p id={`${id}-desc`} className="text-xs text-gray-500 dark:text-gray-400">
+                            {option.description}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </fieldset>
+              <Button type="button" onClick={handleOptimize} disabled={optimizeOptions.size === 0} className="mt-4 min-h-[44px]">
+                ⚡ Optimize Code
+              </Button>
+            </div>
+
+            {optimized ? (
+              <div className="space-y-3">
+                <div className={cardClass}>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Changes</h3>
+                  {optimized.changes.length ? (
+                    <ul className="list-disc pl-5 text-sm text-gray-600 dark:text-gray-300 space-y-1">
+                      {optimized.changes.map((c) => (
+                        <li key={c.label}>
+                          {c.label}: <strong className="text-gray-900 dark:text-white">{c.count}</strong>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-sm text-gray-600 dark:text-gray-300">Nothing to change - the selected clean-ups are already satisfied.</p>
+                  )}
+                  {optimized.changes.length > 0 && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="mt-3 min-h-[44px]"
+                      onClick={() => {
+                        setUserCode(optimized.code);
+                        toast.success('Input replaced with the optimized code');
+                      }}
+                    >
+                      ↩️ Use as input
+                    </Button>
+                  )}
+                </div>
+                {codeOutput(optimized.code, language, 'Optimized Code', 'optimized')}
+              </div>
+            ) : (
+              <p className="text-center text-sm text-gray-500 dark:text-gray-400">
+                Choose the clean-ups you want and click Optimize. Every change is listed so you can review it.
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Templates */}
+        {activeTab === 'templates' && (
+          <div role="tabpanel" id={panelId('templates')} aria-labelledby={tabId('templates')} tabIndex={0} className={`${cardClass} focus:outline-none`}>
+            <h3 className="text-lg font-semibold text-purple-700 dark:text-purple-300 mb-1">📝 Code Templates</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
+              Templates are generated in the selected language ({languageLabel(language)}) and open in the Generate tab.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {CODE_TEMPLATES.map((template) => (
+                <button
+                  key={template.id}
+                  type="button"
+                  onClick={() => runTemplate(template)}
+                  className={`${subCardClass} text-left p-4 min-h-[44px] hover:border-purple-400 dark:hover:border-purple-400/60 hover:bg-purple-50 dark:hover:bg-purple-500/10 transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500/50`}
+                >
+                  <span className="block font-medium text-gray-900 dark:text-white">{template.title}</span>
+                  <span className="block text-sm text-gray-600 dark:text-gray-400 mt-1">{template.description}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </ToolWrapper>
-  );  
+  );
 };
 
 export default AICodeAssistant;

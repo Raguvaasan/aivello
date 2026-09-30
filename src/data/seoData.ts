@@ -3,36 +3,26 @@ export const structuredDataSchemas = {
   organization: {
     "@context": "https://schema.org",
     "@type": "Organization",
-    "name": "AiVello",
+    "name": "Aivello",
     "url": "https://aivello.vercel.app",
-    "logo": "https://aivello.vercel.app/logo.svg",
+    "logo": "https://aivello.vercel.app/icons/icon-512.png",
     "description": "Free AI-powered tools for everyday productivity tasks",
     "sameAs": [
-      "https://github.com/aivello",
-      "https://twitter.com/aivello"
+      "https://github.com/Raguvaasan/aivello"
     ],
-    "contactPoint": {
-      "@type": "ContactPoint",
-      "contactType": "customer service",
-      "url": "https://aivello.vercel.app/contact"
-    }
+    "email": "support@aivello.com"
   },
 
   // Website Schema
   website: {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    "name": "AiVello",
+    "name": "Aivello",
     "url": "https://aivello.vercel.app",
     "description": "Free AI-powered tools for everyday productivity tasks",
     "publisher": {
       "@type": "Organization",
-      "name": "AiVello"
-    },
-    "potentialAction": {
-      "@type": "SearchAction",
-      "target": "https://aivello.vercel.app/search?q={search_term_string}",
-      "query-input": "required name=search_term_string"
+      "name": "Aivello"
     }
   },
 
@@ -51,14 +41,7 @@ export const structuredDataSchemas = {
     },
     "publisher": {
       "@type": "Organization",
-      "name": "AiVello"
-    },
-    "aggregateRating": {
-      "@type": "AggregateRating",
-      "ratingValue": "4.8",
-      "reviewCount": "150",
-      "bestRating": "5",
-      "worstRating": "1"
+      "name": "Aivello"
     }
   }),
 
@@ -105,8 +88,8 @@ export const structuredDataSchemas = {
 
 export const seoData = {
   homepage: {
-    title: 'AiVello - Free AI-Powered Daily Tools',
-    description: 'Access 10+ free AI tools including PDF to Word converter, YouTube thumbnail grabber, grammar checker, QR code generator, and more. No signup required!',
+    title: 'Aivello - 40+ Free AI-Powered Tools, No Signup Needed',
+    description: 'Use 40+ free online tools: PDF to Word, PDF merge, image converter, grammar checker, resume builder, QR codes, JSON formatter and more. No signup, runs in your browser.',
     keywords: 'AI tools, free PDF converter, YouTube thumbnail, grammar checker, text to speech, resume builder, QR code generator, background remover',
     structuredData: [structuredDataSchemas.organization, structuredDataSchemas.website]
   },
@@ -220,37 +203,178 @@ export const seoData = {
         'Download high-quality thumbnails from YouTube videos',
         'MultimediaApplication'
       )
-    }
+    },
+    'pdf-merge-split': {
+      title: 'Free PDF Merge & Split Online - No Signup | Aivello',
+      description: 'Merge multiple PDFs in any order or split one into page ranges or single pages, privately in your browser. Free, fast and private.',
+      keywords: 'merge pdf, combine pdf, split pdf, extract pdf pages, pdf page ranges, reorder pdf, free pdf merger, private pdf tool',
+      structuredData: structuredDataSchemas.createSoftwareApplicationSchema(
+        'PDF Merge & Split',
+        'Merge multiple PDFs in any order or split one into page ranges or single pages, privately in your browser',
+        'UtilitiesApplication'
+      )
+    },
+
+    'image-converter': {
+      title: 'Free Image Converter & Resizer Online - No Signup | Aivello',
+      description: 'Convert JPG, PNG, WebP, GIF and BMP to PNG, JPEG or WebP and resize by pixels or percentage, without uploading. Free, fast and private.',
+      keywords: 'image converter, resize image, jpg to png, png to jpg, convert to webp, webp to jpg, image resizer, change image format',
+      structuredData: structuredDataSchemas.createSoftwareApplicationSchema(
+        'Image Converter & Resizer',
+        'Convert JPG, PNG, WebP, GIF and BMP to PNG, JPEG or WebP and resize by pixels or percentage, without uploading',
+        'MultimediaApplication'
+      )
+    },
+
+    'color-contrast-checker': {
+      title: 'Free Color Contrast Checker Online - No Signup | Aivello',
+      description: 'Check WCAG 2.x AA/AAA contrast ratios with a live preview and one-click passing colour suggestions. Free, fast and private.',
+      keywords: 'color contrast checker, wcag contrast ratio, accessibility color checker, aa aaa contrast, contrast ratio calculator, accessible colors',
+      structuredData: structuredDataSchemas.createSoftwareApplicationSchema(
+        'Color Contrast Checker',
+        'Check WCAG 2.x AA/AAA contrast ratios with a live preview and one-click passing colour suggestions',
+        'DesignApplication'
+      )
+    },
+
+    'age-calculator': {
+      title: 'Free Age & Date Calculator Online - No Signup | Aivello',
+      description: 'Exact age in years, months and days, days between dates, and add or subtract days, weeks, months or years. Free, fast and private.',
+      keywords: 'age calculator, date calculator, days between dates, date difference, add days to date, birthday countdown, how old am i',
+      structuredData: structuredDataSchemas.createSoftwareApplicationSchema(
+        'Age & Date Calculator',
+        'Exact age in years, months and days, days between dates, and add or subtract days, weeks, months or years',
+        'UtilitiesApplication'
+      )
+    },
+
+    'lorem-ipsum-generator': {
+      title: 'Free Lorem Ipsum Generator Online - No Signup | Aivello',
+      description: 'Generate placeholder text by paragraphs, sentences or words as plain text or HTML, then copy or download. Free, fast and private.',
+      keywords: 'lorem ipsum generator, placeholder text, dummy text, filler text, lorem ipsum html, random text generator',
+      structuredData: structuredDataSchemas.createSoftwareApplicationSchema(
+        'Lorem Ipsum Generator',
+        'Generate placeholder text by paragraphs, sentences or words as plain text or HTML, then copy or download',
+        'UtilitiesApplication'
+      )
+    },
+
+    'case-converter': {
+      title: 'Free Case Converter Online - No Signup | Aivello',
+      description: 'Convert text to UPPER, lower, Title, Sentence, camelCase, PascalCase, snake_case, kebab-case and more. Free, fast and private.',
+      keywords: 'case converter, text case converter, title case, sentence case, camelcase converter, snake case, kebab case, uppercase to lowercase',
+      structuredData: structuredDataSchemas.createSoftwareApplicationSchema(
+        'Case Converter',
+        'Convert text to UPPER, lower, Title, Sentence, camelCase, PascalCase, snake_case, kebab-case and more',
+        'UtilitiesApplication'
+      )
+    },
+    'json-formatter': {
+      title: 'Free JSON Formatter & Validator Online - No Signup | Aivello',
+      description: 'Format, minify and validate JSON with exact error line and column, recursive key sorting, copy and download. Free, fast and private.',
+      keywords: 'json formatter, json validator, json beautifier, json minifier, pretty print json, json lint, sort json keys, format json online',
+      structuredData: structuredDataSchemas.createSoftwareApplicationSchema(
+        'JSON Formatter & Validator',
+        'Format, minify and validate JSON with exact error line and column, recursive key sorting, copy and download',
+        'DeveloperApplication'
+      )
+    },
+
+    'base64-converter': {
+      title: 'Free Base64 Encoder / Decoder Online - No Signup | Aivello',
+      description: 'UTF-8 safe Base64 encode/decode with URL-safe mode, plus file to Base64 or data URL and back to a file. Free, fast and private.',
+      keywords: 'base64 encoder, base64 decoder, base64 encode online, base64 to file, file to base64, data url converter, url safe base64, utf-8 base64',
+      structuredData: structuredDataSchemas.createSoftwareApplicationSchema(
+        'Base64 Encoder / Decoder',
+        'UTF-8 safe Base64 encode/decode with URL-safe mode, plus file to Base64 or data URL and back to a file',
+        'DeveloperApplication'
+      )
+    },
+
+    'hash-generator': {
+      title: 'Free Hash Generator Online - No Signup | Aivello',
+      description: 'SHA-1, SHA-256, SHA-384 and SHA-512 hashes for text and files, HMAC-SHA256 and checksum verification. Free, fast and private.',
+      keywords: 'hash generator, sha256 generator, sha1 hash, sha512 hash, sha384, hmac sha256 generator, file checksum, verify file hash',
+      structuredData: structuredDataSchemas.createSoftwareApplicationSchema(
+        'Hash Generator',
+        'SHA-1, SHA-256, SHA-384 and SHA-512 hashes for text and files, HMAC-SHA256 and checksum verification',
+        'SecurityApplication'
+      )
+    },
+
+    'uuid-generator': {
+      title: 'Free UUID Generator Online - No Signup | Aivello',
+      description: 'Generate random v4 and time-ordered v7 UUIDs in bulk (up to 1,000) and validate any UUID. Free, fast and private.',
+      keywords: 'uuid generator, uuid v4, uuid v7, guid generator, bulk uuid, random uuid, uuid validator, time ordered uuid',
+      structuredData: structuredDataSchemas.createSoftwareApplicationSchema(
+        'UUID Generator',
+        'Generate random v4 and time-ordered v7 UUIDs in bulk (up to 1,000) and validate any UUID',
+        'DeveloperApplication'
+      )
+    },
+
+    'text-diff-checker': {
+      title: 'Free Text Diff Checker Online - No Signup | Aivello',
+      description: 'Compare two texts line by line and word by word in side-by-side or unified view. Free, fast and private.',
+      keywords: 'text diff checker, compare text online, diff tool, text compare, find differences between texts, side by side diff, unified diff',
+      structuredData: structuredDataSchemas.createSoftwareApplicationSchema(
+        'Text Diff Checker',
+        'Compare two texts line by line and word by word in side-by-side or unified view',
+        'UtilitiesApplication'
+      )
+    },
+
+    'regex-tester': {
+      title: 'Free Regex Tester Online - No Signup | Aivello',
+      description: 'Test JavaScript regular expressions live with highlighted matches, groups, flags and replace preview. Free, fast and private.',
+      keywords: 'regex tester, regular expression tester, javascript regex, regex online, regex match highlighter, named capture groups, regex replace',
+      structuredData: structuredDataSchemas.createSoftwareApplicationSchema(
+        'Regex Tester',
+        'Test JavaScript regular expressions live with highlighted matches, groups, flags and replace preview',
+        'DeveloperApplication'
+      )
+    },
+
+    'timestamp-converter': {
+      title: 'Free Timestamp Converter Online - No Signup | Aivello',
+      description: 'Convert Unix timestamps to human dates and back in any time zone: ISO 8601, RFC 2822 and relative time. Free, fast and private.',
+      keywords: 'unix timestamp converter, epoch converter, timestamp to date, date to timestamp, unix time now, milliseconds to date, iso 8601 converter, time zone converter',
+      structuredData: structuredDataSchemas.createSoftwareApplicationSchema(
+        'Timestamp Converter',
+        'Convert Unix timestamps to human dates and back in any time zone: ISO 8601, RFC 2822 and relative time',
+        'DeveloperApplication'
+      )
+    },
   },
 
   pages: {
     login: {
-      title: 'Login to AiVello - Access Premium AI Tools',
-      description: 'Sign in to AiVello to access your saved projects, preferences, and premium AI tools. Quick login with Google or GitHub.',
-      keywords: 'AiVello login, sign in, user account, AI tools access'
+      title: 'Sign in to Aivello',
+      description: 'Sign in to Aivello with Google or GitHub to keep your tool usage history and sync your preferences. All tools stay free.',
+      keywords: 'Aivello login, sign in, user account, AI tools access'
     },
 
     terms: {
-      title: 'Terms of Service - AiVello',
-      description: 'Read AiVello\'s terms of service and user agreement. Learn about our policies, usage guidelines, and legal terms.',
-      keywords: 'terms of service, user agreement, legal terms, AiVello policies'
+      title: 'Terms of Service - Aivello',
+      description: 'Read Aivello\'s terms of service and user agreement. Learn about our policies, usage guidelines, and legal terms.',
+      keywords: 'terms of service, user agreement, legal terms, Aivello policies'
     },
 
     privacy: {
-      title: 'Privacy Policy - AiVello',
-      description: 'Learn how AiVello protects your privacy and handles your data. Transparent privacy policy and data protection measures.',
+      title: 'Privacy Policy - Aivello',
+      description: 'Learn how Aivello protects your privacy and handles your data. Transparent privacy policy and data protection measures.',
       keywords: 'privacy policy, data protection, privacy rights, data security, GDPR'
     },
 
     profile: {
-      title: 'User Profile - AiVello',
-      description: 'Manage your AiVello account settings, preferences, and usage history. Customize your AI tools experience.',
+      title: 'User Profile - Aivello',
+      description: 'Manage your Aivello account settings, preferences, and usage history. Customize your AI tools experience.',
       keywords: 'user profile, account settings, preferences, usage history'
     },
 
     history: {
-      title: 'Usage History - AiVello',
-      description: 'View your AI tools usage history and track your productivity. Access previously processed files and results.',
+      title: 'Usage History - Aivello',
+      description: 'See which Aivello tools you used recently. Only tool names and times are stored, never your content.',
       keywords: 'usage history, tool history, productivity tracking, file history'
     }
   }

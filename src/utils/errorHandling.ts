@@ -1,3 +1,4 @@
+import { logger } from './logger';
 /**
  * Error handling utilities for the application
  */
@@ -52,7 +53,7 @@ export const handleApiError = (error: unknown): AppError => {
   };
 };
 
-export const handleFirebaseError = (error: any): AppError => {
+export const handleFirebaseError = (error: { code?: string; message?: string }): AppError => {
   const firebaseErrors: Record<string, string> = {
     'auth/user-not-found': 'No user found with this email address',
     'auth/wrong-password': 'Incorrect password',
@@ -65,7 +66,7 @@ export const handleFirebaseError = (error: any): AppError => {
   };
 
   return {
-    message: firebaseErrors[error.code] || error.message || 'An error occurred',
+    message: (error.code && firebaseErrors[error.code]) || error.message || 'An error occurred',
     code: error.code,
     statusCode: 400,
     details: error,
@@ -73,12 +74,8 @@ export const handleFirebaseError = (error: any): AppError => {
 };
 
 export const logError = (error: AppError, context?: string): void => {
-  if (process.env.NODE_ENV === 'development') {
-    console.error(`[${context || 'ERROR'}]`, error);
-  }
-
-  // In production, you might want to send errors to a logging service
-  // like Sentry, LogRocket, etc.
+  // Development console output + production reporting both live in the logger.
+  logger.error(context || 'AppError', error);
 };
 
 const errorHandler = {

@@ -1,181 +1,294 @@
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { FiCheck, FiStar, FiZap } from 'react-icons/fi';
-import { Card, CardContent } from '../components/ui/card';
-import { subscriptionPlans } from '../config/monetization';
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { FiArrowRight, FiCheck, FiChevronDown, FiMinus } from 'react-icons/fi';
+import { Navbar } from '../components/landing/Navbar';
 import { IconWrapper } from '../components/common/IconWrapper';
 import { SEOHelmet } from '../components/common/SEOHelmet';
+import { tools } from '../data/tools';
 
-interface PricingPageProps {
-  onSubscribe?: (planId: string) => void;
+const toolPath = (id: string) => tools.find((tool) => tool.id === id)?.path;
+
+const planFeatures = [
+  `All ${tools.length} tools, free`,
+  'No signup required to use tools',
+  'Most tools run in your browser, so files never leave your device',
+  'No usage caps on browser-based tools',
+  'Light and dark mode on every device',
+  'Optional free account for saved usage history',
+];
+
+interface ComparisonRow {
+  feature: string;
+  guest: boolean | string;
+  account: boolean | string;
 }
 
-const PricingPage: React.FC<PricingPageProps> = ({ onSubscribe = () => {} }) => {
-  const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
+const comparison: ComparisonRow[] = [
+  { feature: 'Every tool except the Background Remover', guest: true, account: true },
+  { feature: 'Browser-side processing (files stay on your device)', guest: true, account: true },
+  { feature: 'Background Remover (up to 20 images per hour)', guest: false, account: true },
+  { feature: 'Saved tool usage history', guest: false, account: true },
+  { feature: 'Price', guest: '$0', account: '$0' },
+];
 
-  const handleSubscribe = (planId: string) => {
-    if (onSubscribe) {
-      onSubscribe(planId);
-    } else {
-      window.location.href = `/subscribe/${planId}`;
-    }
-  };
+const thirdPartyTools = [
+  { toolId: 'grammar-checker', tool: 'Grammar Checker', service: 'LanguageTool', url: 'https://languagetool.org/' },
+  { toolId: 'language-translator', tool: 'Language Translator', service: 'MyMemory', url: 'https://mymemory.translated.net/' },
+  { toolId: 'ai-image-generator', tool: 'AI Image Generator', service: 'Pollinations.ai', url: 'https://pollinations.ai/' },
+  { toolId: 'url-shortener', tool: 'URL Shortener', service: 'is.gd', url: 'https://is.gd/' },
+  { toolId: 'bg-remover', tool: 'Background Remover', service: 'remove.bg', url: 'https://www.remove.bg/' },
+];
 
-  const getYearlyPrice = (monthlyPrice: number) => {
-    return Math.round(monthlyPrice * 12 * 0.8);
-  };
+const textLink =
+  'font-medium text-purple-700 underline underline-offset-2 hover:text-purple-800 dark:text-purple-300 dark:hover:text-purple-200';
+const focusRing =
+  'focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-gray-950';
 
+const faqs: { question: string; answer: React.ReactNode }[] = [
+  {
+    question: 'Is Aivello really free?',
+    answer: (
+      <p>
+        Yes. Every tool is free to use, with no paid plans, no trials and no credit card. There is nothing to upgrade
+        to.
+      </p>
+    ),
+  },
+  {
+    question: 'How is Aivello funded?',
+    answer: (
+      <p>
+        Aivello shows unobtrusive ads (Google AdSense). That covers hosting and the few paid services behind some
+        tools. The project is also{' '}
+        <a href="https://github.com/Raguvaasan/aivello" target="_blank" rel="noopener noreferrer" className={textLink}>
+          open source on GitHub
+        </a>
+        .
+      </p>
+    ),
+  },
+  {
+    question: 'Do I need an account?',
+    answer: (
+      <p>
+        No. You only need a free account (sign in with Google or GitHub) to keep a history of the tools you use and to
+        use the Background Remover, which runs on a paid API.
+      </p>
+    ),
+  },
+  {
+    question: 'Do you store my files?',
+    answer: (
+      <p>
+        No. Browser-based tools process your text and files locally on your device; they are never uploaded to us. If
+        you sign in, we only store which tool you used, what you did and when, never the content you put in or get out.
+      </p>
+    ),
+  },
+  {
+    question: 'Which tools send data to a third party?',
+    answer: (
+      <>
+        <p className="mb-3">A handful of tools need an outside service to work. They send only what the tool needs:</p>
+        <ul className="space-y-2">
+          {thirdPartyTools.map((entry) => {
+            const path = toolPath(entry.toolId);
+            return (
+              <li key={entry.toolId} className="flex flex-wrap items-center gap-x-2">
+                {path ? (
+                  <Link to={path} className={textLink}>
+                    {entry.tool}
+                  </Link>
+                ) : (
+                  <span className="font-medium">{entry.tool}</span>
+                )}
+                <IconWrapper icon={FiArrowRight} className="h-4 w-4 shrink-0 text-gray-500 dark:text-gray-400" />
+                <span className="sr-only">uses</span>
+                <a href={entry.url} target="_blank" rel="noopener noreferrer" className={textLink}>
+                  {entry.service}
+                </a>
+              </li>
+            );
+          })}
+        </ul>
+        <p className="mt-3">
+          Details are in the{' '}
+          <Link to="/privacy" className={textLink}>
+            privacy policy
+          </Link>
+          .
+        </p>
+      </>
+    ),
+  },
+  {
+    question: 'Why is the Background Remover limited?',
+    answer: (
+      <p>
+        It is the one tool that runs on a paid API, so it needs a free account and is limited to 20 images per hour per
+        account. That keeps it free for everyone.
+      </p>
+    ),
+  },
+];
+
+const Cell: React.FC<{ value: boolean | string }> = ({ value }) => {
+  if (typeof value === 'string') {
+    return <span className="font-semibold text-gray-900 dark:text-white">{value}</span>;
+  }
+  return value ? (
+    <>
+      <IconWrapper icon={FiCheck} className="mx-auto h-5 w-5 text-green-700 dark:text-green-400" />
+      <span className="sr-only">Included</span>
+    </>
+  ) : (
+    <>
+      <IconWrapper icon={FiMinus} className="mx-auto h-5 w-5 text-gray-400 dark:text-gray-500" />
+      <span className="sr-only">Not included</span>
+    </>
+  );
+};
+
+const PricingPage: React.FC = () => {
   return (
     <>
       <SEOHelmet
-        title="Pricing Plans - AiVello | Affordable AI Tools"
-        description="Choose the perfect plan for your AI productivity needs. Free tier available with premium options starting at $9.99/month."
-        keywords="pricing, subscription, AI tools, plans, affordable AI"
+        title="Pricing: Free Forever - Aivello"
+        description={`Every Aivello tool is free forever: ${tools.length} tools, no paid plans, no signup, no credit card. Most tools run in your browser, so your files stay on your device.`}
+        keywords="free online tools, free AI tools, no signup, free forever, pricing"
         url="https://aivello.vercel.app/pricing"
       />
-      
-      <div className="min-h-screen bg-gradient-to-br from-gray-950 via-purple-950 to-gray-950 py-20">
-        <div className="container mx-auto px-6 relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-20"
-          >
-            <h1 className="text-5xl md:text-7xl font-bold bg-gradient-to-r from-white via-purple-200 to-pink-200 bg-clip-text text-transparent mb-6">
-              Simple Pricing
-            </h1>
-            <p className="text-xl text-gray-300 mb-12 max-w-3xl mx-auto leading-relaxed">
-              Choose the perfect plan for your AI productivity needs. Start free, upgrade anytime.
-            </p>
-            
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="flex items-center justify-center gap-4 bg-gray-800/50 backdrop-blur-sm p-2 rounded-2xl border border-gray-700 w-fit mx-auto"
-            >
-              <button
-                onClick={() => setBillingCycle('monthly')}
-                className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${
-                  billingCycle === 'monthly'
-                    ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg'
-                    : 'text-gray-400 hover:text-white'
-                }`}
-              >
-                Monthly
-              </button>
-              <button
-                onClick={() => setBillingCycle('yearly')}
-                className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center gap-2 ${
-                  billingCycle === 'yearly'
-                    ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg'
-                    : 'text-gray-400 hover:text-white'
-                }`}
-              >
-                Yearly
-                <span className="bg-yellow-400 text-gray-900 text-xs px-2 py-1 rounded-full font-bold">
-                  Save 20%
+
+      <div className="min-h-screen bg-gradient-to-b from-purple-50 via-white to-white text-gray-900 dark:from-gray-950 dark:via-gray-950 dark:to-gray-950 dark:text-white">
+        <Navbar />
+
+        <main id="main-content" tabIndex={-1} className="pt-24 pb-20 focus:outline-none sm:pt-32">
+          <div className="container mx-auto max-w-5xl px-4 sm:px-6">
+            <header className="mx-auto mb-12 max-w-3xl text-center">
+              <h1 className="mb-4 text-4xl font-black tracking-tight text-gray-900 dark:text-white sm:text-5xl">
+                Pricing:{' '}
+                <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent dark:from-purple-400 dark:to-pink-400">
+                  free forever
                 </span>
-              </button>
-            </motion.div>
-          </motion.div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-20">
-            {subscriptionPlans.map((plan, index) => (
-              <motion.div
-                key={plan.id}
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-                className="relative"
-              >
-                <Card
-                  className={`relative h-full bg-gradient-to-br from-gray-800/50 to-gray-900/50 border-gray-700 backdrop-blur-sm hover:scale-105 transition-all duration-300 ${
-                    plan.popular
-                      ? 'border-purple-500 border-2 shadow-2xl shadow-purple-500/25'
-                      : 'border-gray-600 hover:border-gray-500'
-                  }`}
-                >
-                  {plan.popular && (
-                    <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 z-10">
-                      <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-2 rounded-full text-sm font-bold flex items-center gap-1">
-                        <IconWrapper icon={FiStar} className="w-4 h-4" />
-                        Most Popular
-                      </div>
-                    </div>
-                  )}
-                  
-                  <CardContent className="p-8 text-center">
-                    <div className="mb-8">
-                      <h3 className="text-2xl font-bold text-white mb-4">{plan.name}</h3>
-                      <div className="mb-6">
-                        <span className="text-5xl font-bold text-white">
-                          ${billingCycle === 'monthly' ? plan.price : getYearlyPrice(plan.price)}
-                        </span>
-                        <span className="text-gray-400 text-lg">
-                          /{billingCycle === 'monthly' ? 'month' : 'year'}
-                        </span>
-                      </div>
-                      
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => handleSubscribe(plan.id)}
-                        className={`w-full py-4 px-6 rounded-xl font-semibold text-lg transition-all duration-300 ${
-                          plan.popular
-                            ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40'
-                            : plan.id === 'free'
-                            ? 'bg-gray-600 text-gray-300 cursor-not-allowed'
-                            : 'bg-gray-700 hover:bg-gray-600 text-white'
-                        }`}
-                        disabled={plan.id === 'free'}
-                      >
-                        {plan.id === 'free' ? 'Current Plan' : `Get ${plan.name}`}
-                      </motion.button>
-                    </div>
-                    
-                    <ul className="space-y-4 text-left">
-                      {plan.features.map((feature, featureIndex) => (
-                        <li key={featureIndex} className="flex items-start gap-3">
-                          <div className="mt-1">
-                            <IconWrapper icon={FiCheck} className="w-5 h-5 text-green-400" />
-                          </div>
-                          <span className="text-gray-300 text-sm leading-relaxed">{feature}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.8 }}
-            className="mt-20 text-center"
-          >
-            <div className="bg-gradient-to-r from-purple-600/20 to-pink-600/20 backdrop-blur-sm border border-purple-500/30 p-12 rounded-3xl">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4 text-white">
-                Need a Custom Solution?
-              </h2>
-              <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
-                Enterprise customers get dedicated support, custom integrations, and white-label solutions.
+              </h1>
+              <p className="text-lg leading-relaxed text-gray-600 dark:text-gray-300 sm:text-xl">
+                One plan, and it costs nothing. No tiers, no trials, no credit card.
               </p>
-              
-              <motion.button
-                whileHover={{ scale: 1.05, y: -2 }}
-                whileTap={{ scale: 0.95 }}
-                className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-8 py-4 rounded-2xl font-semibold text-lg shadow-2xl shadow-purple-500/25 hover:shadow-purple-500/40 transition-all duration-300 flex items-center gap-2 mx-auto"
+            </header>
+
+            <section
+              aria-labelledby="plan-heading"
+              className="mx-auto max-w-xl rounded-3xl border-2 border-purple-200 bg-white p-6 shadow-xl shadow-purple-500/10 dark:border-purple-400/30 dark:bg-white/5 dark:shadow-none sm:p-10"
+            >
+              <p className="mb-4 inline-flex rounded-full bg-purple-100 px-3 py-1 text-sm font-medium text-purple-700 dark:bg-purple-500/15 dark:text-purple-300">
+                The only plan
+              </p>
+              <h2 id="plan-heading" className="text-2xl font-bold text-gray-900 dark:text-white">
+                Free
+              </h2>
+              <p className="mt-2 flex items-baseline gap-2">
+                <span className="text-5xl font-black text-gray-900 dark:text-white">$0</span>
+                <span className="text-lg text-gray-600 dark:text-gray-300">forever</span>
+              </p>
+              <p className="mt-3 text-gray-600 dark:text-gray-300">Everything Aivello offers, for everyone.</p>
+
+              <ul className="my-8 space-y-3">
+                {planFeatures.map((feature) => (
+                  <li key={feature} className="flex items-start gap-3">
+                    <IconWrapper icon={FiCheck} className="mt-0.5 h-5 w-5 shrink-0 text-green-700 dark:text-green-400" />
+                    <span className="text-gray-700 dark:text-gray-200">{feature}</span>
+                  </li>
+                ))}
+              </ul>
+
+              <Link
+                to="/app"
+                className={`group flex min-h-[48px] w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-purple-600 to-pink-600 px-6 py-3 font-semibold text-white shadow-lg shadow-purple-500/25 transition-all hover:-translate-y-0.5 hover:shadow-purple-500/40 ${focusRing}`}
               >
-                <IconWrapper icon={FiZap} className="w-5 h-5" />
-                Contact Sales
-              </motion.button>
-            </div>
-          </motion.div>
-        </div>
+                Start using tools
+                <IconWrapper icon={FiArrowRight} className="h-5 w-5 transition-transform group-hover:translate-x-1" />
+              </Link>
+              <p className="mt-3 text-center text-sm text-gray-500 dark:text-gray-400">
+                No credit card. No trial. No account required.
+              </p>
+            </section>
+
+            <section aria-labelledby="compare-heading" className="mt-16 sm:mt-20">
+              <h2
+                id="compare-heading"
+                className="mb-3 text-center text-2xl font-bold text-gray-900 dark:text-white sm:text-3xl"
+              >
+                Do you need an account?
+              </h2>
+              <p className="mx-auto mb-8 max-w-2xl text-center text-gray-600 dark:text-gray-300">
+                Probably not. An account is optional and also free. Sign in with Google or GitHub only if you want the
+                extras below.
+              </p>
+
+              <div className="overflow-x-auto rounded-2xl border border-gray-200 bg-white/80 dark:border-white/10 dark:bg-white/5">
+                <table className="w-full text-left text-sm sm:text-base">
+                  <caption className="sr-only">What you get without an account and with a free account</caption>
+                  <thead className="border-b border-gray-200 text-gray-900 dark:border-white/10 dark:text-white">
+                    <tr>
+                      <th scope="col" className="p-3 font-semibold sm:p-4">
+                        Feature
+                      </th>
+                      <th scope="col" className="w-24 p-3 text-center font-semibold sm:w-40 sm:p-4">
+                        Without account
+                      </th>
+                      <th scope="col" className="w-24 p-3 text-center font-semibold sm:w-40 sm:p-4">
+                        With free account
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200 dark:divide-white/10">
+                    {comparison.map((row) => (
+                      <tr key={row.feature}>
+                        <th scope="row" className="p-3 font-normal text-gray-700 dark:text-gray-200 sm:p-4">
+                          {row.feature}
+                        </th>
+                        <td className="p-3 text-center sm:p-4">
+                          <Cell value={row.guest} />
+                        </td>
+                        <td className="p-3 text-center sm:p-4">
+                          <Cell value={row.account} />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            <section aria-labelledby="faq-heading" className="mx-auto mt-16 max-w-3xl sm:mt-20">
+              <h2
+                id="faq-heading"
+                className="mb-8 text-center text-2xl font-bold text-gray-900 dark:text-white sm:text-3xl"
+              >
+                Frequently asked questions
+              </h2>
+              <div className="space-y-3">
+                {faqs.map((faq) => (
+                  <details
+                    key={faq.question}
+                    className="group rounded-2xl border border-gray-200 bg-white/80 dark:border-white/10 dark:bg-white/5"
+                  >
+                    <summary
+                      className={`flex min-h-[56px] cursor-pointer list-none items-center justify-between gap-4 rounded-2xl px-5 py-3 font-semibold text-gray-900 dark:text-white [&::-webkit-details-marker]:hidden ${focusRing}`}
+                    >
+                      {faq.question}
+                      <IconWrapper
+                        icon={FiChevronDown}
+                        className="h-5 w-5 shrink-0 text-gray-500 transition-transform group-open:rotate-180 dark:text-gray-400"
+                      />
+                    </summary>
+                    <div className="px-5 pb-5 leading-relaxed text-gray-600 dark:text-gray-300">{faq.answer}</div>
+                  </details>
+                ))}
+              </div>
+            </section>
+          </div>
+        </main>
       </div>
     </>
   );

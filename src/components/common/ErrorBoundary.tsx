@@ -1,4 +1,5 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
+import { isChunkLoadError, reloadForNewVersion, reportError } from '../../utils/errorReporter';
 
 interface Props {
   children: ReactNode;
@@ -20,12 +21,14 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('Error caught by ErrorBoundary:', error, errorInfo);
-    
-    // In production, you might want to send this to an error reporting service
-    if (process.env.NODE_ENV === 'production') {
-      // Send to error tracking service (e.g., Sentry, LogRocket)
+    // A stale tab after a deploy requests chunks that no longer exist; one reload
+    // fetches the new index.html and fixes it without the user seeing an error.
+    if (isChunkLoadError(error) && reloadForNewVersion()) return;
+
+    if (import.meta.env.DEV) {
+      console.error('Error caught by ErrorBoundary:', error, errorInfo);
     }
+    reportError(error, 'ErrorBoundary', true);
   }
 
   public render() {
@@ -62,18 +65,20 @@ export class ErrorBoundary extends Component<Props, State> {
             <div className="space-y-4">
               <button
                 onClick={() => window.location.reload()}
-                className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                type="button"
+                className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-xl hover:opacity-90 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
               >
                 Refresh Page
               </button>
               <button
-                onClick={() => window.location.href = '/'}
-                className="block w-full sm:w-auto text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+                type="button"
+                onClick={() => { window.location.href = '/'; }}
+                className="block mx-auto min-h-[44px] text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
               >
                 Go to Homepage
               </button>
             </div>
-            {process.env.NODE_ENV === 'development' && this.state.error && (
+            {import.meta.env.DEV && this.state.error && (
               <details className="mt-6 text-left">
                 <summary className="cursor-pointer text-red-600 dark:text-red-400 font-medium">
                   Error Details (Development Only)

@@ -1,749 +1,465 @@
-import React, { useState } from 'react';
+import React, { useEffect, useId, useRef, useState } from 'react';
+import toast from 'react-hot-toast';
 import { Button } from '../components/ui/button';
-import { Card, CardContent } from '../components/ui/card';
 import { Input } from '../components/ui/input';
 import { ToolWrapper } from '../components/common/ToolWrapper';
+import { useToolTracking } from '../hooks/useToolTracking';
+import {
+  CATEGORY_LABELS,
+  COMMUNICATION_STYLES,
+  CategoryId,
+  CompatibilityResult,
+  EMPTY_PERSON,
+  LIFESTYLES,
+  LOVE_LANGUAGES,
+  MIN_FACTORS,
+  PERSONALITY_TYPES,
+  PersonErrors,
+  PersonProfile,
+  ZODIAC_SIGNS,
+  calculateCompatibility,
+  countComparableFactors,
+  downloadCompatibilityReport,
+  validatePerson,
+} from './lib/aiRelationshipCompatibility';
 
-interface CompatibilityResult {
-  overallScore: number;
-  compatibility: {
-    emotional: number;
-    intellectual: number;
-    physical: number;
-    spiritual: number;
-    lifestyle: number;
-    communication: number;
-  };
-  strengths: string[];
-  challenges: string[];
-  relationshipTips: string[];
-  zodiacCompatibility: string;
-  personalityMatch: string;
-  longTermPotential: string;
-  improvementAreas: string[];
-  dateIdeas: string[];
-  communicationStyle: string;
-  conflictResolution: string[];
+const TOOL_ID = 'ai-relationship-compatibility';
+const TOOL_NAME = 'AI Relationship Compatibility';
+
+const cardClass = 'bg-white/80 dark:bg-white/10 border border-gray-200 dark:border-white/20 rounded-2xl p-4 sm:p-6';
+const labelClass = 'block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300';
+const selectClass =
+  'w-full min-h-[44px] px-3 py-2 rounded-xl bg-white dark:bg-gray-800/60 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50';
+const optionClass = 'bg-white dark:bg-gray-800';
+const errorTextClass = 'mt-1 text-sm text-red-600 dark:text-red-400';
+const invalidClass = 'ring-2 ring-red-500 dark:ring-red-400';
+
+type SelectField = 'zodiacSign' | 'personalityType' | 'loveLanguage' | 'communicationStyle' | 'lifestyle';
+
+const SELECTS: { field: SelectField; label: string; placeholder: string; options: readonly string[] }[] = [
+  { field: 'loveLanguage', label: 'Love Language', placeholder: 'Select love language…', options: LOVE_LANGUAGES },
+  { field: 'communicationStyle', label: 'Communication Style', placeholder: 'Select style…', options: COMMUNICATION_STYLES },
+  { field: 'personalityType', label: 'Personality Type', placeholder: 'Select personality…', options: PERSONALITY_TYPES },
+  { field: 'lifestyle', label: 'Lifestyle', placeholder: 'Select lifestyle…', options: LIFESTYLES },
+  { field: 'zodiacSign', label: 'Zodiac Sign (just for fun)', placeholder: 'Select zodiac sign…', options: ZODIAC_SIGNS },
+];
+
+const TEXTS: { field: 'interests' | 'values' | 'goals'; label: string; placeholder: string }[] = [
+  { field: 'interests', label: 'Interests & Hobbies', placeholder: 'e.g., reading, hiking, cooking, music' },
+  { field: 'values', label: 'Core Values', placeholder: 'e.g., family, honesty, adventure, security' },
+  { field: 'goals', label: 'Life Goals', placeholder: 'e.g., travel the world, start a family, build a business' },
+];
+
+interface PersonFormProps {
+  idPrefix: string;
+  title: string;
+  person: PersonProfile;
+  errors: PersonErrors;
+  nameRef: React.Ref<HTMLInputElement>;
+  onChange: (field: keyof PersonProfile, value: string) => void;
 }
 
-interface PersonProfile {
-  name: string;
-  age: string;
-  zodiacSign: string;
-  interests: string;
-  values: string;
-  personalityType: string;
-  loveLanguage: string;
-  lifestyle: string;
-  goals: string;
-  communicationStyle: string;
-}
-
-const AIRelationshipCompatibility = () => {
-  const [person1, setPerson1] = useState<PersonProfile>({
-    name: '', age: '', zodiacSign: '', interests: '', values: '',
-    personalityType: '', loveLanguage: '', lifestyle: '', goals: '', communicationStyle: ''
-  });
-  
-  const [person2, setPerson2] = useState<PersonProfile>({
-    name: '', age: '', zodiacSign: '', interests: '', values: '',
-    personalityType: '', loveLanguage: '', lifestyle: '', goals: '', communicationStyle: ''
-  });
-
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [compatibility, setCompatibility] = useState<CompatibilityResult | null>(null);
-
-  const zodiacSigns = [
-    'Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo',
-    'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'
-  ];
-
-  const personalityTypes = [
-    'Extrovert', 'Introvert', 'Ambivert', 'Analytical', 'Creative',
-    'Practical', 'Emotional', 'Logical', 'Adventurous', 'Stable'
-  ];
-
-  const loveLanguages = [
-    'Words of Affirmation', 'Quality Time', 'Physical Touch',
-    'Acts of Service', 'Receiving Gifts'
-  ];
-
-  const communicationStyles = [
-    'Direct', 'Indirect', 'Emotional', 'Logical', 'Assertive',
-    'Passive', 'Diplomatic', 'Spontaneous'
-  ];
-
-  const lifestyleOptions = [
-    'Active & Outdoorsy', 'Homebody', 'Social Butterfly', 'Career Focused',
-    'Family Oriented', 'Adventurous', 'Minimalist', 'Luxury Loving'
-  ];
-
-  const analyzeCompatibility = async () => {
-    if (!person1.name || !person2.name) {
-      alert('❌ Please enter names for both people.');
-      return;
-    }
-
-    setIsAnalyzing(true);
-    try {
-      await new Promise(resolve => setTimeout(resolve, 3000));
-
-      const result = calculateCompatibility(person1, person2);
-      setCompatibility(result);
-      alert('💖 Compatibility analysis complete! Check your detailed results below.');
-    } catch (error) {
-      console.error('Error analyzing compatibility:', error);
-      alert('❌ Failed to analyze compatibility. Please try again.');
-    } finally {
-      setIsAnalyzing(false);
-    }
-  };
-
-  const calculateCompatibility = (p1: PersonProfile, p2: PersonProfile): CompatibilityResult => {
-    const zodiacScore = calculateZodiacCompatibility(p1.zodiacSign, p2.zodiacSign);
-    const personalityScore = calculatePersonalityCompatibility(p1.personalityType, p2.personalityType);
-    const loveLanguageScore = calculateLoveLanguageCompatibility(p1.loveLanguage, p2.loveLanguage);
-    const lifestyleScore = calculateLifestyleCompatibility(p1.lifestyle, p2.lifestyle);
-    const communicationScore = calculateCommunicationCompatibility(p1.communicationStyle, p2.communicationStyle);
-    const interestsScore = calculateInterestsCompatibility(p1.interests, p2.interests);
-    const valuesScore = calculateValuesCompatibility(p1.values, p2.values);
-    const goalsScore = calculateGoalsCompatibility(p1.goals, p2.goals);
-
-    const overallScore = Math.round(
-      (zodiacScore + personalityScore + loveLanguageScore + lifestyleScore + 
-       communicationScore + interestsScore + valuesScore + goalsScore) / 8
-    );
-
-    return {
-      overallScore,
-      compatibility: {
-        emotional: Math.round((loveLanguageScore + personalityScore) / 2),
-        intellectual: Math.round((interestsScore + communicationScore) / 2),
-        physical: zodiacScore,
-        spiritual: valuesScore,
-        lifestyle: lifestyleScore,
-        communication: communicationScore
-      },
-      strengths: generateStrengths(p1, p2, overallScore),
-      challenges: generateChallenges(p1, p2, overallScore),
-      relationshipTips: generateRelationshipTips(p1, p2),
-      zodiacCompatibility: getZodiacCompatibilityDescription(p1.zodiacSign, p2.zodiacSign),
-      personalityMatch: getPersonalityMatchDescription(p1.personalityType, p2.personalityType),
-      longTermPotential: getLongTermPotential(overallScore),
-      improvementAreas: generateImprovementAreas(p1, p2),
-      dateIdeas: generateDateIdeas(p1, p2),
-      communicationStyle: getCommunicationStyleAdvice(p1.communicationStyle, p2.communicationStyle),
-      conflictResolution: generateConflictResolution(p1, p2)
-    };
-  };
-
-  const calculateZodiacCompatibility = (sign1: string, sign2: string): number => {
-    const compatibilityMatrix: Record<string, Record<string, number>> = {
-      'Aries': { 'Leo': 95, 'Sagittarius': 90, 'Gemini': 85, 'Aquarius': 80, 'Libra': 70, 'Cancer': 60, 'Capricorn': 55, 'Pisces': 50, 'Taurus': 45, 'Virgo': 40, 'Scorpio': 35 },
-      'Taurus': { 'Virgo': 95, 'Capricorn': 90, 'Cancer': 85, 'Pisces': 80, 'Scorpio': 70, 'Leo': 60, 'Aquarius': 55, 'Aries': 50, 'Gemini': 45, 'Libra': 40, 'Sagittarius': 35 },
-      // Add more combinations as needed
-    };
-
-    return compatibilityMatrix[sign1]?.[sign2] || 
-           compatibilityMatrix[sign2]?.[sign1] || 
-           Math.floor(Math.random() * 30) + 50; // Random between 50-80 if not defined
-  };
-
-  const calculatePersonalityCompatibility = (type1: string, type2: string): number => {
-    if (type1 === type2) return 85;
-    if ((type1 === 'Extrovert' && type2 === 'Introvert') || 
-        (type1 === 'Introvert' && type2 === 'Extrovert')) return 80;
-    if ((type1 === 'Analytical' && type2 === 'Creative') ||
-        (type1 === 'Creative' && type2 === 'Analytical')) return 75;
-    return 70;
-  };
-
-  const calculateLoveLanguageCompatibility = (lang1: string, lang2: string): number => {
-    if (lang1 === lang2) return 95;
-    if ((lang1 === 'Physical Touch' && lang2 === 'Quality Time') ||
-        (lang1 === 'Quality Time' && lang2 === 'Physical Touch')) return 85;
-    return 70;
-  };
-
-  const calculateLifestyleCompatibility = (lifestyle1: string, lifestyle2: string): number => {
-    if (lifestyle1 === lifestyle2) return 90;
-    const compatible = [
-      ['Active & Outdoorsy', 'Adventurous'],
-      ['Homebody', 'Family Oriented'],
-      ['Social Butterfly', 'Luxury Loving']
-    ];
-    
-    for (const pair of compatible) {
-      if ((pair.includes(lifestyle1) && pair.includes(lifestyle2))) return 80;
-    }
-    return 65;
-  };
-
-  const calculateCommunicationCompatibility = (style1: string, style2: string): number => {
-    if (style1 === style2) return 85;
-    if ((style1 === 'Direct' && style2 === 'Assertive') ||
-        (style1 === 'Assertive' && style2 === 'Direct')) return 80;
-    return 70;
-  };
-
-  const calculateInterestsCompatibility = (interests1: string, interests2: string): number => {
-    const i1 = interests1.toLowerCase().split(',').map(i => i.trim());
-    const i2 = interests2.toLowerCase().split(',').map(i => i.trim());
-    
-    const common = i1.filter(interest => i2.some(i => i.includes(interest) || interest.includes(i)));
-    const compatibilityRatio = common.length / Math.max(i1.length, i2.length, 1);
-    
-    return Math.min(Math.round(compatibilityRatio * 100) + 50, 95);
-  };
-
-  const calculateValuesCompatibility = (values1: string, values2: string): number => {
-    const v1 = values1.toLowerCase().split(',').map(v => v.trim());
-    const v2 = values2.toLowerCase().split(',').map(v => v.trim());
-    
-    const common = v1.filter(value => v2.some(v => v.includes(value) || value.includes(v)));
-    const compatibilityRatio = common.length / Math.max(v1.length, v2.length, 1);
-    
-    return Math.min(Math.round(compatibilityRatio * 100) + 60, 95);
-  };
-
-  const calculateGoalsCompatibility = (goals1: string, goals2: string): number => {
-    const g1 = goals1.toLowerCase();
-    const g2 = goals2.toLowerCase();
-    
-    const keywords = ['family', 'career', 'travel', 'money', 'health', 'education', 'creativity'];
-    const matches = keywords.filter(keyword => g1.includes(keyword) && g2.includes(keyword));
-    
-    return Math.min(matches.length * 15 + 55, 95);
-  };
-
-  const generateStrengths = (p1: PersonProfile, p2: PersonProfile, score: number): string[] => {
-    const strengths = [];
-    
-    if (p1.loveLanguage === p2.loveLanguage) {
-      strengths.push(`Both share the same love language: ${p1.loveLanguage}`);
-    }
-    if (p1.zodiacSign && p2.zodiacSign) {
-      strengths.push(`Strong zodiac compatibility between ${p1.zodiacSign} and ${p2.zodiacSign}`);
-    }
-    if (score > 80) {
-      strengths.push('Excellent overall compatibility and natural understanding');
-    }
-    if (p1.lifestyle === p2.lifestyle) {
-      strengths.push('Similar lifestyle preferences create harmony');
-    }
-    
-    strengths.push('Potential for deep emotional connection');
-    strengths.push('Complementary personality traits');
-    
-    return strengths;
-  };
-
-  const generateChallenges = (p1: PersonProfile, p2: PersonProfile, score: number): string[] => {
-    const challenges = [];
-    
-    if (p1.communicationStyle !== p2.communicationStyle) {
-      challenges.push('Different communication styles may require understanding');
-    }
-    if (score < 70) {
-      challenges.push('May need extra effort to understand each other');
-    }
-    if (p1.personalityType === 'Extrovert' && p2.personalityType === 'Introvert') {
-      challenges.push('Balancing social energy levels');
-    }
-    
-    challenges.push('Working through individual differences');
-    challenges.push('Maintaining independence while building connection');
-    
-    return challenges;
-  };
-
-  const generateRelationshipTips = (p1: PersonProfile, p2: PersonProfile): string[] => {
-    return [
-      `Focus on ${p1.loveLanguage === p2.loveLanguage ? 'your shared' : 'learning each other\'s'} love language`,
-      'Practice active listening and empathy',
-      'Plan activities that align with both your interests',
-      'Respect each other\'s communication styles',
-      'Create shared goals and dreams together',
-      'Maintain individual identities while growing together'
-    ];
-  };
-
-  const getZodiacCompatibilityDescription = (sign1: string, sign2: string): string => {
-    const descriptions = {
-      high: `${sign1} and ${sign2} have excellent cosmic compatibility with natural understanding and harmony.`,
-      medium: `${sign1} and ${sign2} can create a beautiful relationship with mutual effort and understanding.`,
-      low: `${sign1} and ${sign2} may face challenges but can build a strong bond through patience and compromise.`
-    };
-    
-    const score = calculateZodiacCompatibility(sign1, sign2);
-    if (score > 80) return descriptions.high;
-    if (score > 60) return descriptions.medium;
-    return descriptions.low;
-  };
-
-  const getPersonalityMatchDescription = (type1: string, type2: string): string => {
-    if (type1 === type2) return `Both being ${type1} personalities creates natural understanding and shared perspectives.`;
-    return `The ${type1} and ${type2} combination can create a balanced and complementary partnership.`;
-  };
-
-  const getLongTermPotential = (score: number): string => {
-    if (score >= 85) return 'Excellent long-term potential with natural compatibility and shared values.';
-    if (score >= 70) return 'Good long-term potential with effort and commitment from both partners.';
-    if (score >= 60) return 'Moderate potential requiring work on understanding and compromise.';
-    return 'Challenging but possible with significant effort and professional guidance.';
-  };
-
-  const generateImprovementAreas = (p1: PersonProfile, p2: PersonProfile): string[] => {
-    return [
-      'Develop better communication techniques',
-      'Learn to appreciate differences',
-      'Build shared interests and activities',
-      'Practice conflict resolution skills',
-      'Create more quality time together'
-    ];
-  };
-
-  const generateDateIdeas = (p1: PersonProfile, p2: PersonProfile): string[] => {
-    const ideas = [];
-    
-    if (p1.lifestyle?.includes('Active') || p2.lifestyle?.includes('Active')) {
-      ideas.push('Hiking or outdoor adventure dates');
-    }
-    if (p1.interests?.includes('art') || p2.interests?.includes('art')) {
-      ideas.push('Art gallery or museum visits');
-    }
-    
-    ideas.push('Cooking together at home');
-    ideas.push('Taking a dance class');
-    ideas.push('Stargazing and deep conversations');
-    ideas.push('Exploring new neighborhoods');
-    
-    return ideas;
-  };
-
-  const getCommunicationStyleAdvice = (style1: string, style2: string): string => {
-    if (style1 === style2) {
-      return `Both having ${style1} communication styles creates understanding but watch for blind spots.`;
-    }
-    return `The ${style1} and ${style2} styles can complement each other with patience and practice.`;
-  };
-
-  const generateConflictResolution = (p1: PersonProfile, p2: PersonProfile): string[] => {
-    return [
-      'Take breaks during heated discussions',
-      'Use "I" statements instead of "you" accusations',
-      'Listen to understand, not to respond',
-      'Find compromise solutions that honor both perspectives',
-      'Seek to understand the root cause of disagreements'
-    ];
-  };
-
-  const downloadCompatibilityReport = () => {
-    if (!compatibility) return;
-
-    const report = `
-RELATIONSHIP COMPATIBILITY ANALYSIS
-${person1.name} & ${person2.name}
-Generated on: ${new Date().toLocaleString()}
-
-OVERALL COMPATIBILITY SCORE: ${compatibility.overallScore}%
-
-COMPATIBILITY BREAKDOWN:
-• Emotional: ${compatibility.compatibility.emotional}%
-• Intellectual: ${compatibility.compatibility.intellectual}%
-• Physical: ${compatibility.compatibility.physical}%
-• Spiritual: ${compatibility.compatibility.spiritual}%
-• Lifestyle: ${compatibility.compatibility.lifestyle}%
-• Communication: ${compatibility.compatibility.communication}%
-
-ZODIAC COMPATIBILITY:
-${compatibility.zodiacCompatibility}
-
-PERSONALITY MATCH:
-${compatibility.personalityMatch}
-
-LONG-TERM POTENTIAL:
-${compatibility.longTermPotential}
-
-RELATIONSHIP STRENGTHS:
-${compatibility.strengths.map(s => `• ${s}`).join('\n')}
-
-CHALLENGES TO WORK ON:
-${compatibility.challenges.map(c => `• ${c}`).join('\n')}
-
-RELATIONSHIP TIPS:
-${compatibility.relationshipTips.map(t => `• ${t}`).join('\n')}
-
-DATE IDEAS:
-${compatibility.dateIdeas.map(d => `• ${d}`).join('\n')}
-
-COMMUNICATION ADVICE:
-${compatibility.communicationStyle}
-
-CONFLICT RESOLUTION STRATEGIES:
-${compatibility.conflictResolution.map(c => `• ${c}`).join('\n')}
-
-IMPROVEMENT AREAS:
-${compatibility.improvementAreas.map(i => `• ${i}`).join('\n')}
-
----
-Report generated by AI Relationship Compatibility Analyzer
-`;
-
-    const blob = new Blob([report], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `compatibility-analysis-${person1.name}-${person2.name}.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
-    alert('💖 Compatibility report downloaded successfully!');
-  };
-
-  const resetForm = () => {
-    setPerson1({
-      name: '', age: '', zodiacSign: '', interests: '', values: '',
-      personalityType: '', loveLanguage: '', lifestyle: '', goals: '', communicationStyle: ''
-    });
-    setPerson2({
-      name: '', age: '', zodiacSign: '', interests: '', values: '',
-      personalityType: '', loveLanguage: '', lifestyle: '', goals: '', communicationStyle: ''
-    });
-    setCompatibility(null);
-  };
-
-  const renderPersonForm = (person: PersonProfile, setPerson: React.Dispatch<React.SetStateAction<PersonProfile>>, title: string) => (
-    <Card className="bg-gradient-to-r from-pink-50 to-red-50 dark:from-pink-900/20 dark:to-red-900/20 border-pink-200 dark:border-pink-800">
-      <CardContent className="p-6">
-        <h3 className="text-xl font-semibold mb-4 text-pink-800 dark:text-pink-300">{title}</h3>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Name</label>
-            <Input
-              placeholder="Name"
-              value={person.name}
-              onChange={(e) => setPerson(prev => ({ ...prev, name: e.target.value }))}
-              className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Age</label>
-            <Input
-              placeholder="Age"
-              value={person.age}
-              onChange={(e) => setPerson(prev => ({ ...prev, age: e.target.value }))}
-              className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Zodiac Sign</label>
-            <select 
-              className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-              value={person.zodiacSign}
-              onChange={(e) => setPerson(prev => ({ ...prev, zodiacSign: e.target.value }))}
-            >
-              <option value="">Select zodiac sign...</option>
-              {zodiacSigns.map(sign => (
-                <option key={sign} value={sign}>{sign}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Personality Type</label>
-            <select 
-              className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-              value={person.personalityType}
-              onChange={(e) => setPerson(prev => ({ ...prev, personalityType: e.target.value }))}
-            >
-              <option value="">Select personality...</option>
-              {personalityTypes.map(type => (
-                <option key={type} value={type}>{type}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Love Language</label>
-            <select 
-              className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-              value={person.loveLanguage}
-              onChange={(e) => setPerson(prev => ({ ...prev, loveLanguage: e.target.value }))}
-            >
-              <option value="">Select love language...</option>
-              {loveLanguages.map(lang => (
-                <option key={lang} value={lang}>{lang}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Communication Style</label>
-            <select 
-              className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-              value={person.communicationStyle}
-              onChange={(e) => setPerson(prev => ({ ...prev, communicationStyle: e.target.value }))}
-            >
-              <option value="">Select style...</option>
-              {communicationStyles.map(style => (
-                <option key={style} value={style}>{style}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        <div className="mt-4">
-          <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Lifestyle</label>
-          <select 
-            className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-            value={person.lifestyle}
-            onChange={(e) => setPerson(prev => ({ ...prev, lifestyle: e.target.value }))}
+const PersonForm = ({ idPrefix, title, person, errors, nameRef, onChange }: PersonFormProps) => (
+  <fieldset className={`${cardClass} min-w-0`}>
+    <legend className="sr-only">{title}</legend>
+    <h3 className="text-xl font-semibold mb-4 text-pink-700 dark:text-pink-300" aria-hidden="true">{title}</h3>
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div>
+        <label className={labelClass} htmlFor={`${idPrefix}-name`}>
+          Name <span aria-hidden="true">*</span>
+        </label>
+        <Input
+          id={`${idPrefix}-name`}
+          ref={nameRef}
+          placeholder="Name"
+          value={person.name}
+          maxLength={40}
+          required
+          aria-invalid={Boolean(errors.name)}
+          aria-describedby={errors.name ? `${idPrefix}-name-error` : undefined}
+          onChange={(e) => onChange('name', e.target.value)}
+          className={errors.name ? invalidClass : ''}
+        />
+        {errors.name && <p id={`${idPrefix}-name-error`} role="alert" className={errorTextClass}>{errors.name}</p>}
+      </div>
+      <div>
+        <label className={labelClass} htmlFor={`${idPrefix}-age`}>Age (optional)</label>
+        <Input
+          id={`${idPrefix}-age`}
+          type="number"
+          inputMode="numeric"
+          min={18}
+          max={120}
+          placeholder="Age"
+          value={person.age}
+          aria-invalid={Boolean(errors.age)}
+          aria-describedby={errors.age ? `${idPrefix}-age-error` : undefined}
+          onChange={(e) => onChange('age', e.target.value)}
+          className={errors.age ? invalidClass : ''}
+        />
+        {errors.age && <p id={`${idPrefix}-age-error`} role="alert" className={errorTextClass}>{errors.age}</p>}
+      </div>
+      {SELECTS.map(({ field, label, placeholder, options }) => (
+        <div key={field} className={field === 'zodiacSign' ? 'sm:col-span-2' : ''}>
+          <label className={labelClass} htmlFor={`${idPrefix}-${field}`}>{label}</label>
+          <select
+            id={`${idPrefix}-${field}`}
+            className={selectClass}
+            value={person[field]}
+            onChange={(e) => onChange(field, e.target.value)}
           >
-            <option value="">Select lifestyle...</option>
-            {lifestyleOptions.map(lifestyle => (
-              <option key={lifestyle} value={lifestyle}>{lifestyle}</option>
+            <option value="" className={optionClass}>{placeholder}</option>
+            {options.map((o) => (
+              <option key={o} value={o} className={optionClass}>{o}</option>
             ))}
           </select>
         </div>
-
-        <div className="grid grid-cols-1 gap-4 mt-4">
-          <div>
-            <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Interests & Hobbies</label>
-            <Input
-              placeholder="e.g., reading, hiking, cooking, music..."
-              value={person.interests}
-              onChange={(e) => setPerson(prev => ({ ...prev, interests: e.target.value }))}
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Core Values</label>
-            <Input
-              placeholder="e.g., family, honesty, adventure, security..."
-              value={person.values}
-              onChange={(e) => setPerson(prev => ({ ...prev, values: e.target.value }))}
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Life Goals</label>
-            <Input
-              placeholder="e.g., travel the world, start a family, build a business..."
-              value={person.goals}
-              onChange={(e) => setPerson(prev => ({ ...prev, goals: e.target.value }))}
-            />
-          </div>
+      ))}
+    </div>
+    <div className="grid grid-cols-1 gap-4 mt-4">
+      {TEXTS.map(({ field, label, placeholder }) => (
+        <div key={field}>
+          <label className={labelClass} htmlFor={`${idPrefix}-${field}`}>{label}</label>
+          <Input
+            id={`${idPrefix}-${field}`}
+            placeholder={placeholder}
+            value={person[field]}
+            maxLength={300}
+            onChange={(e) => onChange(field, e.target.value)}
+          />
         </div>
-      </CardContent>
-    </Card>
-  );
+      ))}
+    </div>
+  </fieldset>
+);
+
+const ListCard = ({ title, items, titleClass, dotClass }: { title: string; items: string[]; titleClass: string; dotClass: string }) => (
+  <section className={cardClass}>
+    <h3 className={`text-xl font-semibold mb-4 ${titleClass}`}>{title}</h3>
+    <ul className="space-y-2">
+      {items.map((item) => (
+        <li key={item} className="flex items-start gap-2">
+          <span className={`${dotClass} mt-0.5`} aria-hidden="true">•</span>
+          <span className="text-sm text-gray-700 dark:text-gray-300">{item}</span>
+        </li>
+      ))}
+    </ul>
+  </section>
+);
+
+const AIRelationshipCompatibility = () => {
+  const track = useToolTracking(TOOL_ID, TOOL_NAME);
+  const uid = useId();
+
+  const [person1, setPerson1] = useState<PersonProfile>(EMPTY_PERSON);
+  const [person2, setPerson2] = useState<PersonProfile>(EMPTY_PERSON);
+  const [errors1, setErrors1] = useState<PersonErrors>({});
+  const [errors2, setErrors2] = useState<PersonErrors>({});
+  const [formError, setFormError] = useState('');
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [compatibility, setCompatibility] = useState<CompatibilityResult | null>(null);
+  const [status, setStatus] = useState('');
+
+  const timerRef = useRef<number | null>(null);
+  const name1Ref = useRef<HTMLInputElement>(null);
+  const name2Ref = useRef<HTMLInputElement>(null);
+  const resultsRef = useRef<HTMLHeadingElement>(null);
+
+  useEffect(() => () => {
+    if (timerRef.current !== null) window.clearTimeout(timerRef.current);
+  }, []);
+
+  const change =
+    (setPerson: React.Dispatch<React.SetStateAction<PersonProfile>>, setErrors: React.Dispatch<React.SetStateAction<PersonErrors>>) =>
+    (field: keyof PersonProfile, value: string) => {
+      setPerson((prev) => ({ ...prev, [field]: value }));
+      if (field === 'name' || field === 'age') {
+        setErrors((prev) => {
+          const next = { ...prev };
+          delete next[field];
+          return next;
+        });
+      }
+      setFormError('');
+    };
+
+  const comparable = countComparableFactors(person1, person2);
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (isAnalyzing) return;
+    const e1 = validatePerson(person1);
+    const e2 = validatePerson(person2);
+    setErrors1(e1);
+    setErrors2(e2);
+    if (Object.keys(e1).length || Object.keys(e2).length) {
+      setFormError('Please fix the highlighted fields.');
+      (Object.keys(e1).length ? name1Ref : name2Ref).current?.focus();
+      return;
+    }
+    if (comparable < MIN_FACTORS) {
+      setFormError(`Fill in at least ${MIN_FACTORS} of the same fields for both people (for example love language and interests) so there is something to compare.`);
+      return;
+    }
+    setFormError('');
+    setIsAnalyzing(true);
+    setStatus('Analysing compatibility…');
+    const p1 = { ...person1 };
+    const p2 = { ...person2 };
+    timerRef.current = window.setTimeout(() => {
+      timerRef.current = null;
+      try {
+        const result = calculateCompatibility(p1, p2);
+        setCompatibility(result);
+        setStatus(`Compatibility score: ${result.overallScore} percent.`);
+        track('analyze');
+        window.requestAnimationFrame(() => resultsRef.current?.focus());
+      } catch {
+        setFormError('Something went wrong while analysing. Please try again.');
+        setStatus('');
+      } finally {
+        setIsAnalyzing(false);
+      }
+    }, 450);
+  };
+
+  const handleDownload = () => {
+    if (!compatibility) return;
+    try {
+      downloadCompatibilityReport(person1, person2, compatibility);
+      toast.success('Compatibility report downloaded');
+    } catch {
+      toast.error('Download failed. Please try again.');
+    }
+  };
+
+  const resetForm = () => {
+    setPerson1(EMPTY_PERSON);
+    setPerson2(EMPTY_PERSON);
+    setErrors1({});
+    setErrors2({});
+    setFormError('');
+    setCompatibility(null);
+    window.requestAnimationFrame(() => name1Ref.current?.focus());
+  };
+
+  const scoreRingOffset = compatibility ? compatibility.overallScore : 0;
 
   return (
     <ToolWrapper
-      toolId="ai-relationship-compatibility"
-      toolName="AI Relationship Compatibility"
+      toolId={TOOL_ID}
+      toolName={TOOL_NAME}
       toolDescription="Analyze relationship compatibility with AI-powered insights into personality, zodiac, and lifestyle matches."
       toolCategory="AI"
     >
-      <div className="min-h-screen bg-white dark:bg-gray-900 p-6 space-y-6">
+      <div className="relative max-w-5xl mx-auto space-y-6">
         {/* Header */}
-        <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold mb-4 text-gray-900 dark:text-white">💖 AI Relationship Compatibility</h2>
+        <div className="text-center">
+          <h2 className="text-3xl sm:text-4xl font-bold mb-3 bg-gradient-to-r from-gray-900 via-purple-700 to-pink-600 dark:from-white dark:via-purple-200 dark:to-pink-200 bg-clip-text text-transparent">
+            💖 AI Relationship Compatibility
+          </h2>
           <p className="text-gray-600 dark:text-gray-300">
-            Discover your relationship compatibility with comprehensive AI analysis
+            Compare love languages, communication, lifestyle, values and goals to see where you click
           </p>
         </div>
 
+        <p className="sr-only" aria-live="polite">{status}</p>
+
         {!compatibility ? (
-          <div className="space-y-6">
-            {/* Person 1 */}
-            {renderPersonForm(person1, setPerson1, "👤 Person 1")}
+          <form className="space-y-6" onSubmit={handleSubmit} noValidate aria-busy={isAnalyzing}>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <PersonForm
+                idPrefix={`${uid}-p1`}
+                title="👤 Person 1"
+                person={person1}
+                errors={errors1}
+                nameRef={name1Ref}
+                onChange={change(setPerson1, setErrors1)}
+              />
+              <PersonForm
+                idPrefix={`${uid}-p2`}
+                title="👤 Person 2"
+                person={person2}
+                errors={errors2}
+                nameRef={name2Ref}
+                onChange={change(setPerson2, setErrors2)}
+              />
+            </div>
 
-            {/* Person 2 */}
-            {renderPersonForm(person2, setPerson2, "👤 Person 2")}
+            <p className="text-center text-sm text-gray-600 dark:text-gray-400">
+              {comparable} comparable field{comparable === 1 ? '' : 's'} filled in for both people
+              {comparable < MIN_FACTORS ? ` - at least ${MIN_FACTORS} needed` : ' - the more you add, the more accurate the result'}.
+            </p>
 
-            {/* Action Buttons */}
-            <div className="flex gap-4 justify-center">
-              <Button
-                onClick={analyzeCompatibility}
-                disabled={isAnalyzing || !person1.name || !person2.name}
-                className="bg-pink-600 hover:bg-pink-700 dark:bg-pink-700 dark:hover:bg-pink-800"
-              >
-                {isAnalyzing ? '💖 Analyzing...' : '💖 Analyze Compatibility'}
+            {formError && (
+              <p role="alert" className="rounded-xl border border-red-200 dark:border-red-500/30 bg-red-50 dark:bg-red-500/10 p-3 text-sm text-red-700 dark:text-red-300 text-center">
+                {formError}
+              </p>
+            )}
+
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Button type="submit" disabled={isAnalyzing} className="min-h-[48px] px-8">
+                {isAnalyzing ? '💖 Analysing…' : '💖 Analyze Compatibility'}
               </Button>
-              <Button
-                onClick={resetForm}
-                variant="outline"
-                className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
-              >
+              <Button type="button" variant="outline" onClick={resetForm} className="min-h-[48px]">
                 🧹 Clear Form
               </Button>
             </div>
-          </div>
+
+            {isAnalyzing && (
+              <div className={`${cardClass} text-center`} role="status">
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-pink-600 dark:border-pink-400 mx-auto mb-3" aria-hidden="true" />
+                <p className="font-semibold text-gray-900 dark:text-white">Comparing your answers…</p>
+              </div>
+            )}
+          </form>
         ) : (
-          /* Results */
           <div className="space-y-6">
             {/* Overall Score */}
-            <Card className="bg-gradient-to-r from-pink-50 to-purple-50 dark:from-pink-900/20 dark:to-purple-900/20 border-pink-200 dark:border-pink-800">
-              <CardContent className="p-8 text-center">
-                <h3 className="text-2xl font-bold mb-4 dark:text-white">Overall Compatibility</h3>
-                <div className="relative w-32 h-32 mx-auto mb-4">
-                  <svg className="w-32 h-32 transform -rotate-90" viewBox="0 0 36 36">
-                    <path
-                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                      fill="none"
-                      stroke="#e5e5e5"
-                      strokeWidth="3"
-                    />
-                    <path
-                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                      fill="none"
-                      stroke="#ec4899"
-                      strokeWidth="3"
-                      strokeDasharray={`${compatibility.overallScore}, 100`}
-                    />
-                  </svg>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-3xl font-bold dark:text-white">{compatibility.overallScore}%</span>
-                  </div>
+            <div className={`${cardClass} text-center`}>
+              <h3 ref={resultsRef} tabIndex={-1} className="text-2xl font-bold mb-4 text-gray-900 dark:text-white focus:outline-none">
+                {person1.name.trim()} & {person2.name.trim()}
+              </h3>
+              <div className="relative w-32 h-32 mx-auto mb-4" role="img" aria-label={`Overall compatibility ${compatibility.overallScore} percent`}>
+                <svg className="w-32 h-32 -rotate-90" viewBox="0 0 36 36" aria-hidden="true">
+                  <path
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="3"
+                    className="text-gray-200 dark:text-gray-700"
+                  />
+                  <path
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                    strokeDasharray={`${scoreRingOffset}, 100`}
+                    className="text-pink-500 dark:text-pink-400"
+                  />
+                </svg>
+                <div className="absolute inset-0 flex items-center justify-center" aria-hidden="true">
+                  <span className="text-3xl font-bold text-gray-900 dark:text-white">{compatibility.overallScore}%</span>
                 </div>
-                <p className="text-lg font-medium dark:text-gray-300">
-                  {compatibility.overallScore >= 85 ? '💕 Excellent Match!' :
-                   compatibility.overallScore >= 70 ? '💖 Good Compatibility' :
-                   compatibility.overallScore >= 60 ? '💛 Moderate Match' : '💙 Needs Work'}
-                </p>
-              </CardContent>
-            </Card>
-
-            {/* Compatibility Breakdown */}
-            <Card className="dark:bg-gray-800">
-              <CardContent className="p-6">
-                <h3 className="text-xl font-semibold mb-4 dark:text-white">📊 Compatibility Breakdown</h3>
-                <div className="space-y-4">
-                  {Object.entries(compatibility.compatibility).map(([category, score]) => (
-                    <div key={category} className="flex items-center space-x-4">
-                      <div className="w-24 text-sm font-medium capitalize dark:text-gray-300">{category}</div>
-                      <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-3">
-                        <div 
-                          className="bg-pink-600 h-3 rounded-full transition-all duration-300"
-                          style={{ width: `${score}%` }}
-                        />
-                      </div>
-                      <div className="w-12 text-sm font-medium dark:text-gray-300">{score}%</div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Strengths and Challenges */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card className="bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800">
-                <CardContent className="p-6">
-                  <h3 className="text-xl font-semibold mb-4 text-green-800 dark:text-green-300">💪 Relationship Strengths</h3>
-                  <ul className="space-y-2">
-                    {compatibility.strengths.map((strength, index) => (
-                      <li key={index} className="flex items-start space-x-2">
-                        <span className="text-green-600 mt-1">•</span>
-                        <span className="text-sm">{strength}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800">
-                <CardContent className="p-6">
-                  <h3 className="text-xl font-semibold mb-4 text-orange-800 dark:text-orange-300">⚠️ Potential Challenges</h3>
-                  <ul className="space-y-2">
-                    {compatibility.challenges.map((challenge, index) => (
-                      <li key={index} className="flex items-start space-x-2">
-                        <span className="text-orange-600 mt-1">•</span>
-                        <span className="text-sm">{challenge}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
+              </div>
+              <p className="text-lg font-medium text-gray-700 dark:text-gray-300">{compatibility.verdict}</p>
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Based on {compatibility.factorsUsed} factors you both filled in</p>
             </div>
 
-            {/* Detailed Analysis */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card className="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
-                <CardContent className="p-6">
-                  <h3 className="text-xl font-semibold mb-4 text-blue-800 dark:text-blue-300">🌟 Zodiac Compatibility</h3>
-                  <p className="text-sm leading-relaxed dark:text-gray-300">{compatibility.zodiacCompatibility}</p>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800">
-                <CardContent className="p-6">
-                  <h3 className="text-xl font-semibold mb-4 text-purple-800 dark:text-purple-300">🧠 Personality Match</h3>
-                  <p className="text-sm leading-relaxed dark:text-gray-300">{compatibility.personalityMatch}</p>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Long-term Potential */}
-            <Card className="bg-pink-50 dark:bg-pink-900/20 border-pink-200 dark:border-pink-800">
-              <CardContent className="p-6">
-                <h3 className="text-xl font-semibold mb-4 text-pink-800 dark:text-pink-300">🔮 Long-term Potential</h3>
-                <p className="text-sm leading-relaxed dark:text-gray-300">{compatibility.longTermPotential}</p>
-              </CardContent>
-            </Card>
-
-            {/* Relationship Tips */}
-            <Card className="bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800">
-              <CardContent className="p-6">
-                <h3 className="text-xl font-semibold mb-4 text-yellow-800 dark:text-yellow-300">💡 Relationship Tips</h3>
-                <ul className="space-y-2">
-                  {compatibility.relationshipTips.map((tip, index) => (
-                    <li key={index} className="flex items-start space-x-2">
-                      <span className="text-yellow-600 mt-1">•</span>
-                      <span className="text-sm">{tip}</span>
+            {/* Breakdown */}
+            <section className={cardClass}>
+              <h3 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">📊 Compatibility Breakdown</h3>
+              <ul className="space-y-4">
+                {(Object.keys(CATEGORY_LABELS) as CategoryId[]).map((category) => {
+                  const score = compatibility.categories[category];
+                  return (
+                    <li key={category} className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4">
+                      <span className="sm:w-44 text-sm font-medium text-gray-700 dark:text-gray-300">{CATEGORY_LABELS[category]}</span>
+                      {score === null ? (
+                        <span className="text-sm text-gray-500 dark:text-gray-400 italic">Not enough info</span>
+                      ) : (
+                        <span className="flex flex-1 items-center gap-3">
+                          <span className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-3" aria-hidden="true">
+                            <span className="block bg-gradient-to-r from-purple-600 to-pink-600 h-3 rounded-full transition-all duration-300" style={{ width: `${score}%` }} />
+                          </span>
+                          <span className="w-12 text-sm font-medium text-gray-700 dark:text-gray-300 text-right">{score}%</span>
+                        </span>
+                      )}
                     </li>
-                  ))}
-                </ul>
-              </CardContent>
-            </Card>
-
-            {/* Date Ideas */}
-            <Card className="bg-teal-50 dark:bg-teal-900/20 border-teal-200 dark:border-teal-800">
-              <CardContent className="p-6">
-                <h3 className="text-xl font-semibold mb-4 text-teal-800 dark:text-teal-300">🎯 Perfect Date Ideas</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {compatibility.dateIdeas.map((idea, index) => (
-                    <div key={index} className="bg-white dark:bg-gray-800 p-3 rounded-lg border border-teal-200 dark:border-teal-800">
-                      <span className="text-sm font-medium dark:text-gray-300">{idea}</span>
-                    </div>
+                  );
+                })}
+              </ul>
+              {(compatibility.sharedInterests.length > 0 || compatibility.sharedValues.length > 0) && (
+                <div className="mt-5 flex flex-wrap gap-2">
+                  {[...compatibility.sharedInterests, ...compatibility.sharedValues].map((item) => (
+                    <span key={item} className="text-xs font-medium px-2.5 py-1 rounded-full bg-pink-100 text-pink-700 dark:bg-pink-500/20 dark:text-pink-300">
+                      {item}
+                    </span>
                   ))}
                 </div>
-              </CardContent>
-            </Card>
+              )}
+            </section>
 
-            {/* Actions */}
-            <div className="flex gap-4">
-              <Button
-                onClick={downloadCompatibilityReport}
-                className="bg-green-600 hover:bg-green-700"
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <ListCard title="💪 Relationship Strengths" items={compatibility.strengths} titleClass="text-green-700 dark:text-green-300" dotClass="text-green-600 dark:text-green-400" />
+              <ListCard title="⚠️ Potential Challenges" items={compatibility.challenges} titleClass="text-orange-700 dark:text-orange-300" dotClass="text-orange-600 dark:text-orange-400" />
+            </div>
+
+            {(compatibility.personalityMatch || compatibility.communicationAdvice || compatibility.zodiacCompatibility) && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {compatibility.communicationAdvice && (
+                  <section className={cardClass}>
+                    <h3 className="text-xl font-semibold mb-3 text-blue-700 dark:text-blue-300">🗣️ Communication</h3>
+                    <p className="text-sm leading-relaxed text-gray-700 dark:text-gray-300">{compatibility.communicationAdvice}</p>
+                  </section>
+                )}
+                {compatibility.personalityMatch && (
+                  <section className={cardClass}>
+                    <h3 className="text-xl font-semibold mb-3 text-purple-700 dark:text-purple-300">🧠 Personality Match</h3>
+                    <p className="text-sm leading-relaxed text-gray-700 dark:text-gray-300">{compatibility.personalityMatch}</p>
+                  </section>
+                )}
+                {compatibility.zodiacCompatibility && (
+                  <section className={cardClass}>
+                    <h3 className="text-xl font-semibold mb-3 text-indigo-700 dark:text-indigo-300">🌟 Zodiac</h3>
+                    <p className="text-sm leading-relaxed text-gray-700 dark:text-gray-300">{compatibility.zodiacCompatibility}</p>
+                  </section>
+                )}
+              </div>
+            )}
+
+            <section className={cardClass}>
+              <h3 className="text-xl font-semibold mb-3 text-pink-700 dark:text-pink-300">🔮 Long-term Potential</h3>
+              <p className="text-sm leading-relaxed text-gray-700 dark:text-gray-300">{compatibility.longTermPotential}</p>
+            </section>
+
+            <ListCard title="💡 Relationship Tips" items={compatibility.relationshipTips} titleClass="text-amber-700 dark:text-amber-300" dotClass="text-amber-600 dark:text-amber-400" />
+
+            <section className={cardClass}>
+              <h3 className="text-xl font-semibold mb-4 text-teal-700 dark:text-teal-300">🎯 Date Ideas</h3>
+              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {compatibility.dateIdeas.map((idea) => (
+                  <li key={idea} className="bg-gray-50 dark:bg-white/5 p-3 rounded-lg border border-gray-200 dark:border-white/10 text-sm font-medium text-gray-800 dark:text-gray-200">
+                    {idea}
+                  </li>
+                ))}
+              </ul>
+            </section>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <ListCard title="🤝 Conflict Resolution" items={compatibility.conflictResolution} titleClass="text-indigo-700 dark:text-indigo-300" dotClass="text-indigo-600 dark:text-indigo-400" />
+              <ListCard title="🌱 Areas to Grow" items={compatibility.improvementAreas} titleClass="text-green-700 dark:text-green-300" dotClass="text-green-600 dark:text-green-400" />
+            </div>
+
+            <p className="text-xs text-center text-gray-500 dark:text-gray-400">
+              Calculated in your browser from the answers above. For entertainment and reflection only - no quiz can predict a relationship.
+            </p>
+
+            <div className="flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={handleDownload}
+                className="min-h-[44px] px-4 py-2 rounded-lg font-medium text-white bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 focus:outline-none focus:ring-2 focus:ring-green-500/50"
               >
                 📊 Download Report
-              </Button>
+              </button>
               <Button
-                onClick={() => setCompatibility(null)}
+                type="button"
                 variant="outline"
+                onClick={() => {
+                  setCompatibility(null);
+                  window.requestAnimationFrame(() => name1Ref.current?.focus());
+                }}
+                className="min-h-[44px]"
               >
+                ✏️ Edit Answers
+              </Button>
+              <Button type="button" variant="outline" onClick={resetForm} className="min-h-[44px]">
                 🔄 New Analysis
               </Button>
             </div>
           </div>
-        )}
-
-        {/* Loading State */}
-        {isAnalyzing && (
-          <Card className="bg-pink-50 dark:bg-pink-900/20 border-pink-200 dark:border-pink-800">
-            <CardContent className="p-8 text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-600 mx-auto mb-4"></div>
-              <h3 className="text-lg font-semibold mb-2 dark:text-white">💖 Analyzing Compatibility...</h3>
-              <p className="text-gray-600 dark:text-gray-400">Calculating cosmic connections and personality matches</p>
-            </CardContent>
-          </Card>
         )}
       </div>
     </ToolWrapper>

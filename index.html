@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Aivello - 40+ Free AI-Powered Tools, No Signup Needed</title>
+
+    <!--
+      Applies the saved theme before first paint.
+
+      This MUST stay inline and MUST stay above the stylesheet. ThemeContext also
+      sets these, but it only runs after React mounts, which is after the browser
+      has already painted - so dark-mode users saw a white flash on every load.
+      Keep this in sync with src/context/ThemeContext.tsx.
+    -->
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var theme = (stored === 'light' || stored === 'dark' || stored === 'system') ? stored : 'system';
+                var resolved = theme === 'system'
+                    ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+                    : theme;
+                document.documentElement.classList.add(resolved);
+                document.documentElement.style.colorScheme = resolved;
+            } catch (e) {
+                // localStorage can throw in private mode / blocked-cookie contexts.
+                // Falling through leaves the light default, which is safe.
+            }
+        })();
+    </script>
+
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.json" />
+
+    <meta name="description" content="Aivello offers 40+ free tools: PDF to Word, PDF merge, image converter, QR codes, grammar checker, resume builder, JSON formatter and more. No signup needed." />
+    <meta name="keywords" content="AI tools, free online tools, PDF to Word, PDF merge, image converter, QR code generator, grammar checker, resume builder, JSON formatter, background remover, word counter" />
+    <link rel="canonical" href="https://aivello.vercel.app/" />
+
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <meta name="author" content="Aivello" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+
+    <!-- Theme and PWA. Values come from the logo gradient (see tailwind.config.js). -->
+    <meta name="theme-color" content="#8139f2" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#111827" media="(prefers-color-scheme: dark)" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Aivello" />
+    <meta name="mobile-web-app-capable" content="yes" />
+
+    <!-- Fonts: non-blocking. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=optional" media="print" onload="this.media='all'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=optional" /></noscript>
+    <link rel="dns-prefetch" href="https://identitytoolkit.googleapis.com" />
+    <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="Aivello - Free AI Tools for Everyday Work" />
+    <meta property="og:description" content="Resume Builder, Grammar Checker, PDF tools, image tools, developer utilities and more - all free, right in your browser." />
+    <!-- Absolute URL required: crawlers do not resolve relative og:image paths. -->
+    <meta property="og:image" content="https://aivello.vercel.app/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Aivello - Free AI-powered tools for everyday work" />
+    <meta property="og:url" content="https://aivello.vercel.app/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Aivello" />
+    <meta property="og:locale" content="en_US" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@aivello" />
+    <meta name="twitter:title" content="Aivello - Free AI Tools for Everyday Work" />
+    <meta name="twitter:description" content="Resume Builder, Grammar Checker, PDF tools, image tools, developer utilities and more - all free, right in your browser." />
+    <meta name="twitter:image" content="https://aivello.vercel.app/og-image.png" />
+
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "Aivello",
+      "url": "https://aivello.vercel.app",
+      "description": "Free AI-powered tools for everyday productivity tasks",
+      "publisher": {
+        "@type": "Organization",
+        "name": "Aivello",
+        "logo": "https://aivello.vercel.app/icons/icon-512.png"
+      }
+    }
+    </script>
+
+    <!-- AdSense site ownership (verification no longer needs the ad script itself). -->
+    <meta name="google-adsense-account" content="ca-pub-2807800939240640" />
+
+    <!--
+      Google Analytics + AdSense, loaded off the critical path.
+
+      Together they cost ~900ms of main-thread time on a mid-range phone, which was
+      most of the landing page's Total Blocking Time. gtag() calls are queued in
+      dataLayer immediately, so no events are lost while the scripts load:
+        - gtag.js loads when the browser is idle, ~2.5s after the page has loaded;
+        - adsbygoogle.js loads on the first user interaction (or after 8s).
+    -->
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+        gtag('js', new Date());
+        gtag('config', 'G-HT07LRHYC5');
+
+        (function () {
+            function load(src, attrs) {
+                var s = document.createElement('script');
+                s.async = true;
+                s.src = src;
+                if (attrs && attrs.crossOrigin) s.crossOrigin = attrs.crossOrigin;
+                document.head.appendChild(s);
+            }
+            var idle = window.requestIdleCallback || function (cb) { return setTimeout(cb, 1500); };
+            window.addEventListener('load', function () {
+                setTimeout(function () {
+                    idle(function () { load('https://www.googletagmanager.com/gtag/js?id=G-HT07LRHYC5'); }, { timeout: 4000 });
+                }, 2500);
+            });
+
+            var adsLoaded = false;
+            var events = ['pointerdown', 'keydown', 'scroll', 'touchstart'];
+            function loadAds() {
+                if (adsLoaded) return;
+                adsLoaded = true;
+                events.forEach(function (e) { window.removeEventListener(e, loadAds, { passive: true }); });
+                load('https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2807800939240640', { crossOrigin: 'anonymous' });
+            }
+            events.forEach(function (e) { window.addEventListener(e, loadAds, { passive: true, once: true }); });
+            setTimeout(loadAds, 8000);
+        })();
+    </script>
+
+</head>
+
+<body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root"></div>
+    <script type="module" src="/src/index.tsx"></script>
+</body>
+
+</html>

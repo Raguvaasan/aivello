@@ -1,546 +1,412 @@
-import React, { useState } from 'react';
+import React, { useEffect, useId, useRef, useState } from 'react';
+import toast from 'react-hot-toast';
 import { Button } from '../components/ui/button';
-import { Card, CardContent } from '../components/ui/card';
 import { Input } from '../components/ui/input';
 import { ToolWrapper } from '../components/common/ToolWrapper';
+import { useToolTracking } from '../hooks/useToolTracking';
+import {
+  ANSWER_OPTIONS,
+  Answers,
+  PersonalInfo,
+  PersonalityProfile,
+  QUESTIONS,
+  TRAITS,
+  allAnswered,
+  buildProfile,
+  downloadProfileReport,
+  validateAge,
+} from './lib/aiPersonalityAnalyzer';
 
-interface PersonalityProfile {
-  type: string;
-  description: string;
-  strengths: string[];
-  weaknesses: string[];
-  careerSuggestions: string[];
-  relationshipCompatibility: string[];
-  personalityTraits: {
-    openness: number;
-    conscientiousness: number;
-    extraversion: number;
-    agreeableness: number;
-    neuroticism: number;
-  };
-  developmentAreas: string[];
-  lifeAdvice: string[];
-}
+const TOOL_ID = 'ai-personality-analyzer';
+const TOOL_NAME = 'AI Personality Analyzer';
 
-interface Question {
-  id: number;
-  question: string;
-  options: string[];
-}
+type Stage = 'intro' | 'quiz' | 'results';
+
+const EMPTY_INFO: PersonalInfo = { name: '', age: '', occupation: '' };
+
+const cardClass = 'bg-white/80 dark:bg-white/10 border border-gray-200 dark:border-white/20 rounded-2xl p-4 sm:p-6';
+const labelClass = 'block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300';
+
+const LEVEL_STYLE = {
+  High: 'bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-300',
+  Moderate: 'bg-gray-100 text-gray-700 dark:bg-white/10 dark:text-gray-300',
+  Low: 'bg-pink-100 text-pink-700 dark:bg-pink-500/20 dark:text-pink-300',
+} as const;
+
+const ListCard = ({ title, items, titleClass, dotClass }: { title: string; items: string[]; titleClass: string; dotClass: string }) => (
+  <section className={cardClass}>
+    <h3 className={`text-xl font-semibold mb-4 ${titleClass}`}>{title}</h3>
+    <ul className="space-y-2">
+      {items.map((item) => (
+        <li key={item} className="flex items-start gap-2">
+          <span className={`${dotClass} mt-0.5`} aria-hidden="true">•</span>
+          <span className="text-sm text-gray-700 dark:text-gray-300">{item}</span>
+        </li>
+      ))}
+    </ul>
+  </section>
+);
 
 const AIPersonalityAnalyzer = () => {
-  const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [answers, setAnswers] = useState<Record<number, number>>({});
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [personalityProfile, setPersonalityProfile] = useState<PersonalityProfile | null>(null);
-  const [showResults, setShowResults] = useState(false);
-  const [userName, setUserName] = useState('');
-  const [userAge, setUserAge] = useState('');
-  const [userOccupation, setUserOccupation] = useState('');
+  const track = useToolTracking(TOOL_ID, TOOL_NAME);
+  const uid = useId();
 
-  const questions: Question[] = [
-    {
-      id: 1,
-      question: "You're really drawn to the counter-culture scene.",
-      options: ["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"]
-    },
-    {
-      id: 2,
-      question: "You have a vivid imagination.",
-      options: ["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"]
-    },
-    {
-      id: 3,
-      question: "You have frequent mood swings.",
-      options: ["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"]
-    },
-    {
-      id: 4,
-      question: "You don't talk a lot.",
-      options: ["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"]
-    },
-    {
-      id: 5,
-      question: "You are interested in people.",
-      options: ["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"]
-    },
-    {
-      id: 6,
-      question: "You leave your belongings around.",
-      options: ["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"]
-    },
-    {
-      id: 7,
-      question: "You are relaxed most of the time.",
-      options: ["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"]
-    },
-    {
-      id: 8,
-      question: "You take time out for others.",
-      options: ["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"]
-    },
-    {
-      id: 9,
-      question: "You are always busy.",
-      options: ["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"]
-    },
-    {
-      id: 10,
-      question: "You have excellent ideas.",
-      options: ["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"]
-    },
-    {
-      id: 11,
-      question: "You have little to say.",
-      options: ["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"]
-    },
-    {
-      id: 12,
-      question: "You have a soft heart.",
-      options: ["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"]
-    },
-    {
-      id: 13,
-      question: "You often forget to put things back in their proper place.",
-      options: ["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"]
-    },
-    {
-      id: 14,
-      question: "You get upset easily.",
-      options: ["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"]
-    },
-    {
-      id: 15,
-      question: "You do not have a good imagination.",
-      options: ["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"]
-    },
-    {
-      id: 16,
-      question: "You talk to a lot of different people at parties.",
-      options: ["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"]
-    },
-    {
-      id: 17,
-      question: "You are not really interested in others.",
-      options: ["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"]
-    },
-    {
-      id: 18,
-      question: "You like order.",
-      options: ["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"]
-    },
-    {
-      id: 19,
-      question: "You change your mood a lot.",
-      options: ["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"]
-    },
-    {
-      id: 20,
-      question: "You are quick to understand things.",
-      options: ["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"]
+  const [stage, setStage] = useState<Stage>('intro');
+  const [info, setInfo] = useState<PersonalInfo>(EMPTY_INFO);
+  const [ageError, setAgeError] = useState('');
+  const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [answers, setAnswers] = useState<Answers>({});
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [profile, setProfile] = useState<PersonalityProfile | null>(null);
+  const [error, setError] = useState('');
+  const [status, setStatus] = useState('');
+
+  const timerRef = useRef<number | null>(null);
+  const questionRef = useRef<HTMLHeadingElement>(null);
+  const resultsRef = useRef<HTMLHeadingElement>(null);
+  const ageRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => () => {
+    if (timerRef.current !== null) window.clearTimeout(timerRef.current);
+  }, []);
+
+  const focusQuestion = () => window.requestAnimationFrame(() => questionRef.current?.focus());
+
+  const startTest = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const err = validateAge(info.age);
+    setAgeError(err);
+    if (err) {
+      ageRef.current?.focus();
+      return;
     }
-  ];
+    setStage('quiz');
+    setCurrentQuestion(0);
+    focusQuestion();
+  };
+
+  const analyze = (finalAnswers: Answers) => {
+    if (!allAnswered(finalAnswers)) {
+      const firstMissing = QUESTIONS.findIndex((q) => typeof finalAnswers[q.id] !== 'number');
+      setCurrentQuestion(Math.max(0, firstMissing));
+      setError('Please answer every question before seeing your results.');
+      focusQuestion();
+      return;
+    }
+    setError('');
+    setIsAnalyzing(true);
+    setStatus('Analysing your answers…');
+    timerRef.current = window.setTimeout(() => {
+      timerRef.current = null;
+      try {
+        const result = buildProfile(finalAnswers);
+        setProfile(result);
+        setStage('results');
+        setStatus(`Your personality type is ${result.type}.`);
+        track('analyze');
+        window.requestAnimationFrame(() => resultsRef.current?.focus());
+      } catch {
+        setError('Something went wrong while analysing your answers. Please try again.');
+        setStatus('');
+      } finally {
+        setIsAnalyzing(false);
+      }
+    }, 450);
+  };
 
   const handleAnswer = (answerIndex: number) => {
-    setAnswers(prev => ({ ...prev, [currentQuestion]: answerIndex }));
-    
-    if (currentQuestion < questions.length - 1) {
-      setCurrentQuestion(prev => prev + 1);
+    if (isAnalyzing) return;
+    const question = QUESTIONS[currentQuestion];
+    // Build the next answers object here so the final question is included when analysing
+    // (reading `answers` after setState would still see the previous render's value).
+    const nextAnswers = { ...answers, [question.id]: answerIndex };
+    setAnswers(nextAnswers);
+    setError('');
+    if (currentQuestion < QUESTIONS.length - 1) {
+      setCurrentQuestion((q) => q + 1);
+      focusQuestion();
     } else {
-      analyzePersonality();
+      analyze(nextAnswers);
     }
   };
 
-  const analyzePersonality = async () => {
-    setIsAnalyzing(true);
-    try {
-      // Simulate AI analysis
-      await new Promise(resolve => setTimeout(resolve, 3000));
-
-      // Calculate personality scores based on answers
-      const scores = calculatePersonalityScores(answers);
-      const personalityType = determinePersonalityType(scores);
-      
-      const profile: PersonalityProfile = {
-        type: personalityType.type,
-        description: personalityType.description,
-        strengths: personalityType.strengths,
-        weaknesses: personalityType.weaknesses,
-        careerSuggestions: personalityType.careerSuggestions,
-        relationshipCompatibility: personalityType.relationshipCompatibility,
-        personalityTraits: scores,
-        developmentAreas: personalityType.developmentAreas,
-        lifeAdvice: personalityType.lifeAdvice
-      };
-
-      setPersonalityProfile(profile);
-      setShowResults(true);
-      alert('🎯 Personality analysis complete! Check your detailed profile below.');
-    } catch (error) {
-      console.error('Error analyzing personality:', error);
-      alert('❌ Failed to analyze personality. Please try again.');
-    } finally {
-      setIsAnalyzing(false);
+  const goBack = () => {
+    if (currentQuestion === 0) {
+      setStage('intro');
+      return;
     }
-  };
-
-  const calculatePersonalityScores = (answers: Record<number, number>) => {
-    // Big Five personality traits calculation
-    const openness = (answers[1] + answers[9] + (4 - answers[14]) + answers[19]) / 4;
-    const conscientiousness = (answers[8] + (4 - answers[5]) + (4 - answers[12]) + answers[17]) / 4;
-    const extraversion = ((4 - answers[3]) + (4 - answers[10]) + answers[15]) / 3;
-    const agreeableness = (answers[4] + (4 - answers[16]) + answers[7] + answers[11]) / 4;
-    const neuroticism = (answers[2] + answers[6] + answers[13] + answers[18]) / 4;
-
-    return {
-      openness: Math.round(openness * 25),
-      conscientiousness: Math.round(conscientiousness * 25),
-      extraversion: Math.round(extraversion * 25),
-      agreeableness: Math.round(agreeableness * 25),
-      neuroticism: Math.round(neuroticism * 25)
-    };
-  };
-
-  const determinePersonalityType = (scores: any) => {
-    const { openness, conscientiousness, extraversion, agreeableness } = scores;
-    
-    // Generate personality type based on traits
-    if (extraversion > 70 && agreeableness > 70) {
-      return {
-        type: "The Enthusiastic Leader",
-        description: "You are a natural leader who thrives on social interaction and helping others. You're optimistic, energetic, and have a talent for motivating people around you.",
-        strengths: ["Natural leadership", "Excellent communication", "Team motivation", "Positive attitude", "Networking abilities"],
-        weaknesses: ["May overcommit", "Sometimes impatient", "Difficulty with routine tasks", "Can be too trusting"],
-        careerSuggestions: ["Sales Manager", "Marketing Director", "HR Manager", "Event Coordinator", "Public Relations", "Team Leader"],
-        relationshipCompatibility: ["The Analyst", "The Supporter", "The Creator"],
-        developmentAreas: ["Time management", "Detail orientation", "Setting boundaries", "Conflict resolution"],
-        lifeAdvice: ["Focus on one goal at a time", "Develop patience", "Listen more than you speak", "Create structured routines"]
-      };
-    } else if (conscientiousness > 70 && openness > 70) {
-      return {
-        type: "The Innovative Organizer",
-        description: "You combine creativity with structure, making you excellent at bringing innovative ideas to life. You're reliable, creative, and have a strong work ethic.",
-        strengths: ["Creative problem-solving", "Strong work ethic", "Reliable execution", "Strategic thinking", "Quality focus"],
-        weaknesses: ["Perfectionism", "Overthinking", "Difficulty delegating", "Stress from high standards"],
-        careerSuggestions: ["Product Manager", "Creative Director", "Architect", "UX Designer", "Project Manager", "Entrepreneur"],
-        relationshipCompatibility: ["The Enthusiastic Leader", "The Loyal Supporter", "The Analytical Thinker"],
-        developmentAreas: ["Stress management", "Flexibility", "Delegation skills", "Work-life balance"],
-        lifeAdvice: ["Accept 'good enough' sometimes", "Take breaks regularly", "Share responsibilities", "Practice mindfulness"]
-      };
-    } else if (agreeableness > 70 && conscientiousness > 70) {
-      return {
-        type: "The Loyal Supporter",
-        description: "You are dependable, caring, and always ready to help others. You value harmony and work well in team environments where you can support others' success.",
-        strengths: ["Teamwork", "Reliability", "Empathy", "Conflict resolution", "Attention to detail"],
-        weaknesses: ["Difficulty saying no", "Avoiding conflict", "Putting others first", "Undervaluing own needs"],
-        careerSuggestions: ["Teacher", "Counselor", "Nurse", "Social Worker", "Customer Service", "Human Resources"],
-        relationshipCompatibility: ["The Enthusiastic Leader", "The Innovative Organizer", "The Analytical Thinker"],
-        developmentAreas: ["Assertiveness", "Self-advocacy", "Boundary setting", "Leadership skills"],
-        lifeAdvice: ["Learn to say no", "Prioritize self-care", "Speak up for your ideas", "Take credit for your work"]
-      };
-    } else if (openness > 70 && extraversion < 50) {
-      return {
-        type: "The Creative Thinker",
-        description: "You are imaginative, intellectual, and prefer depth over breadth. You're drawn to creative pursuits and enjoy exploring new ideas and concepts.",
-        strengths: ["Creative thinking", "Deep analysis", "Independent work", "Intellectual curiosity", "Original ideas"],
-        weaknesses: ["Social anxiety", "Procrastination", "Difficulty with routine", "Overthinking"],
-        careerSuggestions: ["Writer", "Artist", "Researcher", "Software Developer", "Psychologist", "Designer"],
-        relationshipCompatibility: ["The Analytical Thinker", "The Loyal Supporter", "The Innovative Organizer"],
-        developmentAreas: ["Social skills", "Time management", "Networking", "Practical application"],
-        lifeAdvice: ["Push yourself to network", "Set deadlines", "Share your ideas", "Balance creativity with practicality"]
-      };
-    } else {
-      return {
-        type: "The Balanced Achiever",
-        description: "You have a well-rounded personality with balanced traits. You're adaptable, practical, and can work well in various situations and with different people.",
-        strengths: ["Adaptability", "Balanced perspective", "Practical approach", "Steady performance", "Versatility"],
-        weaknesses: ["May lack specialization", "Difficulty standing out", "Indecisiveness", "Average performance"],
-        careerSuggestions: ["Business Analyst", "Operations Manager", "Consultant", "General Manager", "Coordinator"],
-        relationshipCompatibility: ["Most personality types", "Flexible with different styles"],
-        developmentAreas: ["Specialization", "Unique value proposition", "Decision-making", "Leadership"],
-        lifeAdvice: ["Identify your unique strengths", "Develop expertise in one area", "Make decisions faster", "Take on leadership roles"]
-      };
-    }
+    setCurrentQuestion((q) => q - 1);
+    focusQuestion();
   };
 
   const resetTest = () => {
+    if (timerRef.current !== null) {
+      window.clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+    setIsAnalyzing(false);
+    setStage('intro');
     setCurrentQuestion(0);
     setAnswers({});
-    setPersonalityProfile(null);
-    setShowResults(false);
-    setUserName('');
-    setUserAge('');
-    setUserOccupation('');
+    setProfile(null);
+    setError('');
+    setStatus('');
+    setInfo(EMPTY_INFO);
+    setAgeError('');
   };
 
-  const downloadReport = () => {
-    if (!personalityProfile) return;
-
-    const report = `
-AI PERSONALITY ANALYSIS REPORT
-${userName ? `Name: ${userName}` : ''}
-${userAge ? `Age: ${userAge}` : ''}
-${userOccupation ? `Occupation: ${userOccupation}` : ''}
-Generated on: ${new Date().toLocaleDateString()}
-
-PERSONALITY TYPE: ${personalityProfile.type}
-
-DESCRIPTION:
-${personalityProfile.description}
-
-PERSONALITY TRAITS:
-• Openness: ${personalityProfile.personalityTraits.openness}%
-• Conscientiousness: ${personalityProfile.personalityTraits.conscientiousness}%
-• Extraversion: ${personalityProfile.personalityTraits.extraversion}%
-• Agreeableness: ${personalityProfile.personalityTraits.agreeableness}%
-• Neuroticism: ${personalityProfile.personalityTraits.neuroticism}%
-
-STRENGTHS:
-${personalityProfile.strengths.map(s => `• ${s}`).join('\n')}
-
-AREAS FOR DEVELOPMENT:
-${personalityProfile.developmentAreas.map(a => `• ${a}`).join('\n')}
-
-CAREER SUGGESTIONS:
-${personalityProfile.careerSuggestions.map(c => `• ${c}`).join('\n')}
-
-RELATIONSHIP COMPATIBILITY:
-${personalityProfile.relationshipCompatibility.map(r => `• ${r}`).join('\n')}
-
-LIFE ADVICE:
-${personalityProfile.lifeAdvice.map(a => `• ${a}`).join('\n')}
-
----
-Report generated by AI Personality Analyzer
-`;
-
-    const blob = new Blob([report], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `personality-analysis-${userName || 'report'}.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
-    alert('📊 Personality report downloaded successfully!');
+  const handleDownload = () => {
+    if (!profile) return;
+    try {
+      downloadProfileReport(profile, info);
+      toast.success('Personality report downloaded');
+    } catch {
+      toast.error('Download failed. Please try again.');
+    }
   };
+
+  const question = QUESTIONS[currentQuestion];
+  const answeredCount = QUESTIONS.filter((q) => typeof answers[q.id] === 'number').length;
+  const progress = Math.round((answeredCount / QUESTIONS.length) * 100);
 
   return (
     <ToolWrapper
-      toolId="ai-personality-analyzer"
-      toolName="AI Personality Analyzer"
+      toolId={TOOL_ID}
+      toolName={TOOL_NAME}
       toolDescription="Discover your personality type with AI-powered analysis. Get insights into your strengths, career suggestions, and relationship compatibility."
       toolCategory="AI"
     >
-      <div className="min-h-screen bg-white dark:bg-gray-900 p-6 space-y-6">
+      <div className="relative max-w-4xl mx-auto space-y-6">
         {/* Header */}
-        <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold mb-4 text-gray-900 dark:text-white">🧠 AI Personality Analyzer</h2>
+        <div className="text-center">
+          <h2 className="text-3xl sm:text-4xl font-bold mb-3 bg-gradient-to-r from-gray-900 via-purple-700 to-pink-600 dark:from-white dark:via-purple-200 dark:to-pink-200 bg-clip-text text-transparent">
+            🧠 AI Personality Analyzer
+          </h2>
           <p className="text-gray-600 dark:text-gray-300">
-            Discover your unique personality type and get personalized insights
+            Answer {QUESTIONS.length} quick statements to discover your Big Five personality profile
           </p>
         </div>
 
-        {!showResults ? (
-          <div className="space-y-6">
-            {/* User Information */}
-            {currentQuestion === 0 && (
-              <Card className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 border-purple-200 dark:border-purple-800">
-                <CardContent className="p-6">
-                  <h3 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">👤 Personal Information (Optional)</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Name</label>
-                      <Input
-                        placeholder="Your name"
-                        value={userName}
-                        onChange={(e) => setUserName(e.target.value)}
-                        className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Age</label>
-                      <Input
-                        placeholder="Your age"
-                        value={userAge}
-                        onChange={(e) => setUserAge(e.target.value)}
-                        className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Occupation</label>
-                      <Input
-                        placeholder="Your occupation"
-                        value={userOccupation}
-                        onChange={(e) => setUserOccupation(e.target.value)}
-                        className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
-                      />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+        <p className="sr-only" aria-live="polite">{status}</p>
 
-            {/* Progress Bar */}
-            <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-gray-900 dark:text-white">Progress</span>
-                  <span className="text-sm font-medium text-gray-900 dark:text-white">{currentQuestion + 1}/{questions.length}</span>
-                </div>
-                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                  <div 
-                    className="bg-blue-600 dark:bg-blue-500 h-2 rounded-full transition-all duration-300"
-                    style={{ width: `${((currentQuestion + 1) / questions.length) * 100}%` }}
-                  />
-                </div>
-              </CardContent>
-            </Card>
+        {stage === 'intro' && (
+          <form className={cardClass} onSubmit={startTest} noValidate>
+            <h3 className="text-xl font-semibold mb-1 text-gray-900 dark:text-white">👤 About You (optional)</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+              Only used to personalise your downloadable report. Nothing is uploaded or stored.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label className={labelClass} htmlFor={`${uid}-name`}>Name</label>
+                <Input
+                  id={`${uid}-name`}
+                  placeholder="Your name"
+                  autoComplete="given-name"
+                  maxLength={60}
+                  value={info.name}
+                  onChange={(e) => setInfo((p) => ({ ...p, name: e.target.value }))}
+                />
+              </div>
+              <div>
+                <label className={labelClass} htmlFor={`${uid}-age`}>Age</label>
+                <Input
+                  id={`${uid}-age`}
+                  ref={ageRef}
+                  type="number"
+                  inputMode="numeric"
+                  min={13}
+                  max={120}
+                  placeholder="Your age"
+                  value={info.age}
+                  aria-invalid={Boolean(ageError)}
+                  aria-describedby={ageError ? `${uid}-age-error` : undefined}
+                  onChange={(e) => {
+                    setInfo((p) => ({ ...p, age: e.target.value }));
+                    if (ageError) setAgeError('');
+                  }}
+                  className={ageError ? 'ring-2 ring-red-500 dark:ring-red-400' : ''}
+                />
+                {ageError && (
+                  <p id={`${uid}-age-error`} role="alert" className="mt-1 text-sm text-red-600 dark:text-red-400">{ageError}</p>
+                )}
+              </div>
+              <div>
+                <label className={labelClass} htmlFor={`${uid}-occupation`}>Occupation</label>
+                <Input
+                  id={`${uid}-occupation`}
+                  placeholder="Your occupation"
+                  maxLength={80}
+                  value={info.occupation}
+                  onChange={(e) => setInfo((p) => ({ ...p, occupation: e.target.value }))}
+                />
+              </div>
+            </div>
+            <Button type="submit" className="mt-6 w-full sm:w-auto min-h-[48px] px-8">
+              {answeredCount > 0 ? '▶️ Continue Test' : '🚀 Start Test'}
+            </Button>
+          </form>
+        )}
+
+        {stage === 'quiz' && question && (
+          <div className="space-y-6">
+            {/* Progress */}
+            <div className={cardClass}>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-gray-900 dark:text-white">
+                  Question {currentQuestion + 1} of {QUESTIONS.length}
+                </span>
+                <span className="text-sm text-gray-600 dark:text-gray-400">{answeredCount} answered</span>
+              </div>
+              <div
+                className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2"
+                role="progressbar"
+                aria-label="Test progress"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={progress}
+              >
+                <div className="bg-gradient-to-r from-purple-600 to-pink-600 h-2 rounded-full transition-all duration-300" style={{ width: `${progress}%` }} />
+              </div>
+            </div>
 
             {/* Question */}
-            <Card className="bg-white dark:bg-gray-800 border-2 border-blue-200 dark:border-blue-800">
-              <CardContent className="p-8">
-                <div className="text-center">
-                  <h3 className="text-xl font-semibold mb-6 text-gray-900 dark:text-white">
-                    {questions[currentQuestion].question}
-                  </h3>
-                  <div className="space-y-3">
-                    {questions[currentQuestion].options.map((option, index) => (
+            <div className={`${cardClass} border-2 border-purple-200 dark:border-purple-500/30`}>
+              <div className="text-center">
+                <h3 ref={questionRef} tabIndex={-1} className="text-lg sm:text-xl font-semibold mb-6 text-gray-900 dark:text-white focus:outline-none">
+                  {question.text}
+                </h3>
+                <div className="space-y-3" role="group" aria-label="Choose how much you agree">
+                  {ANSWER_OPTIONS.map((option, index) => {
+                    const selected = answers[question.id] === index;
+                    return (
                       <button
-                        key={index}
+                        key={option}
+                        type="button"
+                        aria-pressed={selected}
+                        disabled={isAnalyzing}
                         onClick={() => handleAnswer(index)}
-                        className="w-full p-4 text-left bg-gray-50 dark:bg-gray-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 border border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-600 rounded-lg transition-colors text-gray-900 dark:text-white"
+                        className={`w-full min-h-[48px] p-3 sm:p-4 text-left rounded-lg border transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500/50 disabled:opacity-60 ${
+                          selected
+                            ? 'bg-purple-100 dark:bg-purple-500/20 border-purple-400 dark:border-purple-400/60 text-purple-900 dark:text-purple-100'
+                            : 'bg-gray-50 dark:bg-white/5 border-gray-200 dark:border-white/10 text-gray-900 dark:text-white hover:bg-purple-50 dark:hover:bg-purple-500/10 hover:border-purple-300 dark:hover:border-purple-400/40'
+                        }`}
                       >
                         {option}
                       </button>
-                    ))}
-                  </div>
+                    );
+                  })}
                 </div>
-              </CardContent>
-            </Card>
-          </div>
-        ) : (
-          /* Results */
-          <div className="space-y-6">
-            {/* Personality Type */}
-            <Card className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border-blue-200 dark:border-blue-800">
-              <CardContent className="p-6">
-                <div className="text-center">
-                  <h3 className="text-2xl font-bold mb-4 dark:text-white">{personalityProfile?.type}</h3>
-                  <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
-                    {personalityProfile?.description}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Personality Traits */}
-            <Card className="dark:bg-gray-800">
-              <CardContent className="p-6">
-                <h3 className="text-xl font-semibold mb-4 dark:text-white">📊 Personality Traits</h3>
-                <div className="space-y-4">
-                  {Object.entries(personalityProfile?.personalityTraits || {}).map(([trait, value]) => (
-                    <div key={trait} className="flex items-center space-x-4">
-                      <div className="w-32 text-sm font-medium capitalize dark:text-gray-300">{trait}</div>
-                      <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-3">
-                        <div 
-                          className="bg-blue-600 h-3 rounded-full transition-all duration-300"
-                          style={{ width: `${value}%` }}
-                        />
-                      </div>
-                      <div className="w-12 text-sm font-medium dark:text-gray-300">{value}%</div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Strengths and Development Areas */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card className="bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800">
-                <CardContent className="p-6">
-                  <h3 className="text-xl font-semibold mb-4 text-green-800 dark:text-green-300">💪 Strengths</h3>
-                  <ul className="space-y-2">
-                    {personalityProfile?.strengths.map((strength, index) => (
-                      <li key={index} className="flex items-start space-x-2">
-                        <span className="text-green-600 mt-1">•</span>
-                        <span className="text-sm">{strength}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800">
-                <CardContent className="p-6">
-                  <h3 className="text-xl font-semibold mb-4 text-orange-800 dark:text-orange-300">🎯 Development Areas</h3>
-                  <ul className="space-y-2">
-                    {personalityProfile?.developmentAreas.map((area, index) => (
-                      <li key={index} className="flex items-start space-x-2">
-                        <span className="text-orange-600 mt-1">•</span>
-                        <span className="text-sm">{area}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
+              </div>
+              {error && (
+                <p role="alert" className="mt-4 text-sm text-red-600 dark:text-red-400 text-center">{error}</p>
+              )}
+              <div className="mt-6 flex justify-between gap-3">
+                <Button type="button" variant="outline" onClick={goBack} disabled={isAnalyzing} className="min-h-[44px]">
+                  ← Back
+                </Button>
+                {typeof answers[question.id] === 'number' && currentQuestion < QUESTIONS.length - 1 && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setCurrentQuestion((q) => q + 1);
+                      focusQuestion();
+                    }}
+                    className="min-h-[44px]"
+                  >
+                    Next →
+                  </Button>
+                )}
+              </div>
             </div>
 
-            {/* Career Suggestions */}
-            <Card className="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
-              <CardContent className="p-6">
-                <h3 className="text-xl font-semibold mb-4 text-blue-800 dark:text-blue-300">🚀 Career Suggestions</h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                  {personalityProfile?.careerSuggestions.map((career, index) => (
-                    <div key={index} className="bg-white dark:bg-gray-800 p-3 rounded-lg border border-blue-200 dark:border-blue-800">
-                      <span className="text-sm font-medium dark:text-gray-300">{career}</span>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+            {isAnalyzing && (
+              <div className={`${cardClass} text-center`} role="status">
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-purple-600 dark:border-purple-400 mx-auto mb-3" aria-hidden="true" />
+                <p className="font-semibold text-gray-900 dark:text-white">Analysing your personality…</p>
+              </div>
+            )}
+          </div>
+        )}
 
-            {/* Life Advice */}
-            <Card className="bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800">
-              <CardContent className="p-6">
-                <h3 className="text-xl font-semibold mb-4 text-purple-800 dark:text-purple-300">✨ Life Advice</h3>
-                <ul className="space-y-2">
-                  {personalityProfile?.lifeAdvice.map((advice, index) => (
-                    <li key={index} className="flex items-start space-x-2">
-                      <span className="text-purple-600 mt-1">•</span>
-                      <span className="text-sm">{advice}</span>
+        {stage === 'results' && profile && (
+          <div className="space-y-6">
+            <div className={`${cardClass} text-center`}>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">{info.name.trim() ? `${info.name.trim()}, your type is` : 'Your type is'}</p>
+              <h3 ref={resultsRef} tabIndex={-1} className="text-2xl sm:text-3xl font-bold mb-4 text-gray-900 dark:text-white focus:outline-none">
+                {profile.type}
+              </h3>
+              <p className="text-gray-700 dark:text-gray-300 leading-relaxed">{profile.description}</p>
+            </div>
+
+            <section className={cardClass}>
+              <h3 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">📊 Personality Traits</h3>
+              <ul className="space-y-4">
+                {TRAITS.map((trait) => {
+                  const value = profile.scores[trait.id];
+                  const level = profile.levels[trait.id];
+                  return (
+                    <li key={trait.id}>
+                      <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
+                        <span className="text-sm font-medium text-gray-900 dark:text-white">{trait.label}</span>
+                        <span className="flex items-center gap-2">
+                          <span className={`text-xs font-medium px-2 py-0.5 rounded ${LEVEL_STYLE[level]}`}>{level}</span>
+                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300 w-10 text-right">{value}%</span>
+                        </span>
+                      </div>
+                      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3" aria-hidden="true">
+                        <div className="bg-gradient-to-r from-purple-600 to-pink-600 h-3 rounded-full transition-all duration-300" style={{ width: `${value}%` }} />
+                      </div>
+                      <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        <span>{trait.low}</span>
+                        <span>{trait.high}</span>
+                      </div>
                     </li>
-                  ))}
-                </ul>
-              </CardContent>
-            </Card>
+                  );
+                })}
+              </ul>
+            </section>
 
-            {/* Actions */}
-            <div className="flex gap-4">
-              <Button
-                onClick={downloadReport}
-                className="bg-green-600 hover:bg-green-700"
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <ListCard title="💪 Strengths" items={profile.strengths} titleClass="text-green-700 dark:text-green-300" dotClass="text-green-600 dark:text-green-400" />
+              <ListCard title="🌱 Growth Areas" items={profile.growthAreas} titleClass="text-orange-700 dark:text-orange-300" dotClass="text-orange-600 dark:text-orange-400" />
+            </div>
+
+            <section className={cardClass}>
+              <h3 className="text-xl font-semibold mb-4 text-blue-700 dark:text-blue-300">🚀 Career Suggestions</h3>
+              <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                {profile.careerSuggestions.map((career) => (
+                  <li key={career} className="bg-gray-50 dark:bg-white/5 p-3 rounded-lg border border-gray-200 dark:border-white/10 text-sm font-medium text-gray-800 dark:text-gray-200">
+                    {career}
+                  </li>
+                ))}
+              </ul>
+            </section>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <ListCard title="💞 Relationship Compatibility" items={profile.relationshipCompatibility} titleClass="text-pink-700 dark:text-pink-300" dotClass="text-pink-600 dark:text-pink-400" />
+              <ListCard title="🎯 Development Areas" items={profile.developmentAreas} titleClass="text-amber-700 dark:text-amber-300" dotClass="text-amber-600 dark:text-amber-400" />
+            </div>
+
+            <ListCard title="✨ Life Advice" items={profile.lifeAdvice} titleClass="text-purple-700 dark:text-purple-300" dotClass="text-purple-600 dark:text-purple-400" />
+
+            <p className="text-xs text-center text-gray-500 dark:text-gray-400">
+              Based on a short {QUESTIONS.length}-item Big Five style questionnaire, scored in your browser. For self-reflection only - not a clinical assessment.
+            </p>
+
+            <div className="flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={handleDownload}
+                className="min-h-[44px] px-4 py-2 rounded-lg font-medium text-white bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 focus:outline-none focus:ring-2 focus:ring-green-500/50"
               >
                 📊 Download Report
-              </Button>
-              <Button
-                onClick={resetTest}
-                variant="outline"
-              >
+              </button>
+              <Button type="button" variant="outline" onClick={resetTest} className="min-h-[44px]">
                 🔄 Take Test Again
               </Button>
             </div>
           </div>
-        )}
-
-        {/* Loading State */}
-        {isAnalyzing && (
-          <Card className="bg-blue-50 border-blue-200">
-            <CardContent className="p-8 text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-              <h3 className="text-lg font-semibold mb-2">🤖 Analyzing Your Personality...</h3>
-              <p className="text-gray-600">This may take a few moments</p>
-            </CardContent>
-          </Card>
         )}
       </div>
     </ToolWrapper>

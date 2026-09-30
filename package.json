@@ -1,88 +1,90 @@
 {
-    "name": "aivello",
-    "version": "0.1.0",
-    "private": true,
-    "dependencies": {
-        "@firebase/auth": "^1.10.8",
-        "@loadable/component": "^5.15.3",
-        "compromise": "^14.14.4",
-        "compromise-numbers": "^1.4.0",
-        "docx": "^9.5.1",
-        "file-saver": "^2.0.5",
-        "firebase": "^11.10.0",
-        "framer-motion": "^12.23.3",
-        "jspdf": "^3.0.1",
-        "pdf-lib": "^1.17.1",
-        "pdfjs-dist": "^5.4.54",
-        "qrcode.react": "^4.2.0",
-        "react": "^19.1.0",
-        "react-dom": "^19.1.0",
-        "react-hot-toast": "^2.5.2",
-        "react-icons": "^5.5.0",
-        "react-qrcode-logo": "^3.0.0",
-        "react-router-dom": "^7.6.3",
-        "react-scripts": "5.0.1",
-        "sentiment": "^5.0.2",
-        "typescript": "^4.9.5",
-        "web-vitals": "^2.1.4"
-    },
-    "scripts": {
-        "start": "react-scripts start",
-        "build": "react-scripts build",
-        "test": "react-scripts test",
-        "eject": "react-scripts eject",
-        "lint": "eslint src --ext .ts,.tsx --max-warnings 0",
-        "lint:fix": "eslint src --ext .ts,.tsx --fix",
-        "type-check": "tsc --noEmit",
-        "build:analyze": "npm run build && npx serve -s build",
-        "bundle-analyzer": "npx webpack-bundle-analyzer build/static/js/*.js",
-        "audit:security": "npm audit --audit-level moderate",
-        "precommit": "npm run lint && npm run type-check",
-        "size-limit": "npx size-limit",
-        "setup": "./scripts/setup-dev.sh",
-        "analyze": "./scripts/analyze-bundle.sh",
-        "clean": "rm -rf build node_modules/.cache",
-        "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,json,css,md}\"",
-        "format:check": "prettier --check \"src/**/*.{js,jsx,ts,tsx,json,css,md}\"",
-        "docs:serve": "npx serve docs"
-    },
-    "eslintConfig": {
-        "extends": [
-            "react-app",
-            "react-app/jest"
-        ]
-    },
-    "browserslist": {
-        "production": [
-            ">0.2%",
-            "not dead",
-            "not op_mini all"
-        ],
-        "development": [
-            "last 1 chrome version",
-            "last 1 firefox version",
-            "last 1 safari version"
-        ]
-    },
-    "devDependencies": {
-        "@tailwindcss/postcss": "^4.1.11",
-        "@testing-library/dom": "^10.4.0",
-        "@testing-library/jest-dom": "^6.6.3",
-        "@testing-library/react": "^16.3.0",
-        "@testing-library/user-event": "^13.5.0",
-        "@types/file-saver": "^2.0.7",
-        "@types/jest": "^27.5.2",
-        "@types/node": "^16.18.126",
-        "@types/react": "^19.1.8",
-        "@types/react-dom": "^19.1.6",
-        "@types/react-helmet-async": "^1.0.1",
-        "@types/react-icons": "^3.0.0",
-        "@types/react-router-dom": "^5.3.3",
-        "autoprefixer": "^10.4.21",
-        "compression-webpack-plugin": "^10.0.0",
-        "css-minimizer-webpack-plugin": "^5.0.1",
-        "image-minimizer-webpack-plugin": "^3.8.3",
-        "postcss": "^8.5.6",
-        "tailwindcss": "^3.4.1"
-    }
+  "name": "aivello",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "@firebase/auth": "^1.10.8",
+    "@loadable/component": "^5.15.3",
+    "compromise": "^14.14.4",
+    "compromise-numbers": "^1.4.0",
+    "docx": "^9.5.1",
+    "file-saver": "^2.0.5",
+    "firebase": "^11.10.0",
+    "framer-motion": "^12.23.3",
+    "jspdf": "^4.2.1",
+    "jsqr": "^1.4.0",
+    "pdf-lib": "^1.17.1",
+    "pdfjs-dist": "^5.4.54",
+    "qrcode.react": "^4.2.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-hot-toast": "^2.5.2",
+    "react-icons": "^5.5.0",
+    "react-qrcode-logo": "^3.0.0",
+    "react-router-dom": "^7.6.3",
+    "sentiment": "^5.0.2",
+    "web-vitals": "^5.3.0"
+  },
+  "scripts": {
+    "predev": "node scripts/copy-pdf-worker.js",
+    "dev": "vite",
+    "prestart": "node scripts/copy-pdf-worker.js",
+    "start": "vite",
+    "prebuild": "node scripts/copy-pdf-worker.js",
+    "build": "vite build",
+    "postbuild": "node scripts/stamp-sw-version.js",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint src api --max-warnings 0",
+    "lint:fix": "eslint src api --fix",
+    "type-check": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.api.json",
+    "audit:security": "npm audit --audit-level moderate",
+    "precommit": "npm run lint && npm run type-check && npm test",
+    "clean": "node -e \"const fs=require('fs');for(const p of ['build','coverage','node_modules/.vite'])fs.rmSync(p,{recursive:true,force:true})\"",
+    "check:bundle": "node scripts/check-bundle-size.js",
+    "verify": "npm run type-check && npm run lint && npm test && npm run build && npm run check:bundle"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "@tailwindcss/forms": "^0.5.11",
+    "@testing-library/dom": "^10.4.0",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.7",
+    "@types/file-saver": "^2.0.7",
+    "@types/node": "^24.19.0",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "@vitejs/plugin-react": "^6.1.1",
+    "@vitest/coverage-v8": "^5.0.3",
+    "autoprefixer": "^10.4.21",
+    "eslint": "^9.39.5",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.12.0",
+    "jsdom": "^29.1.1",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.71.0",
+    "vite": "^8.3.1",
+    "vitest": "^5.0.3"
+  },
+  "engines": {
+    "node": ">=20.19.0"
+  }
 }

@@ -1,220 +1,92 @@
-# Aivello - Free AI-Powered Daily Tools
+# Aivello — Free AI-Powered Tools
 
-A comprehensive web application offering 10+ free AI-powered tools for everyday productivity tasks.
+Aivello is a React 19 + TypeScript web app with **44 free tools** for documents, images, writing, code, design and everyday work. Every tool is free, needs no signup, and most run entirely in the browser, so your files never leave your device.
 
-## 🚀 Quick Start
+**Live:** https://aivello.vercel.app
 
-### Prerequisites
-- Node.js 18+ 
-- npm or yarn
-- Firebase project (for authentication)
-- Remove.bg API key (for background removal)
+## Tools
 
-### Installation
+| Category | Tools |
+|---|---|
+| Document | PDF to Word, PDF Merge & Split, AI Resume Builder |
+| Media | Image Compressor, Image Converter & Resizer, Background Remover*, YouTube Thumbnail |
+| Writing | Grammar Checker, Word Counter, Read Time Estimator, AI Text Summarizer, Case Converter, Lorem Ipsum Generator, Text Diff Checker |
+| Developer | AI Code Assistant, JSON Formatter, Base64 Converter, UUID Generator, Regex Tester, Timestamp Converter |
+| Design | Color Palette Generator, Color Contrast Checker, AI Image Generator |
+| Security | Password Generator, Hash Generator |
+| Utility | QR Code Generator, QR Code Scanner, Unit Converter, Age & Date Calculator |
+| AI / Career / Education / Content | Business Plan, Personality Analyzer, Dream Interpreter, Relationship Compatibility, Story Generator, Resume Scanner, Interview Prep, Study Notes, Video Script, Speech to Text |
+| Communication / Audio / Productivity / Marketing | AI Email Writer, Text to Speech, Language Translator, URL Shortener |
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/Raguvaasan/aivello.git
-   cd aivello
-   ```
+\* Background Remover uses the paid remove.bg API, so it requires a free account and is limited to 20 images per hour.
 
-2. **Setup development environment**
-   ```bash
-   ./scripts/setup-dev.sh
-   ```
+Tools that send data to a third party: Grammar Checker (LanguageTool), Language Translator (MyMemory), AI Image Generator (Pollinations), URL Shortener (is.gd, via our server), Background Remover (remove.bg, via our server). Everything else runs locally.
 
-3. **Configure environment variables**
-   ```bash
-   # Edit .env.local with your API keys
-   cp .env.example .env.local
-   ```
+## Quick start
 
-4. **Start development server**
-   ```bash
-   npm start
-   ```
+**Prerequisites:** Node.js **20.19+** (Vite 8 requirement), npm, a Firebase project.
 
-5. **Open your browser**
-   Navigate to `http://localhost:3000`
-
-## 📁 Project Structure
-
-```
-aivello/
-├── .github/                 # GitHub workflows and templates
-│   ├── workflows/          # CI/CD pipelines
-│   ├── ISSUE_TEMPLATE/     # Bug reports, feature requests
-│   └── copilot-instructions.md
-├── docs/                   # Comprehensive documentation
-│   ├── SECURITY.md         # Security guidelines
-│   ├── SEO_GUIDE.md        # SEO implementation
-│   └── README.md           # Documentation index
-├── public/                 # Static assets and PWA files
-├── src/                    # Source code
-│   ├── components/         # React components
-│   ├── tools/             # AI tool implementations
-│   ├── pages/             # Application pages
-│   ├── context/           # React contexts
-│   └── utils/             # Utility functions
-├── scripts/                # Development and build scripts
-├── tools/                  # Development tools (logo generators)
-└── README.md              # This file
-```
-
-## 🚀 Quick Start
-
-### 1. Clone the repository
 ```bash
 git clone https://github.com/Raguvaasan/aivello.git
 cd aivello
-```
-
-### 2. Install dependencies
-```bash
 npm install
+cp .env.example .env.local   # then fill in your Firebase web config
+npm run dev                  # http://localhost:3000
 ```
 
-### 3. Environment Setup
-```bash
-# Copy environment template
-cp .env.example .env.local
+The serverless functions in `api/` (background removal, URL shortener) only run under `vercel dev`; with plain `npm run dev` those two tools show an error, everything else works.
 
-# Edit .env.local with your API keys
-nano .env.local
-```
+### Firebase setup
 
-Required environment variables:
-```env
-REACT_APP_FIREBASE_API_KEY=your_firebase_api_key
-REACT_APP_FIREBASE_AUTH_DOMAIN=your_domain.firebaseapp.com
-REACT_APP_FIREBASE_PROJECT_ID=your_project_id
-REACT_APP_FIREBASE_STORAGE_BUCKET=your_bucket.firebasestorage.app
-REACT_APP_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
-REACT_APP_FIREBASE_APP_ID=your_app_id
-REACT_APP_FIREBASE_MEASUREMENT_ID=your_measurement_id
-REACT_APP_REMOVE_BG_API_KEY=your_remove_bg_api_key
-REACT_APP_ENV=development
-```
+1. Create a project at [console.firebase.google.com](https://console.firebase.google.com).
+2. Enable **Authentication → Google** and **GitHub** providers, and add your domains to *Authorized domains*.
+3. Create a **Firestore** database, then deploy the rules and indexes from this repo:
+   ```bash
+   firebase deploy --only firestore:rules,firestore:indexes
+   ```
 
-### 4. Firebase Setup
-1. Create a Firebase project at [console.firebase.google.com](https://console.firebase.google.com)
-2. Enable Authentication (Email/Password)
-3. Create Firestore database
-4. Add your domain to Firebase Auth authorized domains
+## Scripts
 
-### 5. Start development server
-```bash
-npm start
-```
+| Command | What it does |
+|---|---|
+| `npm run dev` / `npm start` | Vite dev server on port 3000 |
+| `npm run build` | Production build to `build/` (+ sitemap, stamped service worker) |
+| `npm run preview` | Serve the production build locally on port 4173 |
+| `npm test` | Run the Vitest suite once |
+| `npm run test:watch` | Vitest in watch mode |
+| `npm run test:coverage` | Tests with a coverage report in `coverage/` |
+| `npm run lint` | ESLint (TypeScript, React hooks, jsx-a11y) with zero warnings allowed |
+| `npm run type-check` | `tsc` for the app and for `api/` |
+| `npm run check:bundle` | Fails if initial JS exceeds the budget (run after `build`) |
+| `npm run verify` | Everything CI runs: type-check, lint, test, build, bundle budget |
 
-The app will open at [http://localhost:3000](http://localhost:3000)
+## Architecture
 
-## 📝 Available Scripts
+- **Build:** Vite 8 + `@vitejs/plugin-react`. Environment variables keep the `REACT_APP_` prefix (see `envPrefix` in `vite.config.mts`). Only prefixed variables reach the browser.
+- **Routing:** `src/routes/index.tsx`. Every tool is a lazily loaded route under `/app/<id>`; `src/data/tools.ts` is the metadata registry (sidebar, dashboard, sitemap). A test enforces that the two stay in sync.
+- **Auth:** Firebase Auth (Google/GitHub), loaded on demand: anonymous visitors to the landing page never download the auth SDK. Only `/app/history` and `/app/profile` require sign-in.
+- **Data:** Firestore `users/{uid}` (profile + theme preference) and `toolUsage` (tool id, action and timestamp only — never tool input or output). `firestore.rules` enforces per-user isolation and the exact document shape.
+- **Serverless:** `api/remove-bg.ts` (ID-token verified, rate limited) and `api/shorten.ts` (URL validation, SSRF guards, rate limited). Shared helpers in `api/_lib/`.
+- **Theme:** Tailwind `darkMode: 'class'`, light / dark / system, applied before first paint by an inline script in `index.html`. Brand colours come from the logo gradient (`tailwind.config.js`).
+- **PWA:** `public/sw.js` (cache name stamped per build), `public/manifest.json`, maskable icons.
+- **Monitoring:** errors are reported to Google Analytics as `exception` events via `src/utils/errorReporter.ts`; Core Web Vitals (LCP, INP, CLS, FCP, TTFB) are sent as events.
 
-- `npm start` - Start development server
-- `npm build` - Build for production
-- `npm test` - Run tests
-- `npm run lint` - Check code quality
-- `npm run lint:fix` - Fix linting issues
-- `npm run type-check` - TypeScript type checking
+## Adding a tool
 
-## 🏗️ Project Structure
+1. Create `src/tools/MyTool.tsx` wrapped in `<ToolWrapper toolId="my-tool" …>`. Put pure logic in `src/utils/tools/` and test it in `src/__tests__/tools/`.
+2. Call `useToolTracking('my-tool', 'My Tool')` once per completed action.
+3. Add the registry entry in `src/data/tools.ts` and the lazy route in `src/routes/index.tsx`.
+4. Support both themes (every colour needs a `dark:` pair) and associate every label with its control.
+5. Run `npm run verify`.
 
-```
-src/
-├── components/          # Reusable UI components
-│   ├── auth/           # Authentication components
-│   ├── common/         # Shared components
-│   ├── landing/        # Landing page components
-│   ├── layout/         # Layout components
-│   └── ui/            # Basic UI components
-├── tools/              # Individual tool implementations
-├── pages/              # Page components
-├── context/            # React context providers
-├── hooks/              # Custom React hooks
-├── config/             # Configuration files
-├── services/           # API services
-├── utils/              # Utility functions
-├── constants/          # Application constants
-└── types/             # TypeScript type definitions
-```
+## Deployment
 
-## 🔒 Security
+Vercel reads `vercel.json` (framework `vite`, output `build/`, SPA rewrite, security headers and CSP). Set the `REACT_APP_FIREBASE_*` variables and the server-only `REMOVE_BG_API_KEY` in *Project Settings → Environment Variables*. `public/_headers` mirrors the headers for Netlify / Cloudflare Pages.
 
-This project implements several security measures:
+## Contributing & security
 
-- Environment variables for sensitive data
-- Input validation and sanitization
-- File type and size restrictions
-- Secure Firebase configuration
-- Error handling without information leakage
+See [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md) and [.github/SECURITY.md](.github/SECURITY.md). Never prefix a secret with `REACT_APP_` or `VITE_`.
 
-See [SECURITY.md](./SECURITY.md) for detailed security guidelines.
+## License
 
-## 🚀 Deployment
-
-### Vercel (Recommended)
-1. Connect your GitHub repository to Vercel
-2. Add environment variables in Vercel dashboard
-3. Deploy automatically on push to main branch
-
-### Other Platforms
-The app can be deployed to any static hosting service:
-- Netlify
-- GitHub Pages
-- Firebase Hosting
-- AWS S3 + CloudFront
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🐛 Bug Reports
-
-If you find a bug, please open an issue with:
-- Bug description
-- Steps to reproduce
-- Expected behavior
-- Screenshots (if applicable)
-- Browser/OS information
-
-## 📞 Support
-
-- **Documentation**: Check this README and [SECURITY.md](./SECURITY.md)
-- **Issues**: GitHub Issues for bug reports and feature requests
-- **Discussions**: GitHub Discussions for questions and ideas
-
-## 🙏 Acknowledgments
-
-- [Remove.bg](https://remove.bg) for background removal API
-- [Firebase](https://firebase.google.com) for backend services
-- [Tailwind CSS](https://tailwindcss.com) for styling
-- [React](https://reactjs.org) and the amazing React ecosystem
-
----
-
-Made with ❤️ by the Aivello team
-
-### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
-
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
-
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
+MIT — see [LICENSE](LICENSE).

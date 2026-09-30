@@ -7,6 +7,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-09-30
+
+### Added
+- **13 new tools** (all client-side): PDF Merge & Split, Image Converter & Resizer, Color Contrast Checker,
+  Age & Date Calculator, Lorem Ipsum Generator, Case Converter, JSON Formatter & Validator, Base64
+  Encoder/Decoder, Hash Generator, UUID Generator, Text Diff Checker, Regex Tester, Timestamp Converter.
+- Re-enabled AI Code Assistant and AI Resume Scanner.
+- New logo (violet-to-pink `A✦` mark), favicons, PWA/maskable icons, 1200×630 social card; the Tailwind
+  `purple`/`pink` scales now match the logo gradient.
+- Real usage history: tools record metadata-only `toolUsage` events (tool, action, time); History and
+  Profile pages read them. Cross-device theme sync via `users/{uid}.preferences.theme`.
+- `api/shorten.ts` (is.gd proxy with URL validation, SSRF guards, rate limiting) and shared `api/_lib` helpers.
+- Breadcrumbs + BreadcrumbList structured data on every tool page; sitemap generated from the tool registry.
+- Centralised error reporting (GA `exception` events), stale-chunk auto-reload after deploys, Core Web
+  Vitals reporting (now INP instead of FID).
+- Dashboard search and category filters; CSS-only landing navigation; bundle budget check in CI.
+- Test suite: ~600 Vitest tests, including a smoke test that renders every tool route signed-out.
+
+### Changed
+- **Build tooling: Create React App + craco → Vite 8**, Jest → Vitest, ESLint 9 flat config with jsx-a11y.
+  `REACT_APP_*` variable names are unchanged.
+- **Tools are public** (no login required), as the project guidelines state. Only History and Profile need
+  sign-in; Background Remover asks for sign-in because it spends a paid API quota.
+- Firebase Auth is loaded on demand; the landing page no longer downloads any Firebase code. Firebase
+  Analytics/Performance replaced by the existing gtag.js.
+- Initial JavaScript: ~1.5 MB → under 400 KB.
+- Pricing page now states the truth: everything is free.
+- Firestore rules validate document shape; unused `usage_events` / `usage_history` collections closed.
+
+### Fixed
+- Light/dark theme issues across the app shell, login, profile, history, landing, pricing, legal pages and tools.
+- QR Code Scanner returned hard-coded fake results; URL Shortener produced fake links; Image Compressor
+  uploaded images to Firestore; Password Generator used `Math.random`; several tools had wrong tool ids.
+- Removed fabricated ratings from structured data (Google policy) and fake social proof.
+
+### Security
+- npm vulnerabilities: 52 → 0.
+- CSP/Permissions-Policy updated for camera (QR scanner) and the actual third-party hosts in use.
+
+## [0.x] - earlier
+
 ### Added
 - Professional project structure reorganization
 - Comprehensive GitHub workflows and templates

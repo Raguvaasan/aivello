@@ -2,8 +2,13 @@
  * API service utilities for external API calls
  */
 
-import config from '../config/environment';
 import { handleApiError, createError, logError } from '../utils/errorHandling';
+import { auth } from '../config/firebase';
+import { MAX_UPLOAD_SIZE } from '../constants/limits';
+
+// Re-exported for existing callers; the value lives in constants/limits.ts so that
+// importing it does not drag in the Firebase SDK.
+export { MAX_UPLOAD_SIZE };
 
 interface ApiRequestOptions {
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
@@ -30,10 +35,9 @@ class ApiService {
     try {
       const response = await fetch(url, {
         method,
-        headers: {
-          'Content-Type': 'application/json',
-          ...headers,
-        },
+        headers: body instanceof FormData
+          ? headers  // Let browser set Content-Type with boundary for FormData
+          : { 'Content-Type': 'application/json', ...headers },
         body,
         signal: controller.signal,
       });
@@ -41,11 +45,17 @@ class ApiService {
       clearTimeout(timeoutId);
 
       if (!response.ok) {
-        throw createError(
-          `API request failed: ${response.statusText}`,
-          'API_ERROR',
-          response.status
-        );
+        // Our API routes return { error: "..." } with a message meant for the user
+        // (rate limits, expired sessions, oversized files). Prefer it over statusText.
+        let message = `API request failed: ${response.statusText}`;
+        try {
+          const errorBody = await response.json();
+          if (errorBody?.error) message = errorBody.error;
+        } catch {
+          // Non-JSON error body; keep the generic message.
+        }
+
+        throw createError(message, 'API_ERROR', response.status);
       }
 
       // Handle different response types
@@ -57,10 +67,10 @@ class ApiService {
       } else {
         return (await response.blob()) as unknown as T;
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       clearTimeout(timeoutId);
       
-      if (error.name === 'AbortError') {
+      if (error instanceof Error && error.name === 'AbortError') {
         throw createError('Request timeout', 'TIMEOUT_ERROR', 408);
       }
       
@@ -70,32 +80,33 @@ class ApiService {
     }
   }
 
-  static async removeBg(imageFile: File): Promise<Blob> {
-    if (!config.apiKeys.removeBg) {
-      throw createError(
-        'Remove.bg API key not configured',
-        'MISSING_API_KEY',
-        500
-      );
+  /**
+   * The /api/remove-bg proxy requires a Firebase ID token: it spends a paid
+   * remove.bg quota, so it is never callable anonymously.
+   */
+  static async removeBg(imageFile: Blob, size: 'auto' | 'regular' | 'full' = 'auto'): Promise<Blob> {
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      throw createError('Please sign in to use this tool.', 'UNAUTHENTICATED', 401);
     }
+
+    // getIdToken refreshes automatically when the cached token is close to expiry.
+    const idToken = await currentUser.getIdToken();
 
     const formData = new FormData();
     formData.append('image_file', imageFile);
-    formData.append('size', 'auto');
+    formData.append('size', size);
 
-    return this.request<Blob>('https://api.remove.bg/v1.0/removebg', {
+    return this.request<Blob>('/api/remove-bg', {
       method: 'POST',
-      headers: {
-        'X-Api-Key': config.apiKeys.removeBg,
-      },
       body: formData,
+      headers: { Authorization: `Bearer ${idToken}` },
     });
   }
 
   static async validateImage(file: File): Promise<boolean> {
     return new Promise((resolve) => {
       const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-      const maxSize = 10 * 1024 * 1024; // 10MB
 
       if (!validTypes.includes(file.type)) {
         throw createError(
@@ -105,9 +116,9 @@ class ApiService {
         );
       }
 
-      if (file.size > maxSize) {
+      if (file.size > MAX_UPLOAD_SIZE) {
         throw createError(
-          'File size too large. Please upload an image smaller than 10MB.',
+          'File size too large. Please upload an image smaller than 4MB.',
           'FILE_TOO_LARGE',
           400
         );

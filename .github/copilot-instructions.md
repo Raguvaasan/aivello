@@ -13,18 +13,18 @@
   * SEO: > 90
 
 ## 🎯 Project Overview
-Aivello is a React 19 + TypeScript web application providing 10+ free AI-powered productivity tools. The project emphasizes security, performance, and responsive design across all platforms.
+Aivello is a React 19 + TypeScript web application providing 40+ free AI-powered productivity tools. The project emphasizes security, performance, and responsive design across all platforms.
 
 ## 🏗️ Architecture Guidelines
 
 ### Core Technologies
-- **Frontend**: React 19.1.0 with TypeScript 4.9.5
+- **Frontend**: React 19 with TypeScript 5.9 (strict)
 - **Styling**: Tailwind CSS 3.4.1 with dark mode support
 - **Authentication**: Firebase Auth with Google/GitHub sign-in
 - **Database**: Firestore for user data and history
 - **Routing**: React Router DOM 7.6.3
 - **Animations**: Framer Motion 12.23.3
-- **Build**: Create React App with custom Webpack config
+- **Build**: Vite 8 (`vite.config.mts`); tests with Vitest + React Testing Library; ESLint 9 flat config with jsx-a11y
 
 ### File Structure Patterns
 ```
@@ -48,7 +48,7 @@ src/
 
 ### Environment Variables
 - **ALWAYS** use environment variables for API keys and sensitive data
-- Use `REACT_APP_` prefix for client-side environment variables
+- Use `REACT_APP_` (or `VITE_`) prefix for client-side environment variables - read them via `import.meta.env`, and remember every prefixed variable is public
 - Never hardcode API keys or Firebase config in source code
 - Reference: `src/config/environment.ts` for proper implementation
 
@@ -65,7 +65,7 @@ src/
 - Add rate limiting for API-heavy operations
 
 ### Dependencies Security
-- **Priority**: Address npm security vulnerabilities (currently 11 vulnerabilities)
+- **Priority**: Keep `npm audit --omit=dev` at zero high/critical (CI enforces `--audit-level=high`)
 - Regularly audit dependencies with `npm audit`
 - Keep React and core dependencies updated
 - Remove unused dependencies to reduce attack surface
@@ -222,7 +222,7 @@ const ToolComponent: React.FC<ToolProps> = () => {
 
 ### Build Optimization
 - Ensure `npm run build` completes without warnings
-- Analyze bundle with `npm run build:analyze`
+- Check the bundle budget with `npm run check:bundle` (runs in CI)
 - Configure proper environment variables for production
 - Test production build locally before deployment
 
@@ -297,16 +297,17 @@ const ToolComponent: React.FC<ToolProps> = () => {
 
 ```bash
 # Development
-npm start                 # Start development server
+npm run dev              # Start development server (Vite, port 3000)
 npm run build            # Production build
-npm run test            # Run tests
-npm audit               # Check security vulnerabilities
-npm run lint            # Lint code
-npm run type-check      # TypeScript checking
+npm test                 # Run tests (Vitest)
+npm audit --omit=dev     # Check production dependency vulnerabilities
+npm run lint             # Lint code (zero warnings)
+npm run type-check       # TypeScript checking (app + api)
+npm run verify           # Everything CI runs
 
 # Performance Analysis
-npm run build:analyze   # Analyze bundle size
-npx lighthouse http://localhost:3000 # Performance audit
+npm run check:bundle     # Initial JS budget (after build)
+npm run preview && npx lighthouse http://localhost:4173 # Performance audit
 ```
 
 Remember: Always prioritize security, performance, and user experience in that order. When in doubt, refer to the existing codebase patterns and this guide.

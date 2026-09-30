@@ -1,4 +1,4 @@
-import { Timestamp } from '@firebase/firestore';
+import { Timestamp } from 'firebase/firestore';
 
 export interface UserData {
   uid: string;
@@ -8,19 +8,8 @@ export interface UserData {
   createdAt: Timestamp;
   lastLogin: Timestamp;
   preferences?: {
-    theme: 'light';
-    notifications: boolean;
-  }
-}
-
-export interface ToolUsage {
-  uid: string;
-  toolId: string;
-  timestamp: Timestamp;
-  duration: number;
-  metadata: {
-    inputSize?: number;
-    outputSize?: number;
-    success: boolean;
+    // Was typed as the literal 'light', so this field could never hold the value a
+    // user actually picked. Matches the Theme union in context/ThemeContext.tsx.
+    theme: 'light' | 'dark' | 'system';
   }
 }

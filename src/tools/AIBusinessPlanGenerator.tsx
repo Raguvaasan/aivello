@@ -1,597 +1,439 @@
-import React, { useState } from 'react';
+import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
+import toast from 'react-hot-toast';
 import { Textarea } from '../components/ui/textarea';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { ToolWrapper } from '../components/common/ToolWrapper';
+import { useToolTracking } from '../hooks/useToolTracking';
+import {
+  BUDGET_OPTIONS,
+  BusinessPlan,
+  BusinessPlanErrors,
+  BusinessPlanInput,
+  IDEA_MIN_LENGTH,
+  INDUSTRIES,
+  SectionId,
+  TIMEFRAME_OPTIONS,
+  businessPlanToText,
+  downloadTextFile,
+  generateBusinessPlan,
+  toFileSlug,
+  validateBusinessPlanInput,
+} from './lib/aiBusinessPlanGenerator';
 
-interface BusinessPlan {
-  executiveSummary: string;
-  marketAnalysis: string;
-  competitorAnalysis: string;
-  marketingStrategy: string;
-  financialProjections: string;
-  operationalPlan: string;
-  riskAssessment: string;
-  fundingRequirements: string;
-}
+const TOOL_ID = 'ai-business-plan-generator';
+const TOOL_NAME = 'AI Business Plan Generator';
+
+const EMPTY_INPUT: BusinessPlanInput = {
+  businessName: '',
+  industry: '',
+  businessIdea: '',
+  targetMarket: '',
+  budgetRange: '',
+  timeframe: '',
+};
+
+const cardClass = 'bg-white/80 dark:bg-white/10 border border-gray-200 dark:border-white/20 rounded-2xl p-4 sm:p-6';
+const labelClass = 'block text-sm font-medium text-purple-700 dark:text-purple-300 mb-2';
+const selectClass =
+  'w-full min-h-[44px] px-4 py-3 rounded-xl bg-white dark:bg-gray-800/60 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50';
+const optionClass = 'bg-white dark:bg-gray-800';
+const errorTextClass = 'mt-1 text-sm text-red-600 dark:text-red-400';
+// A ring rather than a border colour, so it never competes with the primitives' own border classes.
+const invalidClass = 'ring-2 ring-red-500 dark:ring-red-400';
+
+const FEATURES = [
+  { icon: '🎯', title: 'Market Analysis', text: 'Industry trends and a sizing worksheet for your target market' },
+  { icon: '💰', title: 'Financial Projections', text: '3-year model scaled to your budget and industry margins' },
+  { icon: '🏆', title: 'Competitive Analysis', text: 'Typical competitor types and where you can win' },
+  { icon: '📈', title: 'Marketing Strategy', text: 'Channels and budget split tailored to your idea' },
+  { icon: '⚙️', title: 'Operations Plan', text: 'Roles, processes and milestones for your timeframe' },
+  { icon: '📊', title: 'Risk Assessment', text: 'Industry, model and runway risks with mitigations' },
+];
 
 const AIBusinessPlanGenerator = () => {
-  const [businessIdea, setBusinessIdea] = useState('');
-  const [businessName, setBusinessName] = useState('');
-  const [industry, setIndustry] = useState('');
-  const [targetMarket, setTargetMarket] = useState('');
-  const [budgetRange, setBudgetRange] = useState('');
-  const [timeframe, setTimeframe] = useState('');
-  const [businessPlan, setBusinessPlan] = useState<BusinessPlan | null>(null);
+  const track = useToolTracking(TOOL_ID, TOOL_NAME);
+  const uid = useId();
+  const ids = {
+    name: `${uid}-name`,
+    industry: `${uid}-industry`,
+    market: `${uid}-market`,
+    budget: `${uid}-budget`,
+    timeframe: `${uid}-timeframe`,
+    idea: `${uid}-idea`,
+    panel: `${uid}-panel`,
+    panelHeading: `${uid}-panel-heading`,
+  };
+
+  const [form, setForm] = useState<BusinessPlanInput>(EMPTY_INPUT);
+  const [errors, setErrors] = useState<BusinessPlanErrors>({});
+  const [generateError, setGenerateError] = useState('');
+  const [plan, setPlan] = useState<BusinessPlan | null>(null);
+  const [planInput, setPlanInput] = useState<BusinessPlanInput | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [activeSection, setActiveSection] = useState('executive-summary');
+  const [activeSection, setActiveSection] = useState<SectionId>('executive-summary');
+  const [status, setStatus] = useState('');
 
-  const industries = [
-    'Technology', 'Healthcare', 'Finance', 'E-commerce', 'Education', 'Food & Beverage',
-    'Real Estate', 'Manufacturing', 'Entertainment', 'Consulting', 'Agriculture', 'Energy'
-  ];
+  const timerRef = useRef<number | null>(null);
+  const resultsRef = useRef<HTMLDivElement>(null);
+  const fieldRefs = {
+    businessName: useRef<HTMLInputElement>(null),
+    industry: useRef<HTMLSelectElement>(null),
+    businessIdea: useRef<HTMLTextAreaElement>(null),
+  };
 
-  const generateBusinessPlan = async () => {
-    if (!businessIdea.trim() || !businessName.trim()) {
-      alert('Please provide at least a business idea and name');
+  useEffect(() => () => {
+    if (timerRef.current !== null) window.clearTimeout(timerRef.current);
+  }, []);
+
+  const updateField = <K extends keyof BusinessPlanInput>(key: K, value: BusinessPlanInput[K]) => {
+    setForm((prev) => ({ ...prev, [key]: value }));
+    if (key in errors) {
+      setErrors((prev) => {
+        const next = { ...prev };
+        delete next[key as keyof BusinessPlanErrors];
+        return next;
+      });
+    }
+  };
+
+  const inputsChanged = useMemo(
+    () => Boolean(plan && planInput && JSON.stringify(planInput) !== JSON.stringify(form)),
+    [plan, planInput, form]
+  );
+
+  const active = useMemo(
+    () => plan?.sections.find((s) => s.id === activeSection) ?? plan?.sections[0] ?? null,
+    [plan, activeSection]
+  );
+
+  const handleGenerate = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (isGenerating) return;
+    const nextErrors = validateBusinessPlanInput(form);
+    setErrors(nextErrors);
+    setGenerateError('');
+    const firstInvalid = (['businessName', 'industry', 'businessIdea'] as const).find((k) => nextErrors[k]);
+    if (firstInvalid) {
+      fieldRefs[firstInvalid].current?.focus();
       return;
     }
 
     setIsGenerating(true);
+    setStatus('Generating business plan…');
+    const snapshot = { ...form };
+    timerRef.current = window.setTimeout(() => {
+      timerRef.current = null;
+      try {
+        const result = generateBusinessPlan(snapshot);
+        setPlan(result);
+        setPlanInput(snapshot);
+        setActiveSection('executive-summary');
+        setStatus(`Business plan for ${result.businessName} generated with ${result.sections.length} sections.`);
+        track('generate');
+        window.requestAnimationFrame(() => resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+      } catch {
+        setGenerateError('Something went wrong while building your plan. Please try again.');
+        setStatus('');
+      } finally {
+        setIsGenerating(false);
+      }
+    }, 400);
+  };
+
+  const handleDownload = () => {
+    if (!plan) return;
     try {
-      // Simulate AI generation
-      await new Promise(resolve => setTimeout(resolve, 3000));
-
-      const plan: BusinessPlan = {
-        executiveSummary: `${businessName} is an innovative ${industry.toLowerCase()} company that addresses ${targetMarket} market needs through ${businessIdea}. 
-
-Our mission is to revolutionize the ${industry.toLowerCase()} industry by providing cutting-edge solutions that deliver exceptional value to our customers. We project significant growth potential with estimated revenues of ${budgetRange} within the first ${timeframe}.
-
-Key Success Factors:
-• Innovative product/service offering
-• Strong market demand in ${targetMarket}
-• Experienced management team
-• Scalable business model
-• Competitive pricing strategy
-
-Financial Highlights:
-• Initial investment requirement: ${budgetRange}
-• Projected break-even: ${timeframe}
-• Expected ROI: 25-40% within 3 years
-• Target market size: $10B+ globally`,
-
-        marketAnalysis: `Market Overview:
-The ${industry.toLowerCase()} industry is experiencing rapid growth, driven by technological advancement and changing consumer preferences. Our target market of ${targetMarket} represents a significant opportunity.
-
-Market Size & Growth:
-• Total Addressable Market (TAM): $50B+
-• Serviceable Available Market (SAM): $10B+
-• Serviceable Obtainable Market (SOM): $500M+
-• Annual Growth Rate: 15-25%
-
-Market Trends:
-• Increasing digital adoption
-• Growing demand for sustainable solutions
-• Rise of personalized services
-• Shift towards subscription models
-• Mobile-first consumer behavior
-
-Target Demographics:
-• Primary: ${targetMarket}
-• Age range: 25-45 years
-• Income level: $50K-$150K annually
-• Tech-savvy and early adopters
-• Value convenience and quality`,
-
-        competitorAnalysis: `Competitive Landscape:
-The ${industry.toLowerCase()} market is moderately competitive with several established players and emerging startups.
-
-Direct Competitors:
-1. Market Leader A
-   - Strengths: Brand recognition, large user base
-   - Weaknesses: High pricing, outdated technology
-   - Market share: 25%
-
-2. Competitor B
-   - Strengths: Innovation, strong marketing
-   - Weaknesses: Limited geographic reach
-   - Market share: 15%
-
-3. Competitor C
-   - Strengths: Low cost, simple interface
-   - Weaknesses: Poor customer service
-   - Market share: 10%
-
-Competitive Advantages:
-• Unique value proposition
-• Superior technology platform
-• Better customer experience
-• Competitive pricing
-• Faster time-to-market
-
-Differentiation Strategy:
-• Focus on ${businessIdea}
-• Superior customer service
-• Innovative features
-• Strategic partnerships
-• Brand positioning`,
-
-        marketingStrategy: `Marketing Mix Strategy:
-
-Product Strategy:
-• Core offering: ${businessIdea}
-• Premium features and customization
-• Continuous innovation and updates
-• Multi-platform availability
-• 24/7 customer support
-
-Pricing Strategy:
-• Competitive pricing model
-• Freemium/trial options
-• Subscription-based revenue
-• Volume discounts
-• Promotional pricing for early adopters
-
-Promotion Strategy:
-• Digital marketing campaign
-• Social media presence
-• Content marketing and SEO
-• Influencer partnerships
-• Industry events and conferences
-
-Place Strategy:
-• Online platform
-• Mobile applications
-• Partner channels
-• Direct sales team
-• International expansion
-
-Customer Acquisition:
-• Target cost per acquisition: $50-100
-• Projected customer lifetime value: $500-1000
-• Monthly growth rate: 20-30%
-• Retention rate target: 85%+
-
-Marketing Budget Allocation:
-• Digital advertising: 40%
-• Content marketing: 25%
-• Events and partnerships: 20%
-• PR and branding: 15%`,
-
-        financialProjections: `Financial Projections (3-Year):
-
-Year 1:
-• Revenue: $250K
-• Gross Margin: 70%
-• Operating Expenses: $300K
-• Net Loss: $(125K)
-• Cash Flow: $(150K)
-
-Year 2:
-• Revenue: $750K
-• Gross Margin: 75%
-• Operating Expenses: $500K
-• Net Profit: $62K
-• Cash Flow: $100K
-
-Year 3:
-• Revenue: $2M
-• Gross Margin: 80%
-• Operating Expenses: $1.2M
-• Net Profit: $400K
-• Cash Flow: $500K
-
-Key Metrics:
-• Monthly Recurring Revenue (MRR): $50K by Year 2
-• Customer Acquisition Cost (CAC): $75
-• Customer Lifetime Value (CLV): $750
-• Monthly Churn Rate: 5%
-• Gross Revenue Retention: 95%
-
-Unit Economics:
-• Average Revenue Per User (ARPU): $50/month
-• Gross Margin per Customer: $40/month
-• Payback Period: 2.5 months
-• Return on Ad Spend (ROAS): 4:1
-
-Break-even Analysis:
-• Break-even point: Month 18
-• Break-even revenue: $500K annually
-• Break-even customers: 1,000 active users`,
-
-        operationalPlan: `Operational Structure:
-
-Team Structure:
-• CEO/Founder: Strategic leadership
-• CTO: Technology development
-• CMO: Marketing and growth
-• COO: Operations and customer success
-• CFO: Finance and fundraising
-
-Key Personnel Requirements:
-• Software developers (3-5)
-• Marketing specialists (2-3)
-• Customer support (2-3)
-• Sales representatives (2-3)
-• Administrative staff (1-2)
-
-Technology Infrastructure:
-• Cloud-based platform (AWS/Azure)
-• Mobile applications (iOS/Android)
-• API integrations
-• Data analytics tools
-• Security and compliance systems
-
-Operational Processes:
-• Customer onboarding workflow
-• Quality assurance procedures
-• Customer support protocols
-• Data backup and security
-• Performance monitoring
-
-Key Performance Indicators:
-• System uptime: 99.9%
-• Response time: <2 seconds
-• Customer satisfaction: 4.5/5
-• Support ticket resolution: <24 hours
-• Feature release cycle: Monthly
-
-Scalability Plan:
-• Automated processes
-• Self-service options
-• API-first architecture
-• Microservices design
-• Global CDN deployment`,
-
-        riskAssessment: `Risk Analysis & Mitigation:
-
-Technical Risks:
-• Risk: System failures or downtime
-• Mitigation: Redundant systems, monitoring, backup plans
-• Probability: Medium | Impact: High
-
-Market Risks:
-• Risk: Market saturation or competition
-• Mitigation: Differentiation, innovation, partnerships
-• Probability: Medium | Impact: Medium
-
-Financial Risks:
-• Risk: Funding shortage or cash flow issues
-• Mitigation: Multiple funding sources, cost control
-• Probability: Medium | Impact: High
-
-Operational Risks:
-• Risk: Key personnel departure
-• Mitigation: Knowledge documentation, succession planning
-• Probability: Low | Impact: Medium
-
-Regulatory Risks:
-• Risk: Compliance changes or regulations
-• Mitigation: Legal counsel, compliance monitoring
-• Probability: Low | Impact: Medium
-
-Competitive Risks:
-• Risk: New entrants or price wars
-• Mitigation: Strong brand, customer loyalty, innovation
-• Probability: High | Impact: Medium
-
-Contingency Plans:
-• Emergency funding options
-• Alternative revenue streams
-• Pivot strategies
-• Cost reduction measures
-• Strategic partnerships`,
-
-        fundingRequirements: `Funding Strategy:
-
-Initial Capital Requirements:
-• Total funding needed: ${budgetRange}
-• Development costs: 40%
-• Marketing & sales: 30%
-• Operations & overhead: 20%
-• Working capital: 10%
-
-Funding Sources:
-1. Bootstrapping: $50K (Personal savings)
-2. Friends & Family: $100K
-3. Angel Investors: $250K
-4. Venture Capital: $500K+
-5. Government Grants: $25K
-
-Use of Funds:
-• Product development: $200K
-• Marketing campaigns: $150K
-• Team hiring: $100K
-• Infrastructure: $75K
-• Legal & compliance: $25K
-
-Funding Timeline:
-• Pre-seed: Months 1-6
-• Seed round: Months 6-12
-• Series A: Months 18-24
-• Series B: Months 30-36
-
-Investor Requirements:
-• Minimum investment: $25K
-• Expected return: 10x in 5 years
-• Board representation: Yes
-• Liquidation preference: 1x non-participating
-• Anti-dilution rights: Weighted average
-
-Exit Strategy:
-• IPO potential: 7-10 years
-• Acquisition opportunities: 3-5 years
-• Strategic partnerships: 2-3 years
-• Management buyout: 5-7 years
-
-Financial Projections for Investors:
-• Year 1: $250K revenue
-• Year 3: $2M revenue
-• Year 5: $10M revenue
-• Exit valuation: $50M+`
-      };
-
-      setBusinessPlan(plan);
-      alert('🚀 Business plan generated successfully! Review each section below.');
-    } catch (error) {
-      console.error('Error generating business plan:', error);
-      alert('❌ Failed to generate business plan. Please try again.');
-    } finally {
-      setIsGenerating(false);
+      downloadTextFile(businessPlanToText(plan), `${toFileSlug(plan.businessName, 'business')}-business-plan.txt`);
+      toast.success('Business plan downloaded');
+    } catch {
+      toast.error('Download failed. Please try again.');
     }
   };
 
-  const downloadPlan = () => {
-    if (!businessPlan) return;
-
-    const planText = `
-${businessName} - Business Plan
-Generated by AI Business Plan Generator
-
-EXECUTIVE SUMMARY
-${businessPlan.executiveSummary}
-
-MARKET ANALYSIS
-${businessPlan.marketAnalysis}
-
-COMPETITOR ANALYSIS
-${businessPlan.competitorAnalysis}
-
-MARKETING STRATEGY
-${businessPlan.marketingStrategy}
-
-FINANCIAL PROJECTIONS
-${businessPlan.financialProjections}
-
-OPERATIONAL PLAN
-${businessPlan.operationalPlan}
-
-RISK ASSESSMENT
-${businessPlan.riskAssessment}
-
-FUNDING REQUIREMENTS
-${businessPlan.fundingRequirements}
-`;
-
-    const blob = new Blob([planText], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${businessName}-business-plan.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
-    alert('📄 Business plan downloaded successfully!');
+  const handleCopySection = async () => {
+    if (!active) return;
+    try {
+      await navigator.clipboard.writeText(`${active.title}\n\n${active.content}`);
+      toast.success(`${active.title} copied`);
+    } catch {
+      toast.error('Could not access the clipboard. Select the text and copy it manually.');
+    }
   };
 
-  const sections = [
-    { id: 'executive-summary', title: '📋 Executive Summary', key: 'executiveSummary' },
-    { id: 'market-analysis', title: '📊 Market Analysis', key: 'marketAnalysis' },
-    { id: 'competitor-analysis', title: '🏆 Competitor Analysis', key: 'competitorAnalysis' },
-    { id: 'marketing-strategy', title: '📈 Marketing Strategy', key: 'marketingStrategy' },
-    { id: 'financial-projections', title: '💰 Financial Projections', key: 'financialProjections' },
-    { id: 'operational-plan', title: '⚙️ Operational Plan', key: 'operationalPlan' },
-    { id: 'risk-assessment', title: '⚠️ Risk Assessment', key: 'riskAssessment' },
-    { id: 'funding-requirements', title: '💵 Funding Requirements', key: 'fundingRequirements' }
-  ];
+  const handleReset = () => {
+    if (timerRef.current !== null) {
+      window.clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+    setIsGenerating(false);
+    setForm(EMPTY_INPUT);
+    setErrors({});
+    setGenerateError('');
+    setPlan(null);
+    setPlanInput(null);
+    setStatus('');
+  };
+
+  const describedBy = (field: keyof BusinessPlanErrors) => (errors[field] ? `${uid}-${field}-error` : undefined);
 
   return (
     <ToolWrapper
-      toolId="ai-business-plan-generator"
-      toolName="AI Business Plan Generator"
+      toolId={TOOL_ID}
+      toolName={TOOL_NAME}
       toolDescription="Generate comprehensive business plans with AI assistance. Create professional business plans for startups and investors."
       toolCategory="AI"
     >
-      <div className="min-h-screen bg-gradient-to-br from-gray-950 via-purple-950/20 to-gray-950 p-6 space-y-6">
-        {/* Background Pattern */}
-        <div 
-          className="fixed inset-0 opacity-10 pointer-events-none"
-          style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'%3E%3Cg fill-rule='evenodd'%3E%3Cg fill='%23a855f7' fill-opacity='0.1'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-          }}
-        />
+      <div className="relative max-w-6xl mx-auto space-y-6">
+        {/* Header */}
+        <div className="text-center">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold bg-gradient-to-r from-gray-900 via-purple-700 to-pink-600 dark:from-white dark:via-purple-200 dark:to-pink-200 bg-clip-text text-transparent mb-4">
+            🚀 AI Business Plan Generator
+          </h2>
+          <p className="text-base sm:text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+            Turn your business idea into a structured plan with market, marketing, financial and risk sections
+          </p>
+        </div>
 
-        <div className="relative z-10 max-w-6xl mx-auto">
-          {/* Header */}
-          <div className="text-center mb-8">
-            <h2 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-white via-purple-200 to-pink-200 bg-clip-text text-transparent mb-4">
-              🚀 AI Business Plan Generator
-            </h2>
-            <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-              Transform your business idea into a comprehensive, investor-ready business plan
-            </p>
-          </div>
-
-          {/* Input Form */}
-          <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-6 mb-8">
-            <h3 className="text-2xl font-semibold text-white mb-6 flex items-center gap-2">
-              📝 Business Information
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-              <div>
-                <label className="block text-sm font-medium text-purple-300 mb-2">Business Name *</label>
-                <Input
-                  placeholder="Enter your business name"
-                  value={businessName}
-                  onChange={(e) => setBusinessName(e.target.value)}
-                  className="bg-white/10 border-white/20 text-white placeholder-gray-400 focus:border-purple-500/50 focus:ring-purple-500/50"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-purple-300 mb-2">Industry *</label>
-                <select
-                  value={industry}
-                  onChange={(e) => setIndustry(e.target.value)}
-                  className="w-full p-3 bg-white/10 border border-white/20 rounded-lg text-white focus:border-purple-500/50 focus:ring-purple-500/50 focus:outline-none"
-                >
-                  <option value="" className="bg-gray-800 text-white">Select Industry</option>
-                  {industries.map(ind => (
-                    <option key={ind} value={ind} className="bg-gray-800 text-white">{ind}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-purple-300 mb-2">Target Market</label>
-                <Input
-                  placeholder="e.g., Small businesses, millennials, healthcare professionals"
-                  value={targetMarket}
-                  onChange={(e) => setTargetMarket(e.target.value)}
-                  className="bg-white/10 border-white/20 text-white placeholder-gray-400 focus:border-purple-500/50 focus:ring-purple-500/50"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-purple-300 mb-2">Budget Range</label>
-                <select
-                  value={budgetRange}
-                  onChange={(e) => setBudgetRange(e.target.value)}
-                  className="w-full p-3 bg-white/10 border border-white/20 rounded-lg text-white focus:border-purple-500/50 focus:ring-purple-500/50 focus:outline-none"
-                >
-                  <option value="" className="bg-gray-800 text-white">Select Budget</option>
-                  <option value="$0-$50K" className="bg-gray-800 text-white">$0 - $50K</option>
-                  <option value="$50K-$250K" className="bg-gray-800 text-white">$50K - $250K</option>
-                  <option value="$250K-$1M" className="bg-gray-800 text-white">$250K - $1M</option>
-                  <option value="$1M+" className="bg-gray-800 text-white">$1M+</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-purple-300 mb-2">Timeframe</label>
-                <select
-                  value={timeframe}
-                  onChange={(e) => setTimeframe(e.target.value)}
-                  className="w-full p-3 bg-white/10 border border-white/20 rounded-lg text-white focus:border-purple-500/50 focus:ring-purple-500/50 focus:outline-none"
-                >
-                  <option value="" className="bg-gray-800 text-white">Select Timeframe</option>
-                  <option value="6 months" className="bg-gray-800 text-white">6 months</option>
-                  <option value="1 year" className="bg-gray-800 text-white">1 year</option>
-                  <option value="2 years" className="bg-gray-800 text-white">2 years</option>
-                  <option value="3+ years" className="bg-gray-800 text-white">3+ years</option>
-                </select>
-              </div>
+        {/* Input Form */}
+        <form className={cardClass} onSubmit={handleGenerate} noValidate>
+          <h3 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+            📝 Business Information
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mb-6">
+            <div>
+              <label className={labelClass} htmlFor={ids.name}>
+                Business Name <span aria-hidden="true">*</span>
+              </label>
+              <Input
+                id={ids.name}
+                ref={fieldRefs.businessName}
+                placeholder="Enter your business name"
+                value={form.businessName}
+                maxLength={80}
+                required
+                aria-invalid={Boolean(errors.businessName)}
+                aria-describedby={describedBy('businessName')}
+                onChange={(e) => updateField('businessName', e.target.value)}
+                className={errors.businessName ? invalidClass : ''}
+              />
+              {errors.businessName && (
+                <p id={`${uid}-businessName-error`} role="alert" className={errorTextClass}>
+                  {errors.businessName}
+                </p>
+              )}
             </div>
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-purple-300 mb-2">Business Idea Description *</label>
-              <Textarea
-                placeholder="Describe your business idea in detail. What problem does it solve? What makes it unique? Who are your customers?"
-                value={businessIdea}
-                onChange={(e) => setBusinessIdea(e.target.value)}
-                className="min-h-[120px] bg-white/10 border-white/20 text-white placeholder-gray-400 focus:border-purple-500/50 focus:ring-purple-500/50"
+            <div>
+              <label className={labelClass} htmlFor={ids.industry}>
+                Industry <span aria-hidden="true">*</span>
+              </label>
+              <select
+                id={ids.industry}
+                ref={fieldRefs.industry}
+                value={form.industry}
+                required
+                aria-invalid={Boolean(errors.industry)}
+                aria-describedby={describedBy('industry')}
+                onChange={(e) => updateField('industry', e.target.value)}
+                className={`${selectClass} ${errors.industry ? invalidClass : ''}`}
+              >
+                <option value="" className={optionClass}>Select industry</option>
+                {INDUSTRIES.map((ind) => (
+                  <option key={ind} value={ind} className={optionClass}>{ind}</option>
+                ))}
+              </select>
+              {errors.industry && (
+                <p id={`${uid}-industry-error`} role="alert" className={errorTextClass}>
+                  {errors.industry}
+                </p>
+              )}
+            </div>
+            <div>
+              <label className={labelClass} htmlFor={ids.market}>Target Market</label>
+              <Input
+                id={ids.market}
+                placeholder="e.g., Small businesses, millennials, healthcare professionals"
+                value={form.targetMarket}
+                maxLength={120}
+                onChange={(e) => updateField('targetMarket', e.target.value)}
               />
             </div>
-            <Button
-              onClick={generateBusinessPlan}
-              disabled={isGenerating}
-              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white border-0 h-12 text-lg font-semibold shadow-lg shadow-purple-500/25"
-            >
-              {isGenerating ? '🤖 Generating Business Plan...' : '🚀 Generate Business Plan'}
-            </Button>
+            <div>
+              <label className={labelClass} htmlFor={ids.budget}>Starting Budget</label>
+              <select
+                id={ids.budget}
+                value={form.budgetRange}
+                onChange={(e) => updateField('budgetRange', e.target.value)}
+                className={selectClass}
+              >
+                <option value="" className={optionClass}>Select budget</option>
+                {BUDGET_OPTIONS.map((b) => (
+                  <option key={b.value} value={b.value} className={optionClass}>{b.label}</option>
+                ))}
+              </select>
+            </div>
+            <div className="md:col-span-2">
+              <label className={labelClass} htmlFor={ids.timeframe}>Target Break-even Timeframe</label>
+              <select
+                id={ids.timeframe}
+                value={form.timeframe}
+                onChange={(e) => updateField('timeframe', e.target.value)}
+                className={selectClass}
+              >
+                <option value="" className={optionClass}>Select timeframe</option>
+                {TIMEFRAME_OPTIONS.map((t) => (
+                  <option key={t.value} value={t.value} className={optionClass}>{t.label}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <div className="mb-6">
+            <label className={labelClass} htmlFor={ids.idea}>
+              Business Idea Description <span aria-hidden="true">*</span>
+            </label>
+            <Textarea
+              id={ids.idea}
+              ref={fieldRefs.businessIdea}
+              placeholder="Describe your business idea in detail. What problem does it solve? What makes it unique? Who are your customers? How will you make money?"
+              value={form.businessIdea}
+              maxLength={3000}
+              required
+              aria-invalid={Boolean(errors.businessIdea)}
+              aria-describedby={[describedBy('businessIdea'), `${uid}-idea-count`].filter(Boolean).join(' ')}
+              onChange={(e) => updateField('businessIdea', e.target.value)}
+              className={`min-h-[140px] ${errors.businessIdea ? invalidClass : ''}`}
+            />
+            <div className="flex flex-wrap items-start justify-between gap-2">
+              {errors.businessIdea ? (
+                <p id={`${uid}-businessIdea-error`} role="alert" className={errorTextClass}>
+                  {errors.businessIdea}
+                </p>
+              ) : (
+                <span />
+              )}
+              <p id={`${uid}-idea-count`} className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                {form.businessIdea.trim().length}/3000 (min {IDEA_MIN_LENGTH})
+              </p>
+            </div>
           </div>
 
+          {generateError && (
+            <p role="alert" className="mb-4 rounded-xl border border-red-200 dark:border-red-500/30 bg-red-50 dark:bg-red-500/10 p-3 text-sm text-red-700 dark:text-red-300">
+              {generateError}
+            </p>
+          )}
+
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Button
+              type="submit"
+              disabled={isGenerating}
+              aria-busy={isGenerating}
+              className="w-full sm:flex-1 min-h-[48px] text-lg font-semibold"
+            >
+              {isGenerating ? '🤖 Generating Business Plan…' : plan ? '🔄 Regenerate Business Plan' : '🚀 Generate Business Plan'}
+            </Button>
+            <Button type="button" variant="outline" onClick={handleReset} className="w-full sm:w-auto min-h-[48px]">
+              🧹 Reset
+            </Button>
+          </div>
+        </form>
+
+        <p className="sr-only" aria-live="polite">{status}</p>
+
         {/* Generated Business Plan */}
-        {businessPlan && (
-          <div className="space-y-6">
+        {plan && active && (
+          <div ref={resultsRef} className="space-y-6 scroll-mt-4">
             {/* Section Navigation */}
-            <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-2xl font-semibold text-white flex items-center gap-2">
-                  📊 Business Plan Sections
+            <div className={cardClass}>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+                <h3 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                  📊 {plan.businessName} - Business Plan
                 </h3>
-                <Button
-                  onClick={downloadPlan}
-                  className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white border-0 shadow-lg shadow-green-500/25"
+                <button
+                  type="button"
+                  onClick={handleDownload}
+                  className="min-h-[44px] px-4 py-2 rounded-lg font-medium text-white bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 shadow-lg shadow-green-500/25 focus:outline-none focus:ring-2 focus:ring-green-500/50"
                 >
-                  📄 Download Plan
-                </Button>
+                  📄 Download Plan (.txt)
+                </button>
               </div>
-              <div className="flex flex-wrap gap-3">
-                {sections.map((section) => (
-                  <button
-                    key={section.id}
-                    onClick={() => setActiveSection(section.id)}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                      activeSection === section.id
-                        ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg shadow-purple-500/25'
-                        : 'bg-white/10 text-gray-300 hover:bg-white/20 hover:text-white border border-white/20'
-                    }`}
-                  >
-                    {section.title}
-                  </button>
-                ))}
+              {inputsChanged && (
+                <p className="mb-4 rounded-lg bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 px-3 py-2 text-sm text-amber-800 dark:text-amber-300">
+                  You changed the form since this plan was generated. Click “Regenerate” to update it.
+                </p>
+              )}
+              <div className="flex flex-wrap gap-2 sm:gap-3" role="group" aria-label="Business plan sections">
+                {plan.sections.map((section) => {
+                  const isActive = section.id === active.id;
+                  return (
+                    <button
+                      key={section.id}
+                      type="button"
+                      aria-pressed={isActive}
+                      aria-controls={ids.panel}
+                      onClick={() => setActiveSection(section.id)}
+                      className={`min-h-[44px] px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500/50 ${
+                        isActive
+                          ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg shadow-purple-500/25'
+                          : 'bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/20 hover:text-gray-900 dark:hover:text-white border border-gray-200 dark:border-white/20'
+                      }`}
+                    >
+                      <span aria-hidden="true">{section.icon}</span> {section.title}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
             {/* Active Section Content */}
-            <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-6">
-              <div className="mb-6">
-                <h3 className="text-2xl font-semibold text-white mb-4">
-                  {sections.find(s => s.id === activeSection)?.title}
+            <section id={ids.panel} aria-labelledby={ids.panelHeading} className={cardClass}>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+                <h3 id={ids.panelHeading} className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-white">
+                  <span aria-hidden="true">{active.icon}</span> {active.title}
                 </h3>
+                <Button type="button" variant="outline" onClick={handleCopySection} className="min-h-[44px]">
+                  📋 Copy Section
+                </Button>
               </div>
-              <div className="bg-gray-900/50 border border-white/10 rounded-xl p-6">
-                <pre className="whitespace-pre-wrap text-sm leading-relaxed text-gray-300">
-                  {businessPlan[sections.find(s => s.id === activeSection)?.key as keyof BusinessPlan]}
+              <div className="bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl p-4 sm:p-6 overflow-x-auto">
+                <pre className="whitespace-pre-wrap break-words font-sans text-sm leading-relaxed text-gray-800 dark:text-gray-300">
+                  {active.content}
                 </pre>
               </div>
+            </section>
+
+            {/* Assumptions */}
+            <div className={cardClass}>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">🧮 Assumptions used</h3>
+              <ul className="list-disc pl-5 space-y-1 text-sm text-gray-600 dark:text-gray-300">
+                {plan.assumptions.map((a) => (
+                  <li key={a}>{a}</li>
+                ))}
+              </ul>
+              <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">
+                Generated in your browser from the details you entered. Figures are estimates for planning - verify them before sharing with investors.
+              </p>
             </div>
           </div>
         )}
 
         {/* Features */}
-        <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-6">
-          <h3 className="text-2xl font-semibold text-white mb-6 flex items-center gap-2">
+        <div className={cardClass}>
+          <h3 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
             ✨ Features
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="text-center p-4 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-all">
-              <div className="text-3xl mb-3">🎯</div>
-              <h4 className="font-semibold text-white mb-2">Market Analysis</h4>
-              <p className="text-sm text-gray-400">Comprehensive market research and analysis</p>
-            </div>
-            <div className="text-center p-4 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-all">
-              <div className="text-3xl mb-3">💰</div>
-              <h4 className="font-semibold text-white mb-2">Financial Projections</h4>
-              <p className="text-sm text-gray-400">Detailed financial forecasts and metrics</p>
-            </div>
-            <div className="text-center p-4 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-all">
-              <div className="text-3xl mb-3">🏆</div>
-              <h4 className="font-semibold text-white mb-2">Competitive Analysis</h4>
-              <p className="text-sm text-gray-400">In-depth competitor research and positioning</p>
-            </div>
-            <div className="text-center p-4 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-all">
-              <div className="text-3xl mb-3">📈</div>
-              <h4 className="font-semibold text-white mb-2">Marketing Strategy</h4>
-              <p className="text-sm text-gray-400">Complete marketing and growth plans</p>
-            </div>
-            <div className="text-center p-4 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-all">
-              <div className="text-3xl mb-3">⚙️</div>
-              <h4 className="font-semibold text-white mb-2">Operations Plan</h4>
-              <p className="text-sm text-gray-400">Operational structure and processes</p>
-            </div>
-            <div className="text-center p-4 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-all">
-              <div className="text-3xl mb-3">📊</div>
-              <h4 className="font-semibold text-white mb-2">Risk Assessment</h4>
-              <p className="text-sm text-gray-400">Risk analysis and mitigation strategies</p>
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            {FEATURES.map((f) => (
+              <div
+                key={f.title}
+                className="text-center p-4 bg-gray-50 dark:bg-white/5 rounded-xl border border-gray-200 dark:border-white/10"
+              >
+                <div className="text-3xl mb-3" aria-hidden="true">{f.icon}</div>
+                <h4 className="font-semibold text-gray-900 dark:text-white mb-2">{f.title}</h4>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{f.text}</p>
+              </div>
+            ))}
           </div>
-        </div>
         </div>
       </div>
     </ToolWrapper>

@@ -1,138 +1,80 @@
-import React, { useState } from 'react';
+import React, { useId, useMemo, useState } from 'react';
+import toast from 'react-hot-toast';
+import { FaEnvelope, FaCopy, FaMagic, FaPaperPlane, FaRedo } from 'react-icons/fa';
 import { ToolWrapper } from '../components/common/ToolWrapper';
-import { FaEnvelope, FaCopy, FaMagic } from 'react-icons/fa';
 import { IconWrapper } from '../components/common/IconWrapper';
+import { useToolTracking } from '../hooks/useToolTracking';
+import {
+  composeEmail,
+  EMAIL_TYPE_LABELS,
+  MAX_POINTS_LENGTH,
+  MAX_TOPIC_LENGTH,
+  type EmailType,
+  type ToneType,
+} from './lib/aiEmailWriter';
 
-type EmailType = 'professional' | 'marketing' | 'followup' | 'apology';
-type ToneType = 'formal' | 'casual';
+const LABEL = 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2';
+const INPUT =
+  'w-full p-3 rounded-xl bg-white dark:bg-gray-800/60 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white ' +
+  'placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500';
+
+/** Splits "Subject: ...\n\nbody" (possibly edited by the user) back into its parts. */
+const splitEmail = (full: string): { subject: string; body: string } => {
+  const match = full.match(/^\s*Subject:\s*(.*)\n?([\s\S]*)$/i);
+  return match ? { subject: match[1].trim(), body: match[2].replace(/^\n+/, '') } : { subject: '', body: full };
+};
 
 export default function AIEmailWriter() {
+  const id = useId();
+  const track = useToolTracking('ai-email-writer', 'AI Email Writer');
   const [emailType, setEmailType] = useState<EmailType>('professional');
-  const [context, setContext] = useState('');
   const [tone, setTone] = useState<ToneType>('formal');
-  const [generatedEmail, setGeneratedEmail] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [topic, setTopic] = useState('');
+  const [keyPoints, setKeyPoints] = useState('');
+  const [recipient, setRecipient] = useState('');
+  const [sender, setSender] = useState('');
+  const [output, setOutput] = useState('');
+  const [variant, setVariant] = useState(0);
+  const [error, setError] = useState<string | null>(null);
 
-  const emailTemplates: Record<EmailType, Record<ToneType, (context: string) => string>> = {
-    professional: {
-      formal: (context) => `Subject: ${context || 'Professional Inquiry'}
-
-Dear [Recipient],
-
-I hope this email finds you well. I am writing to ${context || 'discuss a matter of mutual interest'}.
-
-I would appreciate the opportunity to connect and discuss this further at your convenience. Please let me know if you would be available for a brief conversation.
-
-Thank you for your time and consideration.
-
-Best regards,
-[Your Name]`,
-      casual: (context) => `Subject: ${context || 'Quick Question'}
-
-Hi [Name],
-
-Hope you're doing well! I wanted to reach out about ${context || 'something we discussed earlier'}.
-
-Would love to chat about this when you have a moment. Let me know what works for you!
-
-Thanks,
-[Your Name]`,
-    },
-    marketing: {
-      formal: (context) => `Subject: Exciting Opportunity - ${context || 'Partnership Proposal'}
-
-Dear [Company/Name],
-
-I hope this message finds you well. I am reaching out to present an exciting opportunity that aligns with ${context || 'your business objectives'}.
-
-Our proposal offers significant value through [specific benefits]. I would welcome the chance to discuss how we can collaborate for mutual success.
-
-Please let me know if you would be interested in scheduling a brief meeting to explore this opportunity further.
-
-Best regards,
-[Your Name]
-[Your Title]`,
-      casual: (context) => `Subject: Let's Talk About ${context || 'Your Growth'}!
-
-Hey [Name]!
-
-I've been following your work and I'm impressed! I have an idea that could really help with ${context || 'your current goals'}.
-
-Want to grab coffee (virtual or real) and chat about it? I think you'll find it interesting!
-
-Cheers,
-[Your Name]`,
-    },
-    followup: {
-      formal: (context) => `Subject: Following Up - ${context || 'Our Previous Conversation'}
-
-Dear [Name],
-
-I hope you are well. I wanted to follow up on ${context || 'our previous discussion'} and see if you had any questions or needed additional information.
-
-I remain very interested in moving forward and would be happy to provide any clarification you might need.
-
-I look forward to hearing from you at your earliest convenience.
-
-Best regards,
-[Your Name]`,
-      casual: (context) => `Subject: Just Checking In!
-
-Hi [Name],
-
-Just wanted to follow up on ${context || 'what we talked about last week'}. Have you had a chance to think it over?
-
-No pressure at all - just wanted to keep it on your radar!
-
-Talk soon,
-[Your Name]`,
-    },
-    apology: {
-      formal: (context) => `Subject: Sincere Apologies - ${context || 'Recent Issue'}
-
-Dear [Name],
-
-I am writing to sincerely apologize for ${context || 'the inconvenience caused'}. I take full responsibility for this oversight and understand your frustration.
-
-To rectify this situation, I am implementing the following measures:
-- [Specific action 1]
-- [Specific action 2]
-- [Prevention measures]
-
-I value our relationship and am committed to ensuring this does not happen again. Please let me know if there is anything else I can do to address your concerns.
-
-Sincerely,
-[Your Name]`,
-      casual: (context) => `Subject: My Bad!
-
-Hey [Name],
-
-I really messed up with ${context || 'that thing we discussed'} and I wanted to apologize.
-
-I know it's frustrating and I totally get it. Here's what I'm doing to fix it: [solution].
-
-Sorry again - I'll make sure this doesn't happen again!
-
-[Your Name]`,
-    },
+  const ids = {
+    type: `${id}-type`,
+    tone: `${id}-tone`,
+    topic: `${id}-topic`,
+    topicError: `${id}-topic-error`,
+    points: `${id}-points`,
+    recipient: `${id}-recipient`,
+    sender: `${id}-sender`,
+    output: `${id}-output`,
   };
+
+  const wordCount = useMemo(() => (output.trim() ? output.trim().split(/\s+/).length : 0), [output]);
 
   const generateEmail = () => {
-    setLoading(true);
-    
-    // Simulate AI processing delay
-    setTimeout(() => {
-      const template = emailTemplates[emailType][tone];
-      const email = template(context);
-      setGeneratedEmail(email);
-      setLoading(false);
-    }, 1500);
+    if (topic.trim().length < 3) {
+      setError('Tell us what the email is about, e.g. "request a deadline extension for the Q3 report".');
+      return;
+    }
+    setError(null);
+    const email = composeEmail({ type: emailType, tone, topic, keyPoints, recipient, sender, variant });
+    setOutput(email.full);
+    setVariant((v) => v + 1);
+    track('generate');
   };
 
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(generatedEmail);
-    alert('Email copied to clipboard!');
+  const copyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(output);
+      toast.success('Email copied to clipboard');
+    } catch {
+      toast.error('Could not copy. Select the text and press Ctrl+C instead.');
+    }
   };
+
+  const mailtoHref = useMemo(() => {
+    const { subject, body } = splitEmail(output);
+    return `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  }, [output]);
 
   return (
     <ToolWrapper
@@ -141,113 +83,179 @@ Sorry again - I'll make sure this doesn't happen again!
       toolDescription="Generate professional emails instantly with AI. Perfect for business communication, follow-ups, and marketing outreach"
       toolCategory="Communication"
     >
-      <div className="max-w-4xl mx-auto">
-        <div className="bg-white dark:bg-gray-800 shadow-lg rounded-xl p-6">
+      <div className="relative max-w-5xl mx-auto">
+        <div className="bg-white/80 dark:bg-white/10 border border-gray-200 dark:border-white/20 shadow-lg dark:shadow-2xl rounded-2xl p-4 sm:p-6">
           <div className="flex items-center gap-3 mb-6">
-            <IconWrapper icon={FaEnvelope} className="text-3xl text-blue-600" />
-            <h2 className="text-2xl font-bold text-gray-800 dark:text-white">
-              AI Email Writer
-            </h2>
-            <IconWrapper icon={FaMagic} className="text-2xl text-purple-600" />
+            <IconWrapper icon={FaEnvelope} className="text-3xl text-blue-600 dark:text-blue-400 shrink-0" />
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">AI Email Writer</h2>
+            <IconWrapper icon={FaMagic} className="text-2xl text-purple-600 dark:text-purple-400 shrink-0" />
           </div>
 
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Controls */}
             <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Email Type
-                </label>
-                <select
-                  value={emailType}
-                  onChange={(e) => setEmailType(e.target.value as EmailType)}
-                  className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="professional">Professional Inquiry</option>
-                  <option value="marketing">Marketing/Sales</option>
-                  <option value="followup">Follow-up</option>
-                  <option value="apology">Apology</option>
-                </select>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className={LABEL} htmlFor={ids.type}>
+                    Email type
+                  </label>
+                  <select
+                    id={ids.type}
+                    value={emailType}
+                    onChange={(e) => setEmailType(e.target.value as EmailType)}
+                    className={INPUT}
+                  >
+                    {(Object.keys(EMAIL_TYPE_LABELS) as EmailType[]).map((t) => (
+                      <option key={t} value={t} className="bg-white dark:bg-gray-800">
+                        {EMAIL_TYPE_LABELS[t]}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className={LABEL} htmlFor={ids.tone}>
+                    Tone
+                  </label>
+                  <select id={ids.tone} value={tone} onChange={(e) => setTone(e.target.value as ToneType)} className={INPUT}>
+                    <option value="formal" className="bg-white dark:bg-gray-800">
+                      Formal
+                    </option>
+                    <option value="casual" className="bg-white dark:bg-gray-800">
+                      Casual
+                    </option>
+                  </select>
+                </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Tone
+                <label className={LABEL} htmlFor={ids.topic}>
+                  What is the email about? <span className="text-red-600 dark:text-red-400">*</span>
                 </label>
-                <select
-                  value={tone}
-                  onChange={(e) => setTone(e.target.value as ToneType)}
-                  className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="formal">Formal</option>
-                  <option value="casual">Casual</option>
-                </select>
+                <input
+                  id={ids.topic}
+                  type="text"
+                  value={topic}
+                  maxLength={MAX_TOPIC_LENGTH}
+                  onChange={(e) => {
+                    setTopic(e.target.value);
+                    if (error) setError(null);
+                  }}
+                  placeholder="e.g. request a meeting about the Q3 budget"
+                  aria-invalid={error ? true : undefined}
+                  aria-describedby={error ? ids.topicError : undefined}
+                  className={INPUT}
+                />
+                {error && (
+                  <p id={ids.topicError} role="alert" className="mt-2 text-sm text-red-600 dark:text-red-400">
+                    {error}
+                  </p>
+                )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Context/Topic
+                <label className={LABEL} htmlFor={ids.points}>
+                  Key points <span className="font-normal text-gray-500 dark:text-gray-400">(optional, one per line)</span>
                 </label>
                 <textarea
-                  value={context}
-                  onChange={(e) => setContext(e.target.value)}
-                  placeholder="e.g., Partnership proposal, Project update, Meeting request..."
-                  className="w-full h-24 p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  id={ids.points}
+                  value={keyPoints}
+                  maxLength={MAX_POINTS_LENGTH}
+                  onChange={(e) => setKeyPoints(e.target.value)}
+                  placeholder={'Marketing spend is 12% over plan\nProposal to pause two campaigns'}
+                  className={`${INPUT} h-24 resize-y`}
                 />
               </div>
 
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className={LABEL} htmlFor={ids.recipient}>
+                    Recipient name
+                  </label>
+                  <input
+                    id={ids.recipient}
+                    type="text"
+                    value={recipient}
+                    maxLength={80}
+                    onChange={(e) => setRecipient(e.target.value)}
+                    placeholder="e.g. Ms. Patel"
+                    className={INPUT}
+                  />
+                </div>
+                <div>
+                  <label className={LABEL} htmlFor={ids.sender}>
+                    Your name
+                  </label>
+                  <input
+                    id={ids.sender}
+                    type="text"
+                    value={sender}
+                    maxLength={80}
+                    onChange={(e) => setSender(e.target.value)}
+                    placeholder="e.g. Arun Kumar"
+                    autoComplete="name"
+                    className={INPUT}
+                  />
+                </div>
+              </div>
+
               <button
+                type="button"
                 onClick={generateEmail}
-                disabled={loading}
-                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-6 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-200 disabled:opacity-50 flex items-center justify-center gap-2"
+                className="w-full min-h-[44px] bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-6 rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-200 flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
               >
-                {loading ? (
-                  <>
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                    Generating...
-                  </>
-                ) : (
-                  <>
-                    <IconWrapper icon={FaMagic} />
-                    Generate Email
-                  </>
-                )}
+                <IconWrapper icon={output ? FaRedo : FaMagic} />
+                {output ? 'Regenerate Email' : 'Generate Email'}
               </button>
             </div>
 
             {/* Generated Email */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Generated Email
+            <div className="flex flex-col">
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300" htmlFor={ids.output}>
+                  Generated email {output && <span className="font-normal text-gray-500 dark:text-gray-400">(editable)</span>}
                 </label>
-                {generatedEmail && (
-                  <button
-                    onClick={copyToClipboard}
-                    className="flex items-center gap-2 px-3 py-1 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm"
-                  >
-                    <IconWrapper icon={FaCopy} />
-                    Copy
-                  </button>
+                {output && (
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={copyToClipboard}
+                      className="min-h-[44px] flex items-center gap-2 px-4 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors text-sm focus:outline-none focus:ring-2 focus:ring-green-500/50"
+                    >
+                      <IconWrapper icon={FaCopy} />
+                      Copy
+                    </button>
+                    <a
+                      href={mailtoHref}
+                      className="min-h-[44px] flex items-center gap-2 px-4 bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-white/20 rounded-xl hover:bg-gray-200 dark:hover:bg-white/20 transition-colors text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                    >
+                      <IconWrapper icon={FaPaperPlane} />
+                      Open in mail app
+                    </a>
+                  </div>
                 )}
               </div>
               <textarea
-                value={generatedEmail}
-                readOnly
-                placeholder="Your AI-generated email will appear here..."
-                className="w-full h-80 p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 font-mono text-sm resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                id={ids.output}
+                value={output}
+                onChange={(e) => setOutput(e.target.value)}
+                readOnly={!output}
+                placeholder="Your email will appear here. Fill in the topic and press Generate."
+                className={`${INPUT} flex-1 min-h-[20rem] font-mono text-sm resize-y bg-gray-50 dark:bg-gray-800/60`}
               />
+              <p aria-live="polite" className="mt-1 text-xs text-gray-500 dark:text-gray-400 min-h-[1rem]">
+                {output ? `Email ready · ${wordCount} words. Replace anything in [brackets] before sending.` : ''}
+              </p>
             </div>
           </div>
 
           {/* Tips */}
-          <div className="mt-6 p-4 bg-blue-50 dark:bg-gray-700 rounded-lg">
-            <h3 className="font-semibold text-blue-800 dark:text-blue-300 mb-2">💡 Pro Tips:</h3>
-            <ul className="text-sm text-blue-700 dark:text-blue-200 space-y-1">
-              <li>• Be specific about your context for better results</li>
-              <li>• Always personalize the recipient's name and details</li>
-              <li>• Review and edit the generated email before sending</li>
-              <li>• Adjust the tone based on your relationship with the recipient</li>
+          <div className="mt-6 p-4 bg-blue-50 dark:bg-white/5 border border-blue-100 dark:border-white/10 rounded-xl">
+            <h3 className="font-semibold text-blue-800 dark:text-blue-300 mb-2">Pro tips</h3>
+            <ul className="text-sm text-blue-700 dark:text-blue-200 space-y-1 list-disc pl-5">
+              <li>Start the topic with a verb (&ldquo;ask about&hellip;&rdquo;, &ldquo;confirm&hellip;&rdquo;) or a noun phrase (&ldquo;Q3 budget review&rdquo;).</li>
+              <li>Add key points to turn them into a clear bulleted list.</li>
+              <li>Press Regenerate for alternative wording.</li>
+              <li>Always review and personalize the email before sending.</li>
             </ul>
           </div>
         </div>

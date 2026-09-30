@@ -10,9 +10,11 @@ We love your input! We want to make contributing to Aivello as easy and transpar
    git clone https://github.com/your-username/aivello.git
    cd aivello
    ```
-3. **Setup development environment**
+3. **Setup development environment** (Node.js 20.19+)
    ```bash
-   ./scripts/setup-dev.sh
+   npm install
+   cp .env.example .env.local   # fill in your Firebase web config
+   npm run dev
    ```
 4. **Create a branch**
    ```bash
@@ -29,10 +31,8 @@ We love your input! We want to make contributing to Aivello as easy and transpar
 - Update documentation as needed
 
 ### Before Submitting
-- [ ] Run `npm run lint` and fix any issues
-- [ ] Run `npm run type-check` to verify TypeScript
-- [ ] Run `npm test` to ensure tests pass
-- [ ] Run `npm run build` to verify production build
+- [ ] Run `npm run verify` (type-check, lint with zero warnings, tests, build, bundle budget)
+- [ ] New tools: registry entry in `src/data/tools.ts` + lazy route in `src/routes/index.tsx`, both themes supported, labels associated, `useToolTracking` called on completed actions
 - [ ] Test on mobile devices
 - [ ] Update documentation if needed
 
@@ -92,7 +92,7 @@ We welcome feature suggestions! Please include:
 
 ## 🔒 Security
 
-Please review our [Security Policy](docs/SECURITY.md) before contributing.
+Please review our [Security Policy](SECURITY.md) before contributing.
 
 For security vulnerabilities, please email the maintainers privately rather than opening a public issue.
 

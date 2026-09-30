@@ -1,181 +1,130 @@
 import React from 'react';
-import { motion } from 'framer-motion';
-import { FiZap, FiArrowRight, FiPlay, FiStar } from 'react-icons/fi';
+import { Link } from 'react-router-dom';
+import { FiArrowRight, FiCheckCircle, FiGrid, FiLock, FiMoon } from 'react-icons/fi';
+import { tools } from '../../data/tools';
 import { IconWrapper } from '../common/IconWrapper';
 
-interface HeroProps {
-  onEnterApp: () => void;
-}
+/** Rounded-down tool count ("30+"), so the copy stays true as tools are added. */
+const toolCountLabel = tools.length >= 10 ? `${Math.floor(tools.length / 5) * 5}+` : String(tools.length);
 
-export const Hero: React.FC<HeroProps> = ({ onEnterApp }) => {
+const highlights = [
+  { icon: FiGrid, label: `${toolCountLabel} free tools` },
+  { icon: FiCheckCircle, label: 'No signup' },
+  { icon: FiLock, label: 'Runs in your browser' },
+  { icon: FiMoon, label: 'Light & dark mode' },
+] as const;
+
+// All four process everything locally, which the caption below relies on.
+const previewToolIds = ['pdf-to-word', 'image-compressor', 'resume-builder', 'qr-generator'];
+const previewTools = previewToolIds
+  .map((id) => tools.find((tool) => tool.id === id))
+  .filter((tool): tool is (typeof tools)[number] => Boolean(tool));
+
+const focusRing =
+  'focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-gray-950';
+
+/**
+ * Above-the-fold hero. This is the LCP section, so it is deliberately plain: no
+ * framer-motion, no entrance animation on the headline, and only two decorative
+ * blobs that animate only when the user has not asked for reduced motion.
+ */
+export const Hero: React.FC = () => {
   return (
-    <section className="relative pt-20 sm:pt-24 pb-24 sm:pb-40 overflow-hidden">
-      {/* Modern Gradient Background with Mesh */}
-      <div className="absolute inset-0 bg-gradient-to-br from-purple-100 via-pink-50 to-blue-100 dark:from-indigo-950 dark:via-purple-900 dark:to-pink-900">
-        {/* Animated Background Mesh */}
-        <div className="absolute inset-0 opacity-30">
-          <div className="absolute top-0 -left-4 w-72 h-72 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl animate-blob"></div>
-          <div className="absolute top-0 -right-4 w-72 h-72 bg-yellow-500 rounded-full mix-blend-multiply filter blur-xl animate-blob animation-delay-2000"></div>
-          <div className="absolute -bottom-8 left-20 w-72 h-72 bg-pink-500 rounded-full mix-blend-multiply filter blur-xl animate-blob animation-delay-4000"></div>
-        </div>
-        
-        {/* Grid Pattern */}
-        <div className="absolute inset-0 opacity-40">
-          <div className="absolute inset-0" style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='0.05' class='dark:fill-purple'%3E%3Ccircle cx='7' cy='7' r='1'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
-          }}></div>
-        </div>
+    <section aria-labelledby="hero-heading" className="relative isolate overflow-hidden pt-28 pb-16 sm:pt-36 sm:pb-24">
+      <div aria-hidden="true" className="absolute inset-0 -z-10">
+        <div className="absolute inset-0 bg-gradient-to-b from-purple-50 via-white to-white dark:from-purple-950/40 dark:via-gray-950 dark:to-gray-950" />
+        <div className="absolute -top-24 -left-24 h-72 w-72 rounded-full bg-purple-300/40 blur-3xl dark:bg-purple-600/20 motion-safe:animate-blob" />
+        <div className="absolute top-8 -right-24 h-72 w-72 rounded-full bg-pink-300/30 blur-3xl dark:bg-pink-600/15 motion-safe:animate-blob animation-delay-2000" />
       </div>
 
-      <div className="container mx-auto px-4 sm:px-6 relative z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, ease: "easeOut" }}
-            className="text-center lg:text-left"
-          >
-            {/* Trending Badge */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30 dark:border-purple-400/40 rounded-full px-4 py-2 mb-6 backdrop-blur-sm"
-            >
-              <IconWrapper icon={FiStar} className="w-4 h-4 text-yellow-400" />
-              <span className="text-sm font-medium text-gray-900 dark:text-purple-400">20+ AI Tools • Free Forever</span>
-            </motion.div>
+      <div className="container mx-auto px-4 sm:px-6">
+        <div className="grid grid-cols-1 items-start gap-12 lg:grid-cols-2 lg:gap-16">
+          <div className="text-center lg:text-left">
+            <p className="mb-6 inline-flex items-center gap-2 rounded-full border border-purple-200 bg-white/80 px-4 py-2 text-sm font-medium text-purple-700 dark:border-purple-400/30 dark:bg-white/5 dark:text-purple-300">
+              <span aria-hidden="true" className="h-2 w-2 rounded-full bg-gradient-to-r from-purple-600 to-pink-600" />
+              {toolCountLabel} tools &middot; Free forever
+            </p>
 
-            {/* Main Headline with Gradient Text */}
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black mb-6 leading-[1.1]">
-              <span className="bg-gradient-to-r from-purple-600 via-blue-600 to-pink-600 dark:from-purple-400 dark:via-purple-200 dark:to-pink-200 bg-clip-text text-transparent">
-                AI-Powered
-              </span>
-              <br />
-              <span className="text-gray-900 dark:text-white">
-                Productivity
-              </span>
-              <br />
-              <span className="bg-gradient-to-r from-purple-600 via-pink-600 to-yellow-500 dark:from-purple-400 dark:via-pink-400 dark:to-yellow-400 bg-clip-text text-transparent">
-                Revolution
+            <h1
+              id="hero-heading"
+              className="mb-6 text-4xl font-black leading-[1.1] tracking-tight text-gray-900 dark:text-white sm:text-5xl lg:text-6xl"
+            >
+              Free AI &amp; productivity tools{' '}
+              <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent dark:from-purple-400 dark:to-pink-400">
+                right in your browser
               </span>
             </h1>
 
-            {/* Modern Subtitle */}
-            <p className="text-lg sm:text-xl text-gray-700 dark:text-gray-300 mb-8 leading-relaxed max-w-2xl mx-auto lg:mx-0">
-              Transform your workflow with our suite of cutting-edge AI tools. From content creation to business automation — all in one platform, completely free.
+            <p className="mx-auto mb-8 max-w-2xl text-lg leading-relaxed text-gray-600 dark:text-gray-300 sm:text-xl lg:mx-0">
+              Convert PDFs, compress images, build a resume, check grammar and more. No account needed, and most
+              tools process your files on your device, so they never leave it.
             </p>
 
-            {/* Modern CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 items-center justify-center lg:justify-start">
-              <motion.button
-                whileHover={{ scale: 1.05, y: -2 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={onEnterApp}
-                className="group relative overflow-hidden bg-gradient-to-r from-purple-600 to-pink-600 text-white px-8 py-4 rounded-2xl font-semibold shadow-2xl shadow-purple-500/25 hover:shadow-purple-500/40 transition-all duration-300 min-w-[200px]"
+            <div className="flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center lg:justify-start">
+              <Link
+                to="/app"
+                className={`group inline-flex min-h-[48px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-purple-600 to-pink-600 px-8 py-3 font-semibold text-white shadow-lg shadow-purple-500/25 transition-all hover:-translate-y-0.5 hover:shadow-purple-500/40 ${focusRing}`}
               >
-                <span className="relative z-10 flex items-center gap-2">
-                  <IconWrapper icon={FiZap} className="w-5 h-5" />
-                  Start Creating Now
-                  <IconWrapper icon={FiArrowRight} className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </span>
-                <div className="absolute inset-0 bg-gradient-to-r from-pink-600 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              </motion.button>
-
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={onEnterApp}
-                className="group flex items-center gap-2 text-gray-900 dark:text-purple-400 px-6 py-4 rounded-2xl font-medium border border-gray-300 dark:border-purple-500/20 hover:border-gray-400 dark:hover:border-purple-500/40 bg-white/60 dark:bg-white/5 hover:bg-white/80 dark:hover:bg-white/10 backdrop-blur-sm transition-all duration-300 min-w-[200px] justify-center"
+                Browse all tools
+                <IconWrapper icon={FiArrowRight} className="h-5 w-5 transition-transform group-hover:translate-x-1" />
+              </Link>
+              <a
+                href="#popular-tools"
+                className={`inline-flex min-h-[48px] items-center justify-center rounded-2xl border border-gray-300 bg-white/80 px-8 py-3 font-semibold text-gray-900 transition-colors hover:border-purple-300 hover:text-purple-700 dark:border-white/15 dark:bg-white/5 dark:text-white dark:hover:border-purple-400/50 dark:hover:text-purple-200 ${focusRing}`}
               >
-                <IconWrapper icon={FiPlay} className="w-4 h-4" />
-                Watch Demo
-              </motion.button>
+                See popular tools
+              </a>
             </div>
 
-            {/* Social Proof */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.8 }}
-              className="mt-12 flex items-center gap-8 justify-center lg:justify-start text-sm text-gray-600 dark:text-gray-400"
-            >
-              <div className="flex items-center gap-2">
-                <div className="flex -space-x-2">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-r from-purple-400 to-pink-400 border-2 border-white dark:border-gray-900"></div>
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-400 to-purple-400 border-2 border-white dark:border-gray-900"></div>
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-r from-green-400 to-blue-400 border-2 border-white dark:border-gray-900"></div>
-                </div>
-                <span>10K+ Users</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <span className="text-yellow-400">★★★★★</span>
-                <span>4.9/5 Rating</span>
-              </div>
-            </motion.div>
-          </motion.div>
+            <ul className="mx-auto mt-10 grid max-w-md grid-cols-2 gap-x-4 gap-y-3 text-left text-sm font-medium text-gray-600 dark:text-gray-300 sm:flex sm:max-w-none sm:flex-wrap sm:justify-center sm:gap-x-6 lg:justify-start">
+              {highlights.map(({ icon, label }) => (
+                <li key={label} className="flex items-center gap-2">
+                  <IconWrapper icon={icon} className="h-4 w-4 shrink-0 text-purple-700 dark:text-purple-300" />
+                  <span>{label}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
 
-          {/* Modern Visual Element */}
-          <motion.div
-            initial={{ opacity: 0, x: 50 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.7, delay: 0.3 }}
-            className="relative"
-          >
-            {/* Floating Tool Cards */}
-            <div className="relative">
-              <motion.div
-                animate={{ y: [0, -10, 0] }}
-                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                className="absolute top-0 left-4 bg-white/80 dark:bg-gradient-to-r dark:from-purple-500/20 dark:to-pink-500/20 backdrop-blur-sm border border-gray-200 dark:border-purple-500/10 rounded-2xl p-4 w-48 shadow-lg dark:shadow-none"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
-                    🤖
-                  </div>
-                  <div>
-                    <h4 className="text-gray-900 dark:text-white font-medium text-sm">AI Content</h4>
-                    <p className="text-gray-600 dark:text-gray-400 text-xs">Generate instantly</p>
-                  </div>
-                </div>
-              </motion.div>
-
-              <motion.div
-                animate={{ y: [0, 10, 0] }}
-                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-                className="absolute top-20 right-0 bg-white/80 dark:bg-gradient-to-r dark:from-blue-500/20 dark:to-purple-500/20 backdrop-blur-sm border border-gray-200 dark:border-purple-500/10 rounded-2xl p-4 w-44 shadow-lg dark:shadow-none"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl flex items-center justify-center">
-                    🎨
-                  </div>
-                  <div>
-                    <h4 className="text-gray-900 dark:text-white font-medium text-sm">Design Tools</h4>
-                    <p className="text-gray-600 dark:text-gray-400 text-xs">Create amazing</p>
-                  </div>
-                </div>
-              </motion.div>
-
-              <motion.div
-                animate={{ y: [0, -15, 0] }}
-                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-                className="absolute top-40 left-12 bg-white/80 dark:bg-gradient-to-r dark:from-green-500/20 dark:to-blue-500/20 backdrop-blur-sm border border-gray-200 dark:border-purple-500/10 rounded-2xl p-4 w-52 shadow-lg dark:shadow-none"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-blue-500 rounded-xl flex items-center justify-center">
-                    📊
-                  </div>
-                  <div>
-                    <h4 className="text-gray-900 dark:text-white font-medium text-sm">Business Tools</h4>
-                    <p className="text-gray-600 dark:text-gray-400 text-xs">Scale efficiently</p>
-                  </div>
-                </div>
-              </motion.div>
-
-              {/* Central Glow Effect */}
-              <div className="w-64 h-64 mx-auto bg-gradient-to-r from-purple-500/30 to-pink-500/30 rounded-full blur-3xl"></div>
+          {/* Desktop-only preview of real tools; mobile gets the full grid further down. */}
+          <div className="hidden lg:block">
+            <div className="mx-auto max-w-md rounded-3xl border border-gray-200 bg-white/80 p-6 shadow-2xl shadow-purple-500/10 backdrop-blur-sm dark:border-white/10 dark:bg-white/5 dark:shadow-none">
+              <p className="mb-4 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                Try one now
+              </p>
+              <ul className="space-y-2">
+                {previewTools.map((tool) => (
+                  <li key={tool.id}>
+                    <Link
+                      to={tool.path}
+                      className={`group flex items-center gap-4 rounded-2xl p-3 transition-colors hover:bg-purple-50 dark:hover:bg-white/5 ${focusRing}`}
+                    >
+                      <span
+                        aria-hidden="true"
+                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-purple-100 text-xl dark:bg-purple-500/15"
+                      >
+                        {tool.icon}
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block font-semibold text-gray-900 group-hover:text-purple-700 dark:text-white dark:group-hover:text-purple-200">
+                          {tool.name}
+                        </span>
+                        <span className="block truncate text-sm text-gray-500 dark:text-gray-400">{tool.description}</span>
+                      </span>
+                      <IconWrapper
+                        icon={FiArrowRight}
+                        className="h-4 w-4 shrink-0 text-gray-400 transition-transform group-hover:translate-x-1 group-hover:text-purple-700 dark:group-hover:text-purple-300"
+                      />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-4 flex items-center gap-2 border-t border-gray-200 pt-4 text-sm text-gray-600 dark:border-white/10 dark:text-gray-300">
+                <IconWrapper icon={FiLock} className="h-4 w-4 shrink-0 text-purple-700 dark:text-purple-300" />
+                These run entirely in your browser, so your files stay on your device.
+              </p>
             </div>
-          </motion.div>
+          </div>
         </div>
       </div>
     </section>

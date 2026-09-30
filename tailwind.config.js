@@ -1,3 +1,43 @@
+/**
+ * Aivello brand palette, derived from the logo (src/components/common/AivelloLogo.tsx).
+ * Logo tile gradient = purple-600 -> pink-600 (#8139f2 -> #d4247f).
+ *
+ * Built in OKLCH with a fixed hue per family (violet ~294deg, pink ~350-359deg) and
+ * Tailwind's lightness/chroma curve, gamut-mapped to sRGB. `purple` and `pink` are
+ * overridden so every existing purple-* / pink-* class adopts the brand colours.
+ *
+ * Contrast (WCAG 2.x):
+ *   purple-600 on #fff    5.53:1   pink-600 on #fff    4.82:1
+ *   purple-400 on #111827 6.68:1   pink-400 on #111827 6.70:1
+ */
+const purple = {
+    50: '#f6f4ff',
+    100: '#edeaff',
+    200: '#dfd7ff',
+    300: '#c7b7ff',
+    400: '#aa8cff',
+    500: '#925bfe',
+    600: '#8139f2',
+    700: '#7027d8',
+    800: '#5e21b6',
+    900: '#4c1d95',
+    950: '#320b68',
+};
+
+const pink = {
+    50: '#fef2f7',
+    100: '#fee7f0',
+    200: '#fecee2',
+    300: '#fda7cc',
+    400: '#f771ae',
+    500: '#ec4899',
+    600: '#d4247f',
+    700: '#ba1c6d',
+    800: '#9a1959',
+    900: '#811949',
+    950: '#4f0829',
+};
+
 /** @type {import('tailwindcss').Config} */
 module.exports = {
     content: ['./src/**/*.{js,ts,jsx,tsx}'],
@@ -5,19 +45,14 @@ module.exports = {
     theme: {
         extend: {
             colors: {
-                primary: {
-                    50: '#f5f3ff',
-                    100: '#ede9fe',
-                    200: '#ddd6fe',
-                    300: '#c4b5fd',
-                    400: '#a78bfa',
-                    500: '#8b5cf6',
-                    600: '#7c3aed',
-                    700: '#6d28d9',
-                    800: '#5b21b6',
-                    900: '#4c1d95',
-                    950: '#2e1065',
-                },
+                purple,
+                pink,
+                primary: purple,
+                accent: pink,
+            },
+            backgroundImage: {
+                // Same gradient as the logo tile: `bg-brand-gradient`
+                'brand-gradient': `linear-gradient(135deg, ${purple[600]} 0%, ${pink[600]} 100%)`,
             },
             fontFamily: {
                 sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
@@ -33,5 +68,9 @@ module.exports = {
             },
         },
     },
-    plugins: [],
+    plugins: [
+        require('@tailwindcss/forms')({
+            strategy: 'class', // Only apply to elements with form-* classes
+        }),
+    ],
 };

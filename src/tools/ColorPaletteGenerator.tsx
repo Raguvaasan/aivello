@@ -1,150 +1,90 @@
-import React, { useState, useCallback } from 'react';
+import React, { useEffect, useId, useMemo, useState } from 'react';
+import toast from 'react-hot-toast';
+import { FaPalette, FaCopy, FaRandom, FaDownload } from 'react-icons/fa';
 import { ToolWrapper } from '../components/common/ToolWrapper';
-import { FaPalette, FaCopy, FaRedo, FaDownload } from 'react-icons/fa';
 import { IconWrapper } from '../components/common/IconWrapper';
+import { useToolTracking } from '../hooks/useToolTracking';
+import {
+  PALETTE_TYPES,
+  PaletteColor,
+  PaletteType,
+  generatePalette,
+  hslToHex,
+  normalizeHex,
+  paletteToCss,
+  readableTextColor,
+} from './lib/colorPalette';
 
-interface Color {
-  hex: string;
-  rgb: string;
-  hsl: string;
-}
+const DEFAULT_COLOR = '#3b82f6';
+
+/** Random vivid-ish colour for the "Random" button. Not security sensitive. */
+const randomBaseColor = (): string =>
+  hslToHex({ h: Math.random() * 360, s: 55 + Math.random() * 35, l: 40 + Math.random() * 25 });
 
 export default function ColorPaletteGenerator() {
-  const [baseColor, setBaseColor] = useState('#3B82F6');
-  const [paletteType, setPaletteType] = useState('complementary');
-  const [palette, setPalette] = useState<Color[]>([]);
+  const [baseColor, setBaseColor] = useState(DEFAULT_COLOR);
+  // Free-text draft for the hex field, so typing "#3b" does not blank the palette.
+  const [hexDraft, setHexDraft] = useState(DEFAULT_COLOR);
+  const [paletteType, setPaletteType] = useState<PaletteType>('complementary');
+  const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
+  const track = useToolTracking('color-palette-generator', 'Color Palette Generator');
 
-  const hexToRgb = (hex: string): { r: number; g: number; b: number } => {
-    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    return result ? {
-      r: parseInt(result[1], 16),
-      g: parseInt(result[2], 16),
-      b: parseInt(result[3], 16)
-    } : { r: 0, g: 0, b: 0 };
+  const baseId = useId();
+  const pickerId = `${baseId}-picker`;
+  const hexId = `${baseId}-hex`;
+  const hexErrorId = `${baseId}-hex-error`;
+  const typeId = `${baseId}-type`;
+
+  const palette = useMemo(() => generatePalette(baseColor, paletteType), [baseColor, paletteType]);
+  const hexIsValid = normalizeHex(hexDraft) !== null;
+  const activeType = PALETTE_TYPES.find((t) => t.id === paletteType);
+
+  // Revoke the previous download blob once a new one replaces it, and on unmount.
+  useEffect(() => {
+    if (!downloadUrl) return;
+    return () => URL.revokeObjectURL(downloadUrl);
+  }, [downloadUrl]);
+
+  const applyColor = (hex: string) => {
+    setBaseColor(hex);
+    setHexDraft(hex);
   };
 
-  const rgbToHsl = (r: number, g: number, b: number): { h: number; s: number; l: number } => {
-    r /= 255;
-    g /= 255;
-    b /= 255;
-    const max = Math.max(r, g, b);
-    const min = Math.min(r, g, b);
-    let h = 0, s, l = (max + min) / 2;
+  const handleHexChange = (value: string) => {
+    setHexDraft(value);
+    const normalized = normalizeHex(value);
+    if (normalized) setBaseColor(normalized);
+  };
 
-    if (max === min) {
-      h = s = 0;
-    } else {
-      const d = max - min;
-      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-      switch (max) {
-        case r: h = (g - b) / d + (g < b ? 6 : 0); break;
-        case g: h = (b - r) / d + 2; break;
-        case b: h = (r - g) / d + 4; break;
-      }
-      h /= 6;
+  const handleRandom = () => {
+    applyColor(randomBaseColor());
+    track('generate');
+  };
+
+  const copyText = async (text: string, message: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success(message);
+      track('copy');
+    } catch {
+      toast.error('Could not copy to the clipboard.');
     }
-
-    return {
-      h: Math.round(h * 360),
-      s: Math.round(s * 100),
-      l: Math.round(l * 100)
-    };
   };
 
-  const hslToHex = (h: number, s: number, l: number): string => {
-    l /= 100;
-    const a = s * Math.min(l, 1 - l) / 100;
-    const f = (n: number) => {
-      const k = (n + h / 30) % 12;
-      const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
-      return Math.round(255 * color).toString(16).padStart(2, '0');
-    };
-    return `#${f(0)}${f(8)}${f(4)}`;
-  };
-
-  const generatePalette = useCallback(() => {
-    const { r, g, b } = hexToRgb(baseColor);
-    const { h, s, l } = rgbToHsl(r, g, b);
-    const colors: Color[] = [];
-
-    const createColor = (newH: number, newS: number, newL: number): Color => {
-      const hex = hslToHex(newH, newS, newL);
-      const rgb = hexToRgb(hex);
-      return {
-        hex,
-        rgb: `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`,
-        hsl: `hsl(${newH}, ${newS}%, ${newL}%)`
-      };
-    };
-
-    switch (paletteType) {
-      case 'complementary':
-        colors.push(createColor(h, s, l));
-        colors.push(createColor((h + 180) % 360, s, l));
-        colors.push(createColor(h, s * 0.7, l + 20));
-        colors.push(createColor((h + 180) % 360, s * 0.7, l + 20));
-        colors.push(createColor(h, s * 0.4, l + 40));
-        break;
-
-      case 'analogous':
-        for (let i = -2; i <= 2; i++) {
-          colors.push(createColor((h + i * 30) % 360, s, l));
-        }
-        break;
-
-      case 'triadic':
-        colors.push(createColor(h, s, l));
-        colors.push(createColor((h + 120) % 360, s, l));
-        colors.push(createColor((h + 240) % 360, s, l));
-        colors.push(createColor(h, s * 0.6, l + 25));
-        colors.push(createColor((h + 60) % 360, s * 0.6, l + 25));
-        break;
-
-      case 'monochromatic':
-        const lightnesses = [l - 40, l - 20, l, l + 20, l + 30];
-        lightnesses.forEach(newL => {
-          colors.push(createColor(h, s, Math.max(10, Math.min(90, newL))));
-        });
-        break;
-
-      case 'tetradic':
-        colors.push(createColor(h, s, l));
-        colors.push(createColor((h + 90) % 360, s, l));
-        colors.push(createColor((h + 180) % 360, s, l));
-        colors.push(createColor((h + 270) % 360, s, l));
-        colors.push(createColor(h, s * 0.5, l + 30));
-        break;
-
-      default:
-        colors.push(createColor(h, s, l));
-    }
-
-    setPalette(colors);
-  }, [baseColor, paletteType]);
-
-  const copyColor = (color: Color) => {
-    navigator.clipboard.writeText(color.hex);
-    alert(`Color ${color.hex} copied to clipboard!`);
-  };
-
-  const downloadPalette = () => {
-    const css = palette.map((color, index) => 
-      `--color-${index + 1}: ${color.hex}; /* ${color.rgb} */`
-    ).join('\n');
-    
-    const content = `:root {\n${css}\n}`;
-    const blob = new Blob([content], { type: 'text/css' });
-    const url = URL.createObjectURL(blob);
+  const downloadCss = () => {
+    if (palette.length === 0) return;
+    const url = URL.createObjectURL(new Blob([paletteToCss(palette)], { type: 'text/css' }));
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'color-palette.css';
+    a.download = `palette-${paletteType}-${baseColor.slice(1)}.css`;
+    document.body.appendChild(a);
     a.click();
-    URL.revokeObjectURL(url);
+    a.remove();
+    // Keep the URL alive until the next download or unmount; revoking synchronously
+    // can cancel the download in some browsers.
+    setDownloadUrl(url);
+    track('download');
   };
-
-  React.useEffect(() => {
-    generatePalette();
-  }, [generatePalette]);
 
   return (
     <ToolWrapper
@@ -153,65 +93,84 @@ export default function ColorPaletteGenerator() {
       toolDescription="Generate beautiful color palettes for your designs. Create harmonious color schemes with complementary, triadic, and monochromatic options"
       toolCategory="Design"
     >
-      <div className="max-w-4xl mx-auto">
-        <div className="bg-white dark:bg-gray-800 shadow-lg rounded-xl p-6">
+      <div className="relative max-w-4xl mx-auto">
+        <div className="bg-white/80 dark:bg-white/10 backdrop-blur-xl border border-gray-200 dark:border-white/20 shadow-lg rounded-2xl p-4 sm:p-6">
           <div className="flex items-center gap-3 mb-6">
-            <IconWrapper icon={FaPalette} className="text-3xl text-purple-600" />
-            <h2 className="text-2xl font-bold text-gray-800 dark:text-white">
-              Color Palette Generator
-            </h2>
+            <IconWrapper icon={FaPalette} className="text-3xl text-purple-600 dark:text-purple-400 shrink-0" />
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Color Palette Generator</h2>
           </div>
 
           {/* Controls */}
-          <div className="grid md:grid-cols-3 gap-4 mb-6">
+          <div className="grid gap-4 md:grid-cols-3 mb-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label htmlFor={hexId} className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">
                 Base Color
               </label>
               <div className="flex items-center gap-2">
                 <input
+                  id={pickerId}
                   type="color"
                   value={baseColor}
-                  onChange={(e) => setBaseColor(e.target.value)}
-                  className="w-12 h-12 border border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer"
+                  onChange={(e) => applyColor(e.target.value)}
+                  aria-label="Pick base color"
+                  className="w-12 h-12 shrink-0 p-1 rounded-lg cursor-pointer bg-white dark:bg-gray-800/60 border border-gray-300 dark:border-gray-600"
                 />
                 <input
+                  id={hexId}
                   type="text"
-                  value={baseColor}
-                  onChange={(e) => setBaseColor(e.target.value)}
-                  className="flex-1 p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-mono"
+                  value={hexDraft}
+                  onChange={(e) => handleHexChange(e.target.value)}
+                  onBlur={() => {
+                    // Tidy "38F" to "#3388ff" once the user leaves the field.
+                    if (hexIsValid) setHexDraft(baseColor);
+                  }}
+                  spellCheck={false}
+                  autoComplete="off"
+                  maxLength={7}
+                  aria-invalid={!hexIsValid}
+                  aria-describedby={hexIsValid ? undefined : hexErrorId}
+                  className="flex-1 min-w-0 p-3 rounded-lg font-mono bg-white dark:bg-gray-800/60 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
                 />
               </div>
+              {!hexIsValid && (
+                <p id={hexErrorId} role="alert" className="mt-1 text-xs text-red-600 dark:text-red-400">
+                  Enter a hex color like #3b82f6 or #38f.
+                </p>
+              )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label htmlFor={typeId} className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">
                 Palette Type
               </label>
               <select
+                id={typeId}
                 value={paletteType}
-                onChange={(e) => setPaletteType(e.target.value)}
-                className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                onChange={(e) => setPaletteType(e.target.value as PaletteType)}
+                className="w-full p-3 rounded-lg bg-white dark:bg-gray-800/60 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50"
               >
-                <option value="complementary">Complementary</option>
-                <option value="analogous">Analogous</option>
-                <option value="triadic">Triadic</option>
-                <option value="monochromatic">Monochromatic</option>
-                <option value="tetradic">Tetradic</option>
+                {PALETTE_TYPES.map((t) => (
+                  <option key={t.id} value={t.id} className="bg-white dark:bg-gray-800">
+                    {t.label}
+                  </option>
+                ))}
               </select>
             </div>
 
             <div className="flex items-end gap-2">
               <button
-                onClick={generatePalette}
-                className="flex items-center gap-2 px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                type="button"
+                onClick={handleRandom}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-lg font-medium transition-colors"
               >
-                <IconWrapper icon={FaRedo} />
-                Generate
+                <IconWrapper icon={FaRandom} />
+                Random
               </button>
               <button
-                onClick={downloadPalette}
-                className="flex items-center gap-2 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                type="button"
+                onClick={downloadCss}
+                disabled={palette.length === 0}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gray-100 hover:bg-gray-200 dark:bg-white/10 dark:hover:bg-white/20 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-white/20 rounded-lg font-medium transition-colors disabled:opacity-50"
               >
                 <IconWrapper icon={FaDownload} />
                 CSS
@@ -219,66 +178,81 @@ export default function ColorPaletteGenerator() {
             </div>
           </div>
 
-          {/* Palette Display */}
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
-            {palette.map((color, index) => (
-              <div
-                key={index}
-                className="group relative bg-gray-50 dark:bg-gray-700 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600 hover:shadow-lg transition-shadow"
-              >
-                <div
-                  className="h-32 cursor-pointer relative"
-                  style={{ backgroundColor: color.hex }}
-                  onClick={() => copyColor(color)}
-                >
-                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200 flex items-center justify-center">
-                    <IconWrapper icon={FaCopy} className="text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </div>
-                </div>
-                <div className="p-3">
-                  <div className="text-xs font-mono text-gray-600 dark:text-gray-300">
-                    <div className="font-bold text-gray-900 dark:text-white">{color.hex}</div>
-                    <div className="mt-1">{color.rgb}</div>
-                    <div>{color.hsl}</div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+          {activeType && <p className="-mt-2 mb-4 text-sm text-gray-500 dark:text-gray-400">{activeType.description}</p>}
 
-          {/* Palette Preview */}
+          {/* Swatches */}
+          <ul className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 sm:gap-4 mb-6" aria-label="Generated palette">
+            {palette.map((color: PaletteColor, index) => (
+              <li
+                key={`${color.hex}-${index}`}
+                className="rounded-lg overflow-hidden bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 hover:shadow-lg transition-shadow"
+              >
+                <button
+                  type="button"
+                  onClick={() => copyText(color.hex, `Copied ${color.hex}`)}
+                  aria-label={`Copy ${color.hex}`}
+                  className="group w-full h-24 sm:h-32 flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-purple-500"
+                  style={{ backgroundColor: color.hex, color: readableTextColor(color.hex) }}
+                >
+                  <IconWrapper
+                    icon={FaCopy}
+                    className="opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity"
+                  />
+                </button>
+                <div className="p-3 text-xs font-mono text-gray-600 dark:text-gray-300 break-all">
+                  <div className="font-bold text-gray-900 dark:text-white">{color.hex}</div>
+                  <button
+                    type="button"
+                    onClick={() => copyText(color.rgb, `Copied ${color.rgb}`)}
+                    className="block mt-1 text-left hover:text-purple-600 dark:hover:text-purple-400"
+                  >
+                    {color.rgb}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => copyText(color.hsl, `Copied ${color.hsl}`)}
+                    className="block text-left hover:text-purple-600 dark:hover:text-purple-400"
+                  >
+                    {color.hsl}
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+
+          {/* Preview strip */}
           <div className="mb-6">
-            <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-3">Preview</h3>
-            <div className="flex h-20 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Preview</h3>
+            <div
+              className="flex h-16 sm:h-20 rounded-lg overflow-hidden border border-gray-200 dark:border-white/20"
+              aria-hidden="true"
+            >
               {palette.map((color, index) => (
-                <div
-                  key={index}
-                  className="flex-1"
-                  style={{ backgroundColor: color.hex }}
-                ></div>
+                <div key={`${color.hex}-${index}`} className="flex-1" style={{ backgroundColor: color.hex }} />
               ))}
             </div>
           </div>
 
-          {/* Information */}
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="p-4 bg-purple-50 dark:bg-gray-700 rounded-lg">
-              <h3 className="font-semibold text-purple-800 dark:text-purple-300 mb-2">🎨 Palette Types:</h3>
-              <ul className="text-sm text-purple-700 dark:text-purple-200 space-y-1">
-                <li>• <strong>Complementary:</strong> Colors opposite on the color wheel</li>
-                <li>• <strong>Analogous:</strong> Colors next to each other</li>
-                <li>• <strong>Triadic:</strong> Three colors evenly spaced</li>
-                <li>• <strong>Monochromatic:</strong> Variations of a single hue</li>
+          {/* Info */}
+          <div className="grid md:grid-cols-2 gap-4 sm:gap-6">
+            <div className="p-4 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-lg">
+              <h3 className="font-semibold text-purple-700 dark:text-purple-300 mb-2">🎨 Palette Types</h3>
+              <ul className="text-sm text-gray-600 dark:text-gray-300 space-y-1">
+                {PALETTE_TYPES.map((t) => (
+                  <li key={t.id}>
+                    • <strong className="text-gray-900 dark:text-white">{t.label}:</strong> {t.description}
+                  </li>
+                ))}
               </ul>
             </div>
-            
-            <div className="p-4 bg-blue-50 dark:bg-gray-700 rounded-lg">
-              <h3 className="font-semibold text-blue-800 dark:text-blue-300 mb-2">💡 Usage Tips:</h3>
-              <ul className="text-sm text-blue-700 dark:text-blue-200 space-y-1">
-                <li>• Click any color to copy its hex code</li>
-                <li>• Use 60-30-10 rule: 60% primary, 30% secondary, 10% accent</li>
-                <li>• Test accessibility with color contrast checkers</li>
-                <li>• Download CSS variables for easy implementation</li>
+
+            <div className="p-4 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-lg">
+              <h3 className="font-semibold text-pink-700 dark:text-pink-300 mb-2">💡 Usage Tips</h3>
+              <ul className="text-sm text-gray-600 dark:text-gray-300 space-y-1">
+                <li>• Click a swatch to copy its hex code, or click the RGB/HSL value to copy that</li>
+                <li>• Use the 60-30-10 rule: 60% primary, 30% secondary, 10% accent</li>
+                <li>• Check text/background pairs with a contrast checker (WCAG AA is 4.5:1)</li>
+                <li>• Download the palette as CSS custom properties</li>
               </ul>
             </div>
           </div>

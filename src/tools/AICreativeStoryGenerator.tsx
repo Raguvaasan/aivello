@@ -1,584 +1,393 @@
-import React, { useState } from 'react';
+import React, { useEffect, useId, useRef, useState } from 'react';
+import toast from 'react-hot-toast';
 import { Textarea } from '../components/ui/textarea';
 import { Button } from '../components/ui/button';
-import { Card, CardContent } from '../components/ui/card';
 import { Input } from '../components/ui/input';
 import { ToolWrapper } from '../components/common/ToolWrapper';
+import { useToolTracking } from '../hooks/useToolTracking';
+import {
+  GENRES,
+  LENGTHS,
+  MOODS,
+  PROMPT_MAX_LENGTH,
+  StoryInput,
+  StoryResult,
+  createStory,
+  downloadStoryFile,
+  validateStoryPrompt,
+} from './lib/aiCreativeStoryGenerator';
 
-interface StoryResult {
-  title: string;
-  story: string;
-  genre: string;
-  wordCount: number;
-  readingTime: number;
-  characterAnalysis: string;
-  plotSummary: string;
-  themes: string[];
-  moodAnalysis: string;
-  sequel_suggestions: string[];
-}
+const TOOL_ID = 'ai-creative-story-generator';
+const TOOL_NAME = 'AI Creative Story Generator';
+const HISTORY_LIMIT = 10;
+
+const EMPTY_FORM: StoryInput = { prompt: '', genre: '', mood: '', length: 'short', characters: '', setting: '' };
+
+const cardClass = 'bg-white/80 dark:bg-white/10 border border-gray-200 dark:border-white/20 rounded-2xl p-4 sm:p-6';
+const subCardClass = 'bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl';
+const labelClass = 'block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300';
+const selectClass =
+  'w-full min-h-[44px] px-3 py-2 rounded-xl bg-white dark:bg-gray-800/60 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50';
+const optionClass = 'bg-white dark:bg-gray-800';
 
 const AICreativeStoryGenerator = () => {
-  const [prompt, setPrompt] = useState('');
-  const [genre, setGenre] = useState('');
-  const [mood, setMood] = useState('');
-  const [length, setLength] = useState('');
-  const [characters, setCharacters] = useState('');
-  const [setting, setSetting] = useState('');
+  const track = useToolTracking(TOOL_ID, TOOL_NAME);
+  const uid = useId();
+
+  const [form, setForm] = useState<StoryInput>(EMPTY_FORM);
+  const [promptError, setPromptError] = useState('');
+  const [generateError, setGenerateError] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [story, setStory] = useState<StoryResult | null>(null);
-  const [storyHistory, setStoryHistory] = useState<any[]>([]);
+  const [variation, setVariation] = useState(0);
+  const [history, setHistory] = useState<StoryResult[]>([]);
+  const [status, setStatus] = useState('');
 
-  const genres = [
-    'Fantasy', 'Science Fiction', 'Mystery', 'Romance', 'Horror',
-    'Adventure', 'Comedy', 'Drama', 'Thriller', 'Historical Fiction',
-    'Dystopian', 'Magical Realism', 'Western', 'Cyberpunk', 'Steampunk'
-  ];
+  const timerRef = useRef<number | null>(null);
+  const promptRef = useRef<HTMLTextAreaElement>(null);
+  const titleRef = useRef<HTMLHeadingElement>(null);
 
-  const moods = [
-    'Uplifting', 'Dark', 'Mysterious', 'Romantic', 'Humorous',
-    'Suspenseful', 'Melancholic', 'Inspiring', 'Eerie', 'Adventurous',
-    'Nostalgic', 'Intense', 'Whimsical', 'Dramatic', 'Peaceful'
-  ];
+  useEffect(() => () => {
+    if (timerRef.current !== null) window.clearTimeout(timerRef.current);
+  }, []);
 
-  const lengths = [
-    { value: 'flash', label: 'Flash Fiction (100-300 words)', words: 200 },
-    { value: 'short', label: 'Short Story (500-1000 words)', words: 750 },
-    { value: 'medium', label: 'Medium Story (1000-2000 words)', words: 1500 },
-    { value: 'long', label: 'Long Story (2000+ words)', words: 2500 }
-  ];
+  const update = <K extends keyof StoryInput>(key: K, value: StoryInput[K]) => {
+    setForm((prev) => ({ ...prev, [key]: value }));
+    if (key === 'prompt' && promptError) setPromptError('');
+  };
 
-  const generateStory = async () => {
-    if (!prompt.trim()) {
-      alert('❌ Please provide a story prompt first.');
+  const runGeneration = (nextVariation: number) => {
+    if (isGenerating) return;
+    const error = validateStoryPrompt(form.prompt);
+    if (error) {
+      setPromptError(error);
+      setStory(null);
+      window.requestAnimationFrame(() => promptRef.current?.focus());
       return;
     }
-
+    setPromptError('');
+    setGenerateError('');
     setIsGenerating(true);
-    try {
-      await new Promise(resolve => setTimeout(resolve, 5000));
-
-      const generatedStory = await createStory(prompt, genre, mood, length, characters, setting);
-      setStory(generatedStory);
-      
-      // Add to history
-      const storyEntry = {
-        id: Date.now(),
-        title: generatedStory.title,
-        genre: generatedStory.genre,
-        wordCount: generatedStory.wordCount,
-        timestamp: new Date().toLocaleString(),
-        preview: generatedStory.story.substring(0, 100) + '...'
-      };
-      setStoryHistory(prev => [storyEntry, ...prev.slice(0, 9)]);
-
-      alert('📚 Story generated successfully! Check your creative masterpiece below.');
-    } catch (error) {
-      console.error('Error generating story:', error);
-      alert('❌ Failed to generate story. Please try again.');
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
-  const createStory = async (
-    prompt: string, 
-    genre: string, 
-    mood: string, 
-    length: string, 
-    characters: string, 
-    setting: string
-  ): Promise<StoryResult> => {
-    const selectedLength = lengths.find(l => l.value === length);
-    const targetWords = selectedLength?.words || 750;
-    
-    // Generate story based on inputs
-    const storyContent = generateStoryContent(prompt, genre, mood, characters, setting, targetWords);
-    const title = generateTitle(prompt, genre);
-    const themes = extractThemes(genre, mood, prompt);
-    
-    return {
-      title,
-      story: storyContent,
-      genre: genre || 'General Fiction',
-      wordCount: storyContent.split(' ').length,
-      readingTime: Math.ceil(storyContent.split(' ').length / 200), // 200 WPM average
-      characterAnalysis: analyzeCharacters(characters, storyContent),
-      plotSummary: generatePlotSummary(storyContent),
-      themes,
-      moodAnalysis: analyzeMood(mood, storyContent),
-      sequel_suggestions: generateSequelSuggestions(prompt, genre, storyContent)
-    };
-  };
-
-  const generateStoryContent = (
-    prompt: string, 
-    genre: string, 
-    mood: string, 
-    characters: string, 
-    setting: string, 
-    targetWords: number
-  ): string => {
-    // This is a simplified story generation - in a real app, this would use AI APIs
-    const storyTemplates = {
-      'Fantasy': {
-        opening: "In a realm where magic flows like rivers through ancient forests,",
-        conflict: "An ancient evil stirred, threatening to consume all that was pure and good.",
-        resolution: "With courage born of desperation and magic forged in friendship, our heroes prevailed."
-      },
-      'Science Fiction': {
-        opening: "In the year 2157, when humanity had spread across the stars,",
-        conflict: "A discovery that challenged everything we thought we knew about the universe.",
-        resolution: "Through innovation and sacrifice, a new chapter in human evolution began."
-      },
-      'Mystery': {
-        opening: "The rain hadn't stopped for three days when the first body was discovered,",
-        conflict: "Each clue led deeper into a web of secrets that someone was desperate to keep buried.",
-        resolution: "The truth, when it finally emerged, was more shocking than anyone could have imagined."
-      },
-      'Romance': {
-        opening: "Their eyes met across the crowded room, and in that instant, everything changed.",
-        conflict: "But fate, it seemed, had other plans for their newfound love.",
-        resolution: "Love, they learned, was not just about finding each other, but about choosing to stay."
-      },
-      'Horror': {
-        opening: "The old house had been empty for decades, yet something still moved within its walls,",
-        conflict: "What had started as curiosity quickly turned into a fight for survival.",
-        resolution: "Some doors, once opened, can never truly be closed again."
+    setStatus('Writing your story…');
+    const snapshot = { ...form };
+    timerRef.current = window.setTimeout(() => {
+      timerRef.current = null;
+      try {
+        const result = createStory(snapshot, nextVariation);
+        setStory(result);
+        setVariation(nextVariation);
+        setHistory((prev) => [result, ...prev].slice(0, HISTORY_LIMIT));
+        setStatus(`Story "${result.title}" is ready, ${result.wordCount} words.`);
+        track('generate');
+        window.requestAnimationFrame(() => titleRef.current?.focus());
+      } catch {
+        setGenerateError('Something went wrong while writing your story. Please try again.');
+        setStatus('');
+      } finally {
+        setIsGenerating(false);
       }
-    };
-
-    const template = storyTemplates[genre as keyof typeof storyTemplates] || storyTemplates['Fantasy'];
-    
-    let story = `${template.opening} ${prompt}\n\n`;
-    
-    if (characters) {
-      story += `Our tale centers around ${characters}, whose lives would soon be forever changed. `;
-    }
-    
-    if (setting) {
-      story += `The story unfolds in ${setting}, a place where ordinary rules seemed not to apply. `;
-    }
-    
-    // Generate middle section based on genre and mood
-    story += generateMiddleSection(genre, mood, prompt);
-    
-    // Add conflict
-    story += `\n\n${template.conflict}\n\n`;
-    
-    // Generate climax and resolution
-    story += generateClimax(genre, mood);
-    story += `\n\n${template.resolution}`;
-    
-    // Adjust length if needed
-    const currentWords = story.split(' ').length;
-    if (currentWords < targetWords * 0.8) {
-      story += generateAdditionalContent(genre, mood, targetWords - currentWords);
-    }
-    
-    return story;
+    }, 450);
   };
 
-  const generateMiddleSection = (genre: string, mood: string, prompt: string): string => {
-    const sections = {
-      dark: "Shadows seemed to lengthen with each passing moment, and an inexplicable dread settled over everything like a suffocating blanket.",
-      uplifting: "Hope bloomed in the most unexpected places, reminding everyone that even in darkness, light could always find a way to shine through.",
-      mysterious: "Questions multiplied faster than answers, each revelation only deepening the enigma that surrounded them.",
-      romantic: "Hearts spoke in languages that words could never capture, and every stolen glance carried the weight of unspoken promises.",
-      adventurous: "Each step forward brought new challenges and discoveries, transforming an ordinary journey into an extraordinary quest."
-    };
-    
-    const moodKey = mood.toLowerCase() as keyof typeof sections;
-    return sections[moodKey] || sections.mysterious;
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    runGeneration(0);
   };
 
-  const generateClimax = (genre: string, mood: string): string => {
-    const climaxTemplates = {
-      'Fantasy': "Magic crackled through the air as ancient powers awakened, and the very fabric of reality trembled under the weight of destiny.",
-      'Science Fiction': "Technology and humanity collided in ways never before imagined, forcing a choice between progress and preservation.",
-      'Mystery': "The final piece of the puzzle clicked into place, revealing a truth that recontextualized everything that came before.",
-      'Romance': "Hearts laid bare, they faced the moment that would either unite them forever or tear them apart.",
-      'Horror': "Terror reached its crescendo as the true nature of the evil was finally revealed."
-    };
-    
-    return climaxTemplates[genre as keyof typeof climaxTemplates] || climaxTemplates['Fantasy'];
-  };
-
-  const generateAdditionalContent = (genre: string, mood: string, neededWords: number): string => {
-    const additionalSections = [
-      "\n\nThe journey had changed them all in ways they were only beginning to understand.",
-      "\n\nLooking back, they realized this was just the beginning of something much larger.",
-      "\n\nThe consequences of their choices would ripple through time in ways they could never have foreseen.",
-      "\n\nSome stories end, but the best ones transform into new beginnings."
-    ];
-    
-    return additionalSections.join('');
-  };
-
-  const generateTitle = (prompt: string, genre: string): string => {
-    const titleWords = prompt.split(' ').slice(0, 3);
-    const genreTitles = {
-      'Fantasy': ['The Chronicles of', 'The Legend of', 'The Saga of'],
-      'Science Fiction': ['Beyond the', 'The Future of', 'Starbound:'],
-      'Mystery': ['The Secret of', 'The Case of', 'Shadows of'],
-      'Romance': ['Love in', 'Hearts of', 'The Promise of'],
-      'Horror': ['The Haunting of', 'Terror in', 'The Curse of']
-    };
-    
-    const prefixes = genreTitles[genre as keyof typeof genreTitles] || ['The Story of'];
-    const randomPrefix = prefixes[Math.floor(Math.random() * prefixes.length)];
-    
-    return `${randomPrefix} ${titleWords.join(' ')}`;
-  };
-
-  const extractThemes = (genre: string, mood: string, prompt: string): string[] => {
-    const themes = ['Identity', 'Love', 'Sacrifice', 'Redemption', 'Growth'];
-    const genreThemes = {
-      'Fantasy': ['Good vs Evil', 'Magic vs Reality', 'Destiny'],
-      'Science Fiction': ['Technology vs Humanity', 'Evolution', 'Discovery'],
-      'Mystery': ['Truth vs Deception', 'Justice', 'Hidden Secrets'],
-      'Romance': ['Love Conquers All', 'Second Chances', 'Soulmates'],
-      'Horror': ['Fear of Unknown', 'Survival', 'Corruption']
-    };
-    
-    const specificThemes = genreThemes[genre as keyof typeof genreThemes] || [];
-    return [...themes.slice(0, 2), ...specificThemes.slice(0, 2)];
-  };
-
-  const analyzeCharacters = (characters: string, story: string): string => {
-    if (!characters) return 'Characters emerge organically through the narrative, each serving to advance both plot and theme.';
-    
-    return `The characters ${characters} are well-developed protagonists whose personal growth mirrors the story's central themes. Their interactions drive the narrative forward while revealing deeper truths about human nature.`;
-  };
-
-  const generatePlotSummary = (story: string): string => {
-    return 'A compelling narrative that weaves together character development, thematic depth, and engaging plot progression to create a memorable reading experience.';
-  };
-
-  const analyzeMood = (mood: string, story: string): string => {
-    if (!mood) return 'The story maintains a balanced emotional tone throughout.';
-    
-    return `The ${mood.toLowerCase()} atmosphere permeates the narrative, creating an immersive emotional experience that enhances character development and plot progression.`;
-  };
-
-  const generateSequelSuggestions = (prompt: string, genre: string, story: string): string[] => {
-    return [
-      'Explore the aftermath and consequences of the main events',
-      'Focus on a secondary character\'s perspective',
-      'Jump forward in time to see long-term impacts',
-      'Prequel exploring the background and origins',
-      'Expand the world-building and introduce new locations'
-    ];
-  };
-
-  const downloadStory = () => {
+  const handleCopy = async () => {
     if (!story) return;
+    try {
+      await navigator.clipboard.writeText(`${story.title}\n\n${story.story}`);
+      toast.success('Story copied to clipboard');
+    } catch {
+      toast.error('Could not access the clipboard. Select the text and copy it manually.');
+    }
+  };
 
-    const storyDocument = `
-${story.title}
-${'='.repeat(story.title.length)}
-
-Genre: ${story.genre}
-Word Count: ${story.wordCount}
-Reading Time: ${story.readingTime} minutes
-Generated on: ${new Date().toLocaleString()}
-
-STORY:
-${story.story}
-
----
-
-STORY ANALYSIS:
-
-Plot Summary:
-${story.plotSummary}
-
-Character Analysis:
-${story.characterAnalysis}
-
-Themes:
-${story.themes.map(theme => `• ${theme}`).join('\n')}
-
-Mood Analysis:
-${story.moodAnalysis}
-
-Sequel Suggestions:
-${story.sequel_suggestions.map(suggestion => `• ${suggestion}`).join('\n')}
-
----
-Generated by AI Creative Story Generator
-`;
-
-    const blob = new Blob([storyDocument], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${story.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
-    alert('📚 Story downloaded successfully!');
+  const handleDownload = () => {
+    if (!story) return;
+    try {
+      downloadStoryFile(story);
+      toast.success('Story downloaded');
+    } catch {
+      toast.error('Download failed. Please try again.');
+    }
   };
 
   const clearForm = () => {
-    setPrompt('');
-    setGenre('');
-    setMood('');
-    setLength('');
-    setCharacters('');
-    setSetting('');
+    setForm(EMPTY_FORM);
+    setPromptError('');
+    setGenerateError('');
     setStory(null);
+    setVariation(0);
+  };
+
+  const backToForm = () => {
+    setStory(null);
+    window.requestAnimationFrame(() => promptRef.current?.focus());
+  };
+
+  const openFromHistory = (item: StoryResult) => {
+    setStory(item);
+    setStatus(`Showing "${item.title}".`);
+    window.requestAnimationFrame(() => titleRef.current?.focus());
   };
 
   return (
     <ToolWrapper
-      toolId="ai-creative-story-generator"
-      toolName="AI Creative Story Generator"
+      toolId={TOOL_ID}
+      toolName={TOOL_NAME}
       toolDescription="Generate creative stories with AI assistance. Perfect for writers, storytellers, and creative minds."
       toolCategory="AI"
     >
-      <div className="min-h-screen bg-white dark:bg-gray-900 p-6 space-y-6">
+      <div className="relative max-w-5xl mx-auto space-y-6">
         {/* Header */}
-        <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold mb-4 text-gray-900 dark:text-white">📚 AI Creative Story Generator</h2>
+        <div className="text-center">
+          <h2 className="text-3xl sm:text-4xl font-bold mb-3 bg-gradient-to-r from-gray-900 via-purple-700 to-pink-600 dark:from-white dark:via-purple-200 dark:to-pink-200 bg-clip-text text-transparent">
+            📚 AI Creative Story Generator
+          </h2>
           <p className="text-gray-600 dark:text-gray-300">
-            Transform your ideas into captivating stories with AI-powered creativity
+            Turn your idea into a short story built around your premise, characters and setting
           </p>
         </div>
 
+        <p className="sr-only" aria-live="polite">{status}</p>
+
         {!story ? (
           <div className="space-y-6">
-            {/* Story Configuration */}
-            <Card className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border-blue-200 dark:border-blue-800">
-              <CardContent className="p-6">
-                <h3 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">✨ Story Configuration</h3>
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Genre</label>
-                    <select 
-                      className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                      value={genre}
-                      onChange={(e) => setGenre(e.target.value)}
-                    >
-                      <option value="">Select genre...</option>
-                      {genres.map(g => (
-                        <option key={g} value={g}>{g}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Mood</label>
-                    <select 
-                      className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                      value={mood}
-                      onChange={(e) => setMood(e.target.value)}
-                    >
-                      <option value="">Select mood...</option>
-                      {moods.map(m => (
-                        <option key={m} value={m}>{m}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Length</label>
-                    <select 
-                      className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                      value={length}
-                      onChange={(e) => setLength(e.target.value)}
-                    >
-                      <option value="">Select length...</option>
-                      {lengths.map(l => (
-                        <option key={l.value} value={l.value}>{l.label}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
+            <form className={cardClass} onSubmit={handleSubmit} noValidate aria-busy={isGenerating}>
+              <h3 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">✨ Story Configuration</h3>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Main Characters (Optional)</label>
-                    <Input
-                      placeholder="e.g., a brave knight, a mysterious wizard..."
-                      value={characters}
-                      onChange={(e) => setCharacters(e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Setting (Optional)</label>
-                    <Input
-                      placeholder="e.g., a magical forest, futuristic city..."
-                      value={setting}
-                      onChange={(e) => setSetting(e.target.value)}
-                    />
-                  </div>
-                </div>
+              <div className="mb-4">
+                <label className={labelClass} htmlFor={`${uid}-prompt`}>
+                  Story Prompt <span aria-hidden="true">*</span>
+                </label>
+                <Textarea
+                  id={`${uid}-prompt`}
+                  ref={promptRef}
+                  placeholder="Describe your story idea... e.g. “A lighthouse keeper finds a message in a bottle addressed to her, dated fifty years in the future.”"
+                  value={form.prompt}
+                  maxLength={PROMPT_MAX_LENGTH}
+                  required
+                  rows={4}
+                  aria-invalid={Boolean(promptError)}
+                  aria-describedby={promptError ? `${uid}-prompt-error` : `${uid}-prompt-hint`}
+                  onChange={(e) => update('prompt', e.target.value)}
+                  className="resize-y"
+                />
+                {promptError ? (
+                  <p id={`${uid}-prompt-error`} role="alert" className="mt-1 text-sm text-red-600 dark:text-red-400">
+                    {promptError}
+                  </p>
+                ) : (
+                  <p id={`${uid}-prompt-hint`} className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    {form.prompt.trim().length}/{PROMPT_MAX_LENGTH} · objects and people you mention become part of the story
+                  </p>
+                )}
+              </div>
 
-                <div className="mb-4">
-                  <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Story Prompt</label>
-                  <Textarea
-                    placeholder="Describe your story idea... What happens? Who are the characters? What's the central conflict or theme?"
-                    value={prompt}
-                    onChange={(e) => setPrompt(e.target.value)}
-                    rows={4}
-                    className="w-full"
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+                <div>
+                  <label className={labelClass} htmlFor={`${uid}-genre`}>Genre</label>
+                  <select id={`${uid}-genre`} className={selectClass} value={form.genre} onChange={(e) => update('genre', e.target.value)}>
+                    <option value="" className={optionClass}>General fiction</option>
+                    {GENRES.map((g) => (
+                      <option key={g} value={g} className={optionClass}>{g}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className={labelClass} htmlFor={`${uid}-mood`}>Mood</label>
+                  <select id={`${uid}-mood`} className={selectClass} value={form.mood} onChange={(e) => update('mood', e.target.value)}>
+                    <option value="" className={optionClass}>Balanced</option>
+                    {MOODS.map((m) => (
+                      <option key={m} value={m} className={optionClass}>{m}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className={labelClass} htmlFor={`${uid}-length`}>Length</label>
+                  <select id={`${uid}-length`} className={selectClass} value={form.length} onChange={(e) => update('length', e.target.value)}>
+                    {LENGTHS.map((l) => (
+                      <option key={l.value} value={l.value} className={optionClass}>{l.label}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label className={labelClass} htmlFor={`${uid}-characters`}>Main Characters (optional)</label>
+                  <Input
+                    id={`${uid}-characters`}
+                    placeholder="e.g., a knight named Rowan, a mysterious wizard"
+                    value={form.characters}
+                    maxLength={200}
+                    aria-describedby={`${uid}-characters-hint`}
+                    onChange={(e) => update('characters', e.target.value)}
+                  />
+                  <p id={`${uid}-characters-hint`} className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    Separate with commas. The first is the protagonist, the second their ally.
+                  </p>
+                </div>
+                <div>
+                  <label className={labelClass} htmlFor={`${uid}-setting`}>Setting (optional)</label>
+                  <Input
+                    id={`${uid}-setting`}
+                    placeholder="e.g., a floating market, a futuristic city"
+                    value={form.setting}
+                    maxLength={120}
+                    onChange={(e) => update('setting', e.target.value)}
                   />
                 </div>
+              </div>
 
-                <div className="flex gap-4">
-                  <Button
-                    onClick={generateStory}
-                    disabled={isGenerating || !prompt.trim()}
-                    className="bg-purple-600 hover:bg-purple-700"
-                  >
-                    {isGenerating ? '✍️ Creating Story...' : '✍️ Generate Story'}
-                  </Button>
-                  <Button
-                    onClick={clearForm}
-                    variant="outline"
-                  >
-                    🧹 Clear Form
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+              {generateError && (
+                <p role="alert" className="mb-4 rounded-xl border border-red-200 dark:border-red-500/30 bg-red-50 dark:bg-red-500/10 p-3 text-sm text-red-700 dark:text-red-300">
+                  {generateError}
+                </p>
+              )}
 
-            {/* Story History */}
-            {storyHistory.length > 0 && (
-              <Card className="bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700">
-                <CardContent className="p-6">
-                  <h3 className="text-xl font-semibold mb-4 dark:text-white">📖 Recent Stories</h3>
-                  <div className="space-y-3">
-                    {storyHistory.slice(0, 3).map((storyItem, index) => (
-                      <div key={storyItem.id} className="bg-white dark:bg-gray-700 p-3 rounded-lg border dark:border-gray-600">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <h4 className="font-medium dark:text-white">{storyItem.title}</h4>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">{storyItem.preview}</p>
-                          </div>
-                          <div className="text-right">
-                            <span className="text-xs bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300 px-2 py-1 rounded block mb-1">
-                              {storyItem.genre}
-                            </span>
-                            <span className="text-xs text-gray-500 dark:text-gray-400">
-                              {storyItem.wordCount} words
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Button type="submit" disabled={isGenerating} className="min-h-[48px] sm:flex-1">
+                  {isGenerating ? '✍️ Writing your story…' : '✍️ Generate Story'}
+                </Button>
+                <Button type="button" variant="outline" onClick={clearForm} className="min-h-[48px]">
+                  🧹 Clear Form
+                </Button>
+              </div>
+            </form>
+
+            {isGenerating && (
+              <div className={`${cardClass} text-center`} role="status">
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-purple-600 dark:border-purple-400 mx-auto mb-3" aria-hidden="true" />
+                <p className="font-semibold text-gray-900 dark:text-white">Weaving characters, plot and setting together…</p>
+              </div>
             )}
-          </div>
-        ) : (
-          /* Story Results */
-          <div className="space-y-6">
-            {/* Story Header */}
-            <Card className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border-purple-200 dark:border-purple-800">
-              <CardContent className="p-6 text-center">
-                <h3 className="text-3xl font-bold mb-2 dark:text-white">{story.title}</h3>
-                <div className="flex justify-center space-x-6 text-sm text-gray-600 dark:text-gray-400">
-                  <span>📚 {story.genre}</span>
-                  <span>📝 {story.wordCount} words</span>
-                  <span>⏱️ {story.readingTime} min read</span>
-                </div>
-              </CardContent>
-            </Card>
 
-            {/* The Story */}
-            <Card className="dark:bg-gray-800">
-              <CardContent className="p-8">
-                <div className="prose max-w-none dark:prose-invert">
-                  <div className="whitespace-pre-line text-lg leading-relaxed">
-                    {story.story}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Story Analysis */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card className="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
-                <CardContent className="p-6">
-                  <h3 className="text-xl font-semibold mb-4 text-blue-800 dark:text-blue-300">📊 Plot Summary</h3>
-                  <p className="text-sm leading-relaxed dark:text-gray-300">{story.plotSummary}</p>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800">
-                <CardContent className="p-6">
-                  <h3 className="text-xl font-semibold mb-4 text-green-800 dark:text-green-300">👥 Character Analysis</h3>
-                  <p className="text-sm leading-relaxed dark:text-gray-300">{story.characterAnalysis}</p>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Themes and Mood */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card className="bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800">
-                <CardContent className="p-6">
-                  <h3 className="text-xl font-semibold mb-4 text-yellow-800 dark:text-yellow-300">🎭 Themes</h3>
-                  <div className="grid grid-cols-2 gap-2">
-                    {story.themes.map((theme, index) => (
-                      <div key={index} className="bg-white dark:bg-gray-800 p-2 rounded border border-yellow-200 dark:border-yellow-800">
-                        <span className="text-sm font-medium dark:text-gray-300">{theme}</span>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800">
-                <CardContent className="p-6">
-                  <h3 className="text-xl font-semibold mb-4 text-purple-800 dark:text-purple-300">🎨 Mood Analysis</h3>
-                  <p className="text-sm leading-relaxed dark:text-gray-300">{story.moodAnalysis}</p>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Sequel Suggestions */}
-            <Card className="bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800">
-              <CardContent className="p-6">
-                <h3 className="text-xl font-semibold mb-4 text-orange-800 dark:text-orange-300">🔮 Sequel Ideas</h3>
-                <ul className="space-y-2">
-                  {story.sequel_suggestions.map((suggestion, index) => (
-                    <li key={index} className="flex items-start space-x-2">
-                      <span className="text-orange-600 mt-1">•</span>
-                      <span className="text-sm">{suggestion}</span>
+            {history.length > 0 && (
+              <div className={cardClass}>
+                <h3 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">📖 Recent Stories</h3>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">Kept in this browser tab only.</p>
+                <ul className="space-y-3">
+                  {history.map((item) => (
+                    <li key={item.id}>
+                      <button
+                        type="button"
+                        onClick={() => openFromHistory(item)}
+                        className={`${subCardClass} w-full text-left p-3 hover:border-purple-400 dark:hover:border-purple-400/60 focus:outline-none focus:ring-2 focus:ring-purple-500/50`}
+                      >
+                        <span className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
+                          <span className="min-w-0">
+                            <span className="block font-medium text-gray-900 dark:text-white truncate">{item.title}</span>
+                            <span className="block text-sm text-gray-600 dark:text-gray-400 line-clamp-2">{item.story.slice(0, 140)}…</span>
+                          </span>
+                          <span className="shrink-0 flex sm:flex-col items-center sm:items-end gap-2">
+                            <span className="text-xs bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-300 px-2 py-1 rounded">{item.genre}</span>
+                            <span className="text-xs text-gray-500 dark:text-gray-400">{item.wordCount} words</span>
+                          </span>
+                        </span>
+                      </button>
                     </li>
                   ))}
                 </ul>
-              </CardContent>
-            </Card>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {/* Story Header */}
+            <div className={`${cardClass} text-center`}>
+              <h3 ref={titleRef} tabIndex={-1} className="text-2xl sm:text-3xl font-bold mb-2 text-gray-900 dark:text-white focus:outline-none">
+                {story.title}
+              </h3>
+              <div className="flex flex-wrap justify-center gap-x-6 gap-y-1 text-sm text-gray-600 dark:text-gray-400">
+                <span>📚 {story.genre}</span>
+                <span>🎨 {story.mood}</span>
+                <span>📝 {story.wordCount} words</span>
+                <span>⏱️ {story.readingTime} min read</span>
+              </div>
+            </div>
+
+            {/* The Story */}
+            <article className={cardClass} aria-label={story.title}>
+              <div className="max-w-none space-y-4 text-base sm:text-lg leading-relaxed text-gray-800 dark:text-gray-200">
+                {story.story.split('\n\n').map((paragraph, i) => (
+                  <p key={`${story.id}-${i}`}>{paragraph}</p>
+                ))}
+              </div>
+            </article>
 
             {/* Actions */}
-            <div className="flex gap-4">
-              <Button
-                onClick={downloadStory}
-                className="bg-green-600 hover:bg-green-700"
+            <div className="flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={handleDownload}
+                className="min-h-[44px] px-4 py-2 rounded-lg font-medium text-white bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 focus:outline-none focus:ring-2 focus:ring-green-500/50"
               >
-                📥 Download Story
+                📥 Download
+              </button>
+              <Button type="button" variant="outline" onClick={handleCopy} className="min-h-[44px]">
+                📋 Copy
+              </Button>
+              <Button type="button" onClick={() => runGeneration(variation + 1)} disabled={isGenerating} className="min-h-[44px]">
+                {isGenerating ? '✍️ Rewriting…' : '🔄 Another Version'}
+              </Button>
+              <Button type="button" variant="outline" onClick={backToForm} className="min-h-[44px]">
+                ✏️ Edit Inputs
               </Button>
               <Button
-                onClick={() => setStory(null)}
+                type="button"
                 variant="outline"
+                onClick={() => {
+                  clearForm();
+                  window.requestAnimationFrame(() => promptRef.current?.focus());
+                }}
+                className="min-h-[44px]"
               >
-                ✍️ Generate New Story
+                ✍️ New Story
               </Button>
             </div>
-          </div>
-        )}
 
-        {/* Loading State */}
-        {isGenerating && (
-          <Card className="bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800">
-            <CardContent className="p-8 text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-              <h3 className="text-lg font-semibold mb-2 dark:text-white">✍️ Crafting Your Story...</h3>
-              <p className="text-gray-600 dark:text-gray-400">Weaving characters, plot, and magic together</p>
-            </CardContent>
-          </Card>
+            {/* Story Analysis */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <section className={cardClass}>
+                <h3 className="text-lg font-semibold mb-3 text-purple-700 dark:text-purple-300">📊 Plot Summary</h3>
+                <p className="text-sm leading-relaxed text-gray-700 dark:text-gray-300">{story.plotSummary}</p>
+              </section>
+              <section className={cardClass}>
+                <h3 className="text-lg font-semibold mb-3 text-pink-700 dark:text-pink-300">👥 Characters</h3>
+                <p className="text-sm leading-relaxed text-gray-700 dark:text-gray-300">{story.characterAnalysis}</p>
+              </section>
+              <section className={cardClass}>
+                <h3 className="text-lg font-semibold mb-3 text-amber-700 dark:text-amber-300">🎭 Themes</h3>
+                <ul className="flex flex-wrap gap-2">
+                  {story.themes.map((theme) => (
+                    <li key={theme} className="text-sm font-medium px-3 py-1 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300">
+                      {theme}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+              <section className={cardClass}>
+                <h3 className="text-lg font-semibold mb-3 text-indigo-700 dark:text-indigo-300">🎨 Mood</h3>
+                <p className="text-sm leading-relaxed text-gray-700 dark:text-gray-300">{story.moodAnalysis}</p>
+              </section>
+            </div>
+
+            <section className={cardClass}>
+              <h3 className="text-lg font-semibold mb-3 text-orange-700 dark:text-orange-300">🔮 Sequel Ideas</h3>
+              <ul className="list-disc pl-5 space-y-2 text-sm text-gray-700 dark:text-gray-300">
+                {story.sequelSuggestions.map((s) => (
+                  <li key={s}>{s}</li>
+                ))}
+              </ul>
+            </section>
+
+            <p className="text-xs text-center text-gray-500 dark:text-gray-400">
+              Composed in your browser from your prompt, characters and setting using genre and mood templates. Nothing is uploaded.
+            </p>
+          </div>
         )}
       </div>
     </ToolWrapper>

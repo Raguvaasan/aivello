@@ -1,96 +1,84 @@
-import React, { useState } from 'react';
-import { ToolWrapper } from '../components/common/ToolWrapper';
+import React, { useId, useMemo, useState } from 'react';
+import toast from 'react-hot-toast';
 import { FaFileAlt, FaCopy, FaMagic, FaList } from 'react-icons/fa';
+import { ToolWrapper } from '../components/common/ToolWrapper';
 import { IconWrapper } from '../components/common/IconWrapper';
+import { useToolTracking } from '../hooks/useToolTracking';
+import {
+  countWords,
+  MAX_SUMMARY_INPUT,
+  MIN_SUMMARY_SENTENCES,
+  splitSentences,
+  summarizeText,
+  type Keyword,
+  type SummaryFormat,
+  type SummaryLength,
+} from './lib/aiTextSummarizer';
+
+const LABEL = 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2';
+const INPUT =
+  'w-full p-3 rounded-xl bg-white dark:bg-gray-800/60 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white ' +
+  'placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500';
+
+interface SummaryState {
+  text: string;
+  keywords: Keyword[];
+  selected: number;
+  total: number;
+}
 
 export default function AITextSummarizer() {
+  const id = useId();
+  const track = useToolTracking('ai-text-summarizer', 'AI Text Summarizer');
   const [inputText, setInputText] = useState('');
-  const [summary, setSummary] = useState('');
-  const [summaryType, setSummaryType] = useState('bullet');
-  const [summaryLength, setSummaryLength] = useState('medium');
-  const [loading, setLoading] = useState(false);
+  const [summary, setSummary] = useState<SummaryState | null>(null);
+  const [summaryType, setSummaryType] = useState<SummaryFormat>('bullet');
+  const [summaryLength, setSummaryLength] = useState<SummaryLength>('medium');
+  const [error, setError] = useState<string | null>(null);
+
+  const ids = {
+    input: `${id}-input`,
+    inputHelp: `${id}-input-help`,
+    error: `${id}-error`,
+    format: `${id}-format`,
+    length: `${id}-length`,
+    output: `${id}-output`,
+  };
+
+  const wordCount = useMemo(() => countWords(inputText), [inputText]);
+  const summaryWordCount = useMemo(() => (summary ? countWords(summary.text) : 0), [summary]);
 
   const generateSummary = () => {
-    if (!inputText.trim()) {
-      alert('Please enter text to summarize');
+    const text = inputText.trim();
+    if (!text) {
+      setError('Paste the text you want to summarize.');
       return;
     }
-
-    setLoading(true);
-
-    // Simulate AI processing
-    setTimeout(() => {
-      const sentences = inputText.split(/[.!?]+/).filter(s => s.trim().length > 10);
-      let result = '';
-
-      // Simple extractive summarization algorithm
-      const keyPoints = sentences
-        .map(sentence => ({
-          sentence: sentence.trim(),
-          score: calculateSentenceScore(sentence)
-        }))
-        .sort((a, b) => b.score - a.score);
-
-      const summaryCount = getSummaryCount(sentences.length);
-      const topSentences = keyPoints.slice(0, summaryCount);
-
-      if (summaryType === 'bullet') {
-        result = topSentences
-          .map(item => `• ${item.sentence}.`)
-          .join('\n');
-      } else if (summaryType === 'paragraph') {
-        result = topSentences
-          .map(item => item.sentence)
-          .join('. ') + '.';
-      } else {
-        result = `Summary:\n\n${topSentences
-          .map(item => item.sentence)
-          .join('. ')}.`;
-      }
-
-      setSummary(result);
-      setLoading(false);
-    }, 2000);
+    if (splitSentences(text).length < MIN_SUMMARY_SENTENCES) {
+      setError(`Add a bit more text: at least ${MIN_SUMMARY_SENTENCES} sentences are needed to pick out the key points.`);
+      return;
+    }
+    const result = summarizeText(text, summaryType, summaryLength);
+    if (!result.text.trim()) {
+      setError('Couldn’t find sentences to summarize. Make sure the text contains full sentences.');
+      return;
+    }
+    setError(null);
+    setSummary({ text: result.text, keywords: result.keywords, selected: result.selectedCount, total: result.sentenceCount });
+    track('generate');
   };
 
-  const calculateSentenceScore = (sentence: string): number => {
-    const words = sentence.toLowerCase().split(' ');
-    const importantWords = ['important', 'key', 'main', 'significant', 'crucial', 'essential', 'major'];
-    let score = words.length; // Base score on length
-
-    // Boost score for important words
-    importantWords.forEach(word => {
-      if (sentence.toLowerCase().includes(word)) {
-        score += 5;
-      }
-    });
-
-    // Boost score for numbers and dates
-    if (/\d/.test(sentence)) score += 3;
-    
-    return score;
-  };
-
-  const getSummaryCount = (totalSentences: number): number => {
-    switch (summaryLength) {
-      case 'short':
-        return Math.max(1, Math.floor(totalSentences * 0.2));
-      case 'medium':
-        return Math.max(2, Math.floor(totalSentences * 0.4));
-      case 'long':
-        return Math.max(3, Math.floor(totalSentences * 0.6));
-      default:
-        return Math.max(2, Math.floor(totalSentences * 0.4));
+  const copyToClipboard = async () => {
+    if (!summary) return;
+    try {
+      await navigator.clipboard.writeText(summary.text);
+      toast.success('Summary copied to clipboard');
+    } catch {
+      toast.error('Could not copy. Select the text and press Ctrl+C instead.');
     }
   };
 
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(summary);
-    alert('Summary copied to clipboard!');
-  };
-
-  const wordCount = inputText.trim().split(/\s+/).length;
-  const summaryWordCount = summary.trim().split(/\s+/).length;
+  const compression = summary && wordCount > 0 ? Math.max(0, Math.round((1 - summaryWordCount / wordCount) * 100)) : 0;
 
   return (
     <ToolWrapper
@@ -99,143 +87,173 @@ export default function AITextSummarizer() {
       toolDescription="Summarize long articles, documents, and texts instantly. Extract key points and main ideas with AI-powered text summarization"
       toolCategory="Writing"
     >
-      <div className="max-w-6xl mx-auto">
-        <div className="bg-white dark:bg-gray-800 shadow-lg rounded-xl p-6">
+      <div className="relative max-w-6xl mx-auto">
+        <div className="bg-white/80 dark:bg-white/10 border border-gray-200 dark:border-white/20 shadow-lg dark:shadow-2xl rounded-2xl p-4 sm:p-6">
           <div className="flex items-center gap-3 mb-6">
-            <IconWrapper icon={FaFileAlt} className="text-3xl text-blue-600" />
-            <h2 className="text-2xl font-bold text-gray-800 dark:text-white">
-              AI Text Summarizer
-            </h2>
-            <IconWrapper icon={FaMagic} className="text-2xl text-purple-600" />
+            <IconWrapper icon={FaFileAlt} className="text-3xl text-blue-600 dark:text-blue-400 shrink-0" />
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">AI Text Summarizer</h2>
+            <IconWrapper icon={FaMagic} className="text-2xl text-purple-600 dark:text-purple-400 shrink-0" />
           </div>
 
-          <div className="grid lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Input Section */}
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Original Text
+                <label className={LABEL} htmlFor={ids.input}>
+                  Original text
                 </label>
                 <textarea
+                  id={ids.input}
                   value={inputText}
-                  onChange={(e) => setInputText(e.target.value)}
-                  placeholder="Paste your article, document, or long text here..."
-                  className="w-full h-80 p-4 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                  maxLength={MAX_SUMMARY_INPUT}
+                  onChange={(e) => {
+                    setInputText(e.target.value);
+                    if (error) setError(null);
+                  }}
+                  placeholder="Paste your article, document, or long text here…"
+                  aria-invalid={error ? true : undefined}
+                  aria-describedby={`${ids.inputHelp}${error ? ` ${ids.error}` : ''}`}
+                  className={`${INPUT} h-80 resize-y`}
                 />
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                <p id={ids.inputHelp} className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                   {wordCount} words
                 </p>
+                {error && (
+                  <p id={ids.error} role="alert" className="mt-1 text-sm text-red-600 dark:text-red-400">
+                    {error}
+                  </p>
+                )}
               </div>
 
-              {/* Settings */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Summary Format
+                  <label className={LABEL} htmlFor={ids.format}>
+                    Summary format
                   </label>
                   <select
+                    id={ids.format}
                     value={summaryType}
-                    onChange={(e) => setSummaryType(e.target.value)}
-                    className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    onChange={(e) => setSummaryType(e.target.value as SummaryFormat)}
+                    className={INPUT}
                   >
-                    <option value="bullet">Bullet Points</option>
-                    <option value="paragraph">Paragraph</option>
-                    <option value="structured">Structured</option>
+                    <option value="bullet" className="bg-white dark:bg-gray-800">
+                      Bullet points
+                    </option>
+                    <option value="paragraph" className="bg-white dark:bg-gray-800">
+                      Paragraph
+                    </option>
+                    <option value="structured" className="bg-white dark:bg-gray-800">
+                      Structured (main idea + key points)
+                    </option>
                   </select>
                 </div>
-
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Summary Length
+                  <label className={LABEL} htmlFor={ids.length}>
+                    Summary length
                   </label>
                   <select
+                    id={ids.length}
                     value={summaryLength}
-                    onChange={(e) => setSummaryLength(e.target.value)}
-                    className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    onChange={(e) => setSummaryLength(e.target.value as SummaryLength)}
+                    className={INPUT}
                   >
-                    <option value="short">Short (20%)</option>
-                    <option value="medium">Medium (40%)</option>
-                    <option value="long">Long (60%)</option>
+                    <option value="short" className="bg-white dark:bg-gray-800">
+                      Short (~20% of sentences)
+                    </option>
+                    <option value="medium" className="bg-white dark:bg-gray-800">
+                      Medium (~35%)
+                    </option>
+                    <option value="long" className="bg-white dark:bg-gray-800">
+                      Long (~55%)
+                    </option>
                   </select>
                 </div>
               </div>
 
               <button
+                type="button"
                 onClick={generateSummary}
-                disabled={loading || !inputText.trim()}
-                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-6 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full min-h-[44px] bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-6 rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-200 flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
               >
-                {loading ? (
-                  <>
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                    Summarizing...
-                  </>
-                ) : (
-                  <>
-                    <IconWrapper icon={FaMagic} />
-                    Generate Summary
-                  </>
-                )}
+                <IconWrapper icon={FaMagic} />
+                {summary ? 'Summarize Again' : 'Generate Summary'}
               </button>
             </div>
 
             {/* Output Section */}
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <div className="flex items-center justify-between gap-2">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300" htmlFor={ids.output}>
                   Summary
                 </label>
                 {summary && (
                   <button
+                    type="button"
                     onClick={copyToClipboard}
-                    className="flex items-center gap-2 px-3 py-1 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm"
+                    className="min-h-[44px] flex items-center gap-2 px-4 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors text-sm focus:outline-none focus:ring-2 focus:ring-green-500/50"
                   >
                     <IconWrapper icon={FaCopy} />
                     Copy
                   </button>
                 )}
               </div>
-              
+
               <textarea
-                value={summary}
+                id={ids.output}
+                value={summary?.text ?? ''}
                 readOnly
-                placeholder="Your AI-generated summary will appear here..."
-                className="w-full h-80 p-4 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Your summary will appear here. It is built from the most important sentences of your text."
+                className={`${INPUT} h-80 resize-y bg-gray-50 dark:bg-gray-800/60`}
               />
-              
-              {summary && (
-                <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400">
-                  <span>{summaryWordCount} words</span>
-                  <span>
-                    Compression: {wordCount > 0 ? Math.round((1 - summaryWordCount / wordCount) * 100) : 0}%
-                  </span>
-                </div>
-              )}
+
+              <div aria-live="polite">
+                {summary && (
+                  <div className="space-y-3">
+                    <div className="flex flex-wrap justify-between gap-2 text-sm text-gray-500 dark:text-gray-400">
+                      <span>
+                        {summaryWordCount} words · {summary.selected} of {summary.total} sentences
+                      </span>
+                      <span>Reduced by {compression}%</span>
+                    </div>
+                    {summary.keywords.length > 0 && (
+                      <div>
+                        <p className="mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">Top keywords</p>
+                        <ul className="flex flex-wrap gap-2">
+                          {summary.keywords.map((k) => (
+                            <li key={k.term} className="px-2 py-1 text-xs rounded-full bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-300">
+                              {k.term}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
           {/* Features & Tips */}
-          <div className="mt-8 grid md:grid-cols-2 gap-6">
-            <div className="p-4 bg-blue-50 dark:bg-gray-700 rounded-lg">
+          <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="p-4 bg-blue-50 dark:bg-white/5 border border-blue-100 dark:border-white/10 rounded-xl">
               <h3 className="font-semibold text-blue-800 dark:text-blue-300 mb-2 flex items-center gap-2">
                 <IconWrapper icon={FaList} />
-                Features:
+                How it works
               </h3>
-              <ul className="text-sm text-blue-700 dark:text-blue-200 space-y-1">
-                <li>• Extractive summarization algorithm</li>
-                <li>• Multiple output formats</li>
-                <li>• Adjustable summary length</li>
-                <li>• Word count and compression ratio</li>
+              <ul className="text-sm text-blue-700 dark:text-blue-200 space-y-1 list-disc pl-5">
+                <li>Finds the words your text repeats most, ignoring filler words</li>
+                <li>Scores every sentence by how many of those key words it contains</li>
+                <li>Keeps the best sentences in their original order</li>
+                <li>Runs entirely in your browser: your text is never uploaded</li>
               </ul>
             </div>
-            
-            <div className="p-4 bg-green-50 dark:bg-gray-700 rounded-lg">
-              <h3 className="font-semibold text-green-800 dark:text-green-300 mb-2">💡 Best Practices:</h3>
-              <ul className="text-sm text-green-700 dark:text-green-200 space-y-1">
-                <li>• Use well-structured text for better results</li>
-                <li>• Longer texts produce better summaries</li>
-                <li>• Review and edit the summary as needed</li>
-                <li>• Ideal for articles, reports, and research papers</li>
+            <div className="p-4 bg-green-50 dark:bg-white/5 border border-green-100 dark:border-white/10 rounded-xl">
+              <h3 className="font-semibold text-green-800 dark:text-green-300 mb-2">Best practices</h3>
+              <ul className="text-sm text-green-700 dark:text-green-200 space-y-1 list-disc pl-5">
+                <li>Use well-structured text with full sentences</li>
+                <li>Longer texts produce better summaries</li>
+                <li>Review the summary before sharing it</li>
+                <li>Ideal for articles, reports and research papers</li>
               </ul>
             </div>
           </div>

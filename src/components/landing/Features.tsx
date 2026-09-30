@@ -1,209 +1,228 @@
 import React from 'react';
-import { motion } from 'framer-motion';
-import { FiZap, FiShield, FiUsers, FiTrendingUp, FiCpu, FiGlobe } from 'react-icons/fi';
+import { Link } from 'react-router-dom';
+import { FiArrowRight, FiGift, FiShield, FiSmartphone, FiZap } from 'react-icons/fi';
 import { IconWrapper } from '../common/IconWrapper';
-import { useNavigate } from 'react-router-dom';
-import { tools } from '../../data/tools';
+import { tools, categories } from '../../data/tools';
+
+type ToolEntry = (typeof tools)[number];
+
+/** Tools that need a (free) account, shown with a badge so nothing is a surprise. */
+const ACCOUNT_REQUIRED = new Set(['bg-remover']);
+
+const popularToolIds = [
+  'pdf-to-word',
+  'image-compressor',
+  'resume-builder',
+  'grammar-checker',
+  'qr-generator',
+  'ai-image-generator',
+  'language-translator',
+  'bg-remover',
+];
+const popularTools = popularToolIds
+  .map((id) => tools.find((tool) => tool.id === id))
+  .filter((tool): tool is ToolEntry => Boolean(tool));
+
+const TOOLS_PER_CATEGORY = 3;
+const toolsByCategory = categories
+  .filter((category) => category !== 'All')
+  .map((category) => ({ category, items: tools.filter((tool) => tool.category === category) }))
+  .filter(({ items }) => items.length > 0);
+
+const features = [
+  {
+    icon: FiGift,
+    title: 'Free, no signup',
+    description: 'Every tool is free to use. No account, no trial and no credit card.',
+  },
+  {
+    icon: FiShield,
+    title: 'Private by design',
+    description: 'Most tools run entirely in your browser, so your files never leave your device.',
+  },
+  {
+    icon: FiZap,
+    title: 'Fast and lightweight',
+    description: 'Each tool loads on demand and starts instantly. No uploads or queues for browser-based tools.',
+  },
+  {
+    icon: FiSmartphone,
+    title: 'Works everywhere',
+    description: 'Built for phones, tablets and desktops, with light and dark mode.',
+  },
+] as const;
+
+const card = 'rounded-2xl border border-gray-200 bg-white/80 dark:border-white/10 dark:bg-white/5';
+const focusRing =
+  'focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-gray-950';
+
+const SectionHeading: React.FC<{ id: string; title: React.ReactNode; subtitle: string }> = ({ id, title, subtitle }) => (
+  <div className="mx-auto mb-10 max-w-3xl text-center sm:mb-12">
+    <h2 id={id} className="mb-4 text-3xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-4xl">
+      {title}
+    </h2>
+    <p className="text-lg text-gray-600 dark:text-gray-300">{subtitle}</p>
+  </div>
+);
+
+const AccountBadge: React.FC = () => (
+  <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-400/15 dark:text-amber-200">
+    Free account
+  </span>
+);
+
+const gradientText =
+  'bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent dark:from-purple-400 dark:to-pink-400';
 
 export const Features: React.FC = () => {
-  const navigate = useNavigate();
-  const popularTools = tools.slice(0, 8);
-  
-  const features = [
-    {
-      icon: FiCpu,
-      title: 'AI-Powered Intelligence',
-      description: 'Cutting-edge AI models for superior results',
-      gradient: 'from-purple-500 to-pink-500'
-    },
-    {
-      icon: FiZap,
-      title: 'Lightning Fast',
-      description: 'Instant results with optimized performance',
-      gradient: 'from-yellow-500 to-orange-500'
-    },
-    {
-      icon: FiShield,
-      title: 'Privacy First',
-      description: 'Your data stays secure and private',
-      gradient: 'from-green-500 to-blue-500'
-    },
-    {
-      icon: FiGlobe,
-      title: 'Global Access',
-      description: 'Available worldwide, 24/7 accessibility',
-      gradient: 'from-blue-500 to-purple-500'
-    }
-  ];
-
-  const stats = [
-    { number: '20+', label: 'AI Tools', icon: FiCpu },
-    { number: '10K+', label: 'Active Users', icon: FiUsers },
-    { number: '99.9%', label: 'Uptime', icon: FiShield },
-    { number: '4.9/5', label: 'User Rating', icon: FiTrendingUp }
-  ];
-
   return (
     <>
-      {/* Stats Section */}
-      <section className="py-16 bg-gradient-to-r from-gray-900 via-purple-900 to-gray-900 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-30">
-          <div className="absolute inset-0" style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.05' fill-rule='evenodd'%3E%3Ccircle cx='3' cy='3' r='1'/%3E%3C/g%3E%3C/svg%3E")`
-          }}></div>
-        </div>
-        
-        <div className="container mx-auto px-6 relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-12"
-          >
-            <h2 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-white via-purple-200 to-pink-200 bg-clip-text text-transparent mb-4">
-              Trusted by Creators Worldwide
-            </h2>
-            <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-              Join thousands of professionals who rely on our AI tools daily
-            </p>
-          </motion.div>
+      <section id="features" aria-labelledby="features-heading" className="scroll-mt-24 py-16 sm:py-24">
+        <div className="container mx-auto px-4 sm:px-6">
+          <SectionHeading
+            id="features-heading"
+            title={
+              <>
+                Why <span className={gradientText}>Aivello</span>?
+              </>
+            }
+            subtitle="Everyday tools that respect your time and your privacy."
+          />
 
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
-            {stats.map((stat, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, scale: 0.8 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                className="text-center group"
-              >
-                <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-2xl flex items-center justify-center border border-purple-500/30 group-hover:scale-110 transition-transform duration-300">
-                  <IconWrapper icon={stat.icon} className="w-8 h-8 text-purple-400" />
+          <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {features.map((feature) => (
+              <li key={feature.title} className={`${card} p-6`}>
+                <div
+                  aria-hidden="true"
+                  className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-purple-600 to-pink-600 text-white"
+                >
+                  <IconWrapper icon={feature.icon} className="h-6 w-6" />
                 </div>
-                <div className="text-3xl md:text-4xl font-bold text-white mb-2">{stat.number}</div>
-                <div className="text-gray-400 font-medium">{stat.label}</div>
-              </motion.div>
+                <h3 className="mb-2 text-lg font-semibold text-gray-900 dark:text-white">{feature.title}</h3>
+                <p className="leading-relaxed text-gray-600 dark:text-gray-300">{feature.description}</p>
+              </li>
             ))}
-          </div>
+          </ul>
+
+          <p className="mx-auto mt-8 max-w-2xl text-center text-sm text-gray-600 dark:text-gray-300">
+            Optional: sign in with Google or GitHub to keep a history of the tools you use and to unlock the
+            Background Remover.{' '}
+            <Link
+              to="/pricing"
+              className="font-medium text-purple-700 underline underline-offset-2 hover:text-purple-800 dark:text-purple-300 dark:hover:text-purple-200"
+            >
+              Compare
+            </Link>
+          </p>
         </div>
       </section>
 
-      {/* Features Section */}
-      <section id="features" className="py-20 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 relative">
-        <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 to-pink-500/5"></div>
-        
-        <div className="container mx-auto px-6 relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-16"
-          >
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-              Why Choose <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">AiVello?</span>
-            </h2>
-            <p className="text-gray-400 text-xl max-w-3xl mx-auto">
-              Experience the future of productivity with our comprehensive AI toolkit
-            </p>
-          </motion.div>
+      <section
+        id="popular-tools"
+        aria-labelledby="popular-tools-heading"
+        className="scroll-mt-24 bg-gray-50 py-16 dark:bg-white/[0.02] sm:py-24"
+      >
+        <div className="container mx-auto px-4 sm:px-6">
+          <SectionHeading
+            id="popular-tools-heading"
+            title={
+              <>
+                Popular <span className={gradientText}>tools</span>
+              </>
+            }
+            subtitle="Start with the tools people use most."
+          />
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mb-20">
-            {features.map((feature, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-                className="group relative p-8 rounded-3xl bg-gradient-to-br from-white/5 to-white/[0.02] border border-white/10 hover:border-white/20 backdrop-blur-sm hover:scale-105 transition-all duration-300"
-              >
-                <div className={`w-16 h-16 rounded-2xl bg-gradient-to-r ${feature.gradient} p-0.5 mb-6 group-hover:scale-110 transition-transform duration-300`}>
-                  <div className="w-full h-full bg-gray-900 rounded-2xl flex items-center justify-center">
-                    <IconWrapper icon={feature.icon} className="w-8 h-8 text-white" />
-                  </div>
-                </div>
-                <h3 className="text-xl font-bold text-white mb-3 group-hover:text-purple-300 transition-colors">
-                  {feature.title}
-                </h3>
-                <p className="text-gray-400 leading-relaxed">
-                  {feature.description}
-                </p>
-                
-                {/* Hover Glow Effect */}
-                <div className={`absolute inset-0 bg-gradient-to-r ${feature.gradient} opacity-0 group-hover:opacity-10 rounded-3xl transition-opacity duration-300 blur-xl`}></div>
-              </motion.div>
-            ))}
-          </div>
-
-          {/* AI Tools Showcase */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-12"
-          >
-            <h3 className="text-3xl md:text-4xl font-bold text-white mb-4">
-              Trending <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">AI Tools</span>
-            </h3>
-            <p className="text-gray-400 text-lg">
-              Discover the most popular AI-powered tools on our platform
-            </p>
-          </motion.div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {popularTools.map((tool, index) => (
-              <motion.div
-                key={tool.id}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.05 }}
-                onClick={() => navigate(tool.path, { replace: true })}
-                className="group cursor-pointer p-6 rounded-2xl bg-gradient-to-br from-white/5 to-white/[0.02] border border-white/10 hover:border-purple-500/50 backdrop-blur-sm hover:scale-105 transition-all duration-300"
-              >
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="text-3xl group-hover:scale-110 transition-transform duration-300">
-                    {tool.icon}
-                  </div>
-                  <div>
-                    <h4 className="text-lg font-semibold text-white group-hover:text-purple-300 transition-colors">
-                      {tool.name}
-                    </h4>
-                    <span className="text-xs text-purple-400 font-medium px-2 py-1 bg-purple-500/20 rounded-full">
-                      {tool.category}
+          <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {popularTools.map((tool) => (
+              <li key={tool.id}>
+                <Link
+                  to={tool.path}
+                  className={`group flex h-full flex-col ${card} p-5 transition-all hover:-translate-y-0.5 hover:border-purple-300 hover:shadow-lg hover:shadow-purple-500/10 dark:hover:border-purple-400/40 ${focusRing}`}
+                >
+                  <span className="mb-3 flex items-center gap-3">
+                    <span
+                      aria-hidden="true"
+                      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-purple-100 text-xl dark:bg-purple-500/15"
+                    >
+                      {tool.icon}
                     </span>
-                  </div>
-                </div>
-                <p className="text-gray-400 text-sm leading-relaxed">
-                  {tool.description}
-                </p>
-                
-                {/* Trending Badge for AI tools */}
-                {tool.category === 'AI' && (
-                  <div className="absolute -top-2 -right-2 bg-gradient-to-r from-yellow-400 to-orange-400 text-gray-900 text-xs font-bold px-2 py-1 rounded-full animate-pulse">
-                    🔥 Hot
-                  </div>
-                )}
-              </motion.div>
+                    <span className="min-w-0">
+                      <span className="block font-semibold text-gray-900 group-hover:text-purple-700 dark:text-white dark:group-hover:text-purple-200">
+                        {tool.name}
+                      </span>
+                      <span className="mt-1 flex flex-wrap items-center gap-1.5">
+                        <span className="rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-700 dark:bg-purple-500/15 dark:text-purple-300">
+                          {tool.category}
+                        </span>
+                        {ACCOUNT_REQUIRED.has(tool.id) && <AccountBadge />}
+                      </span>
+                    </span>
+                  </span>
+                  <span className="text-sm leading-relaxed text-gray-600 dark:text-gray-300">{tool.description}</span>
+                </Link>
+              </li>
             ))}
-          </div>
+          </ul>
+        </div>
+      </section>
 
-          {/* CTA Section */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="text-center mt-16"
-          >
-            <button
-              onClick={() => navigate('/app', { replace: true })}
-              className="group relative overflow-hidden bg-gradient-to-r from-purple-600 to-pink-600 text-white px-10 py-4 rounded-2xl font-semibold text-lg shadow-2xl shadow-purple-500/25 hover:shadow-purple-500/40 hover:scale-105 transition-all duration-300"
+      <section id="categories" aria-labelledby="categories-heading" className="scroll-mt-24 py-16 sm:py-24">
+        <div className="container mx-auto px-4 sm:px-6">
+          <SectionHeading
+            id="categories-heading"
+            title={
+              <>
+                Browse by <span className={gradientText}>category</span>
+              </>
+            }
+            subtitle={`${tools.length} tools across ${toolsByCategory.length} categories, all free.`}
+          />
+
+          <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {toolsByCategory.map(({ category, items }) => (
+              <li key={category} className={`${card} p-5`}>
+                <div className="flex items-baseline justify-between gap-3">
+                  <h3 className="font-semibold text-gray-900 dark:text-white">{category}</h3>
+                  <span className="shrink-0 text-sm text-gray-500 dark:text-gray-400">
+                    {items.length} {items.length === 1 ? 'tool' : 'tools'}
+                  </span>
+                </div>
+                <ul className="mt-2">
+                  {items.slice(0, TOOLS_PER_CATEGORY).map((tool) => (
+                    <li key={tool.id}>
+                      <Link
+                        to={tool.path}
+                        className={`-mx-2 flex min-h-[44px] items-center gap-2 rounded-lg px-2 text-sm text-gray-700 transition-colors hover:bg-purple-50 hover:text-purple-700 dark:text-gray-300 dark:hover:bg-white/5 dark:hover:text-white ${focusRing}`}
+                      >
+                        <span aria-hidden="true">{tool.icon}</span>
+                        <span className="truncate">{tool.name}</span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+                {items.length > TOOLS_PER_CATEGORY && (
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    +{items.length - TOOLS_PER_CATEGORY} more in the app
+                  </p>
+                )}
+              </li>
+            ))}
+          </ul>
+
+          <div className="mt-16 rounded-3xl bg-gradient-to-r from-purple-600 to-pink-600 px-6 py-10 text-center text-white sm:px-12 sm:py-14">
+            <h2 className="mb-3 text-2xl font-bold sm:text-3xl">Ready when you are</h2>
+            <p className="mx-auto mb-8 max-w-xl text-white">
+              Pick a tool and get started. No account, no download, no cost.
+            </p>
+            <Link
+              to="/app"
+              className="group inline-flex min-h-[48px] items-center justify-center gap-2 rounded-2xl bg-white px-8 py-3 font-semibold text-purple-700 shadow-lg transition-transform hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-purple-600"
             >
-              <span className="relative z-10 flex items-center gap-2">
-                Explore All Tools
-                <IconWrapper icon={FiZap} className="w-5 h-5 group-hover:rotate-12 transition-transform" />
-              </span>
-              <div className="absolute inset-0 bg-gradient-to-r from-pink-600 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            </button>
-          </motion.div>
+              Explore all {tools.length} tools
+              <IconWrapper icon={FiArrowRight} className="h-5 w-5 transition-transform group-hover:translate-x-1" />
+            </Link>
+          </div>
         </div>
       </section>
     </>

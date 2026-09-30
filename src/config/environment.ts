@@ -1,6 +1,9 @@
 /**
- * Environment configuration utility
- * Validates and provides access to environment variables
+ * Environment configuration.
+ *
+ * Variables keep their historical REACT_APP_* names (see envPrefix in vite.config.ts)
+ * so deployments configured for Create React App keep working. Only prefixed
+ * variables are bundled; anything secret must stay unprefixed and server-side.
  */
 
 interface Config {
@@ -13,20 +16,32 @@ interface Config {
     appId: string;
     measurementId: string;
   };
-  apiKeys: {
-    removeBg: string;
-  };
   env: 'development' | 'production' | 'test';
 }
 
-const getEnvVar = (key: string, required: boolean = true): string => {
-  const value = process.env[key];
-  
-  if (required && !value) {
-    throw new Error(`Missing required environment variable: ${key}`);
+type EnvKey = keyof ImportMetaEnv & `REACT_APP_${string}`;
+
+const env = import.meta.env;
+const isTest = env.MODE === 'test';
+
+const getEnvVar = (key: EnvKey, required = true): string => {
+  const value = env[key];
+
+  // Missing Firebase config must not crash the whole app at import time: the landing
+  // page and every client-side tool work without it. Firebase features report the
+  // problem when they are first used instead.
+  if (required && !value && !isTest && env.DEV) {
+    console.error(`Missing required environment variable: ${key} (see .env.example)`);
   }
-  
-  return value || '';
+
+  return typeof value === 'string' ? value : '';
+};
+
+const resolveEnv = (): Config['env'] => {
+  const explicit = env.REACT_APP_ENV;
+  if (explicit === 'development' || explicit === 'production' || explicit === 'test') return explicit;
+  if (isTest) return 'test';
+  return env.PROD ? 'production' : 'development';
 };
 
 const config: Config = {
@@ -34,37 +49,14 @@ const config: Config = {
     apiKey: getEnvVar('REACT_APP_FIREBASE_API_KEY'),
     authDomain: getEnvVar('REACT_APP_FIREBASE_AUTH_DOMAIN'),
     projectId: getEnvVar('REACT_APP_FIREBASE_PROJECT_ID'),
-    storageBucket: getEnvVar('REACT_APP_FIREBASE_STORAGE_BUCKET'),
-    messagingSenderId: getEnvVar('REACT_APP_FIREBASE_MESSAGING_SENDER_ID'),
+    storageBucket: getEnvVar('REACT_APP_FIREBASE_STORAGE_BUCKET', false),
+    messagingSenderId: getEnvVar('REACT_APP_FIREBASE_MESSAGING_SENDER_ID', false),
     appId: getEnvVar('REACT_APP_FIREBASE_APP_ID'),
-    measurementId: getEnvVar('REACT_APP_FIREBASE_MEASUREMENT_ID'),
+    measurementId: getEnvVar('REACT_APP_FIREBASE_MEASUREMENT_ID', false),
   },
-  apiKeys: {
-    removeBg: getEnvVar('REACT_APP_REMOVE_BG_API_KEY'),
-  },
-  env: (getEnvVar('REACT_APP_ENV', false) as Config['env']) || 'development',
+  env: resolveEnv(),
 };
 
-// Validate configuration on load
-const validateConfig = (): void => {
-  const requiredKeys = [
-    'firebase.apiKey',
-    'firebase.authDomain', 
-    'firebase.projectId',
-    'apiKeys.removeBg'
-  ];
-
-  for (const key of requiredKeys) {
-    const value = key.split('.').reduce((obj, k) => obj[k], config as any);
-    if (!value) {
-      console.error(`Missing configuration for: ${key}`);
-    }
-  }
-};
-
-// Only validate in development to avoid console errors in production
-if (config.env === 'development') {
-  validateConfig();
-}
+export const isFirebaseConfigured = Boolean(config.firebase.apiKey && config.firebase.projectId);
 
 export default config;

@@ -1,197 +1,146 @@
-import React from 'react';
-import { useAuth } from '../../context/AuthContext';
-import { useNavigate, Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { IconWrapper } from '../common/IconWrapper';
+import React, { useEffect, useState } from 'react';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
+import { motion, MotionConfig } from 'framer-motion';
 import { FcGoogle } from 'react-icons/fc';
 import { FaGithub } from 'react-icons/fa';
+import { FiArrowLeft } from 'react-icons/fi';
+import { useAuth } from '../../context/AuthContext';
+import { IconWrapper } from '../common/IconWrapper';
 import { SEOHelmet } from '../common/SEOHelmet';
+import { AivelloIcon } from '../common/AivelloLogo';
 import { seoData } from '../../data/seoData';
 
+interface LocationState {
+  from?: { pathname?: string; search?: string };
+}
+
+/** Only same-app paths are allowed as a post-login destination (no open redirect). */
+const safeRedirect = (state: unknown): string => {
+  const from = (state as LocationState | null)?.from;
+  const path = from?.pathname;
+  if (typeof path === 'string' && path.startsWith('/') && !path.startsWith('//') && path !== '/login') {
+    return path + (from?.search ?? '');
+  }
+  return '/app';
+};
+
+type Provider = 'google' | 'github';
+
 export const Login: React.FC = () => {
-  const { signInWithGoogle, signInWithGithub, user, loading: authLoading } = useAuth();
-  const [isSigningIn, setIsSigningIn] = React.useState(false);
+  const { signInWithGoogle, signInWithGithub, user, ensureAuth } = useAuth();
+  const [pending, setPending] = useState<Provider | null>(null);
   const navigate = useNavigate();
+  const location = useLocation();
+  const destination = safeRedirect(location.state);
 
-  // Auto redirect if user is already logged in
-  React.useEffect(() => {
-    if (user && !authLoading) {
-      navigate('/app', { replace: true });
-    }
-  }, [user, authLoading, navigate]);
+  useEffect(() => {
+    ensureAuth();
+  }, [ensureAuth]);
 
-  const handleGoogleSignIn = async () => {
-    if (isSigningIn) {
-      console.log('Google sign-in already in progress, ignoring click');
-      return; // Prevent double clicks
-    }
-    
-    console.log('Starting Google sign-in...');
-    setIsSigningIn(true);
+  // Send the user back to where they came from (e.g. Background Remover) once signed in.
+  useEffect(() => {
+    if (user) navigate(destination, { replace: true });
+  }, [user, destination, navigate]);
+
+  const handleSignIn = async (provider: Provider) => {
+    if (pending) return; // Prevent double clicks
+    setPending(provider);
     try {
-      const result = await signInWithGoogle();
-      console.log('Google sign-in successful:', result);
-      // Navigation will happen through useEffect when user state updates
-    } catch (error) {
-      console.error('Error signing in with Google:', error);
-      setIsSigningIn(false);
-    }
-  };
-
-  const handleGithubSignIn = async () => {
-    if (isSigningIn) {
-      console.log('Github sign-in already in progress, ignoring click');
-      return; // Prevent double clicks
-    }
-    
-    console.log('Starting Github sign-in...');
-    setIsSigningIn(true);
-    try {
-      const result = await signInWithGithub();
-      console.log('Github sign-in successful:', result);
-      // Navigation will happen through useEffect when user state updates
-    } catch (error) {
-      console.error('Error signing in with Github:', error);
-      setIsSigningIn(false);
+      await (provider === 'google' ? signInWithGoogle() : signInWithGithub());
+      // Navigation happens in the effect above once the auth state updates.
+    } catch {
+      // The auth context already showed a toast explaining what went wrong.
+      setPending(null);
     }
   };
 
   return (
-    <>
+    <MotionConfig reducedMotion="user">
       <SEOHelmet
         title={seoData.pages.login.title}
         description={seoData.pages.login.description}
         keywords={seoData.pages.login.keywords}
         url="https://aivello.vercel.app/login"
+        noindex
       />
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-950 via-purple-950 to-gray-950 relative overflow-hidden">
-        {/* Background Pattern */}
-        <div 
-          className="absolute inset-0 opacity-20"
-          style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'%3E%3Cg fill-rule='evenodd'%3E%3Cg fill='%23a855f7' fill-opacity='0.1'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-          }}
-        />
-        
-        {/* Floating Elements */}
-        <div className="absolute inset-0 overflow-hidden">
-          <motion.div
-            animate={{
-              y: [0, -20, 0],
-              rotate: [0, 5, 0],
-            }}
-            transition={{
-              duration: 6,
-              repeat: Infinity,
-              ease: "easeInOut"
-            }}
-            className="absolute top-20 left-10 w-20 h-20 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-full blur-xl"
-          />
-          <motion.div
-            animate={{
-              y: [0, 20, 0],
-              rotate: [0, -5, 0],
-            }}
-            transition={{
-              duration: 8,
-              repeat: Infinity,
-              ease: "easeInOut"
-            }}
-            className="absolute bottom-20 right-10 w-32 h-32 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-full blur-xl"
-          />
+      <main
+        id="main-content"
+        className="min-h-screen flex items-center justify-center px-4 py-12 bg-gradient-to-br from-purple-50 via-white to-pink-50 dark:from-gray-950 dark:via-purple-950 dark:to-gray-950 relative overflow-hidden"
+      >
+        <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
+          <div className="absolute top-20 left-10 w-40 h-40 bg-purple-400/20 dark:bg-purple-500/20 rounded-full blur-3xl" />
+          <div className="absolute bottom-20 right-10 w-56 h-56 bg-pink-400/20 dark:bg-pink-500/20 rounded-full blur-3xl" />
         </div>
 
         <motion.div
-          initial={{ opacity: 0, y: 30, scale: 0.95 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 0.6 }}
-          className="bg-gray-800/40 backdrop-blur-xl border border-gray-700/50 p-8 rounded-3xl shadow-2xl w-full max-w-md relative z-10"
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="relative z-10 w-full max-w-md bg-white/90 dark:bg-gray-800/50 backdrop-blur-xl border border-gray-200 dark:border-gray-700/50 p-8 rounded-3xl shadow-2xl"
         >
+          <Link
+            to="/"
+            className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-purple-600 dark:text-gray-400 dark:hover:text-purple-300 mb-6 min-h-[44px]"
+          >
+            <IconWrapper icon={FiArrowLeft} className="w-4 h-4" /> Back to home
+          </Link>
+
           <div className="text-center mb-8">
-            <motion.h2 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="text-4xl font-bold bg-gradient-to-r from-white via-purple-200 to-pink-200 bg-clip-text text-transparent mb-4"
-            >
-              Welcome to AiVello
-            </motion.h2>
-            <motion.p 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.3 }}
-              className="text-gray-300 text-lg"
-            >
-              Access all your favorite AI tools in one place
-            </motion.p>
+            <div className="flex justify-center mb-4">
+              <AivelloIcon width={56} height={56} title="" />
+            </div>
+            <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-purple-700 to-pink-600 dark:from-white dark:via-purple-200 dark:to-pink-200 bg-clip-text text-transparent mb-3">
+              Welcome to Aivello
+            </h1>
+            <p className="text-gray-600 dark:text-gray-300">
+              Sign in to save your usage history and use tools that need an account.
+              Most tools work without signing in.
+            </p>
           </div>
 
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-            className="space-y-4"
-          >
-            <motion.button
-              onClick={handleGoogleSignIn}
-              disabled={isSigningIn}
-              whileHover={{ scale: 1.02, y: -2 }}
-              whileTap={{ scale: 0.98 }}
-              className="w-full flex items-center justify-center space-x-3 px-6 py-4 bg-white/90 backdrop-blur-sm rounded-2xl hover:bg-white transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
+          <div className="space-y-4">
+            <button
+              type="button"
+              onClick={() => handleSignIn('google')}
+              disabled={pending !== null}
+              className="w-full min-h-[56px] flex items-center justify-center gap-3 px-6 py-4 bg-white border border-gray-300 rounded-2xl text-gray-800 font-semibold text-lg shadow hover:shadow-lg hover:bg-gray-50 transition disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
             >
-              {isSigningIn ? (
-                <motion.div 
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                  className="w-6 h-6 border-2 border-gray-300 border-t-gray-800 rounded-full"
-                />
+              {pending === 'google' ? (
+                <span className="w-6 h-6 border-2 border-gray-300 border-t-gray-800 rounded-full animate-spin" aria-hidden="true" />
               ) : (
                 <IconWrapper icon={FcGoogle} className="h-6 w-6" />
               )}
-              <span className="text-gray-800 font-semibold text-lg">
-                {isSigningIn ? 'Signing in...' : 'Continue with Google'}
-              </span>
-            </motion.button>
+              <span>{pending === 'google' ? 'Signing in…' : 'Continue with Google'}</span>
+            </button>
 
-            <motion.button
-              onClick={handleGithubSignIn}
-              disabled={isSigningIn}
-              whileHover={{ scale: 1.02, y: -2 }}
-              whileTap={{ scale: 0.98 }}
-              className="w-full flex items-center justify-center space-x-3 px-6 py-4 bg-gray-800/80 backdrop-blur-sm border border-gray-600 rounded-2xl hover:bg-gray-700/80 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
+            <button
+              type="button"
+              onClick={() => handleSignIn('github')}
+              disabled={pending !== null}
+              className="w-full min-h-[56px] flex items-center justify-center gap-3 px-6 py-4 bg-gray-900 dark:bg-gray-900/80 border border-gray-900 dark:border-gray-600 rounded-2xl text-white font-semibold text-lg shadow hover:shadow-lg hover:bg-gray-800 transition disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
             >
-              {isSigningIn ? (
-                <motion.div 
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                  className="w-6 h-6 border-2 border-gray-600 border-t-white rounded-full"
-                />
+              {pending === 'github' ? (
+                <span className="w-6 h-6 border-2 border-gray-500 border-t-white rounded-full animate-spin" aria-hidden="true" />
               ) : (
-                <IconWrapper icon={FaGithub} className="h-6 w-6 text-white" />
+                <IconWrapper icon={FaGithub} className="h-6 w-6" />
               )}
-              <span className="text-white font-semibold text-lg">
-                {isSigningIn ? 'Signing in...' : 'Continue with GitHub'}
-              </span>
-            </motion.button>
-          </motion.div>
+              <span>{pending === 'github' ? 'Signing in…' : 'Continue with GitHub'}</span>
+            </button>
+          </div>
 
-          <motion.p 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.6, delay: 0.6 }}
-            className="mt-8 text-sm text-gray-400 text-center leading-relaxed"
-          >
+          <p className="mt-8 text-sm text-gray-500 dark:text-gray-400 text-center leading-relaxed">
             By continuing, you agree to our{' '}
-            <Link to="/terms" className="text-purple-400 hover:text-purple-300 transition-colors duration-200 font-medium">
+            <Link to="/terms" className="text-purple-700 hover:text-purple-800 dark:text-purple-400 dark:hover:text-purple-300 font-medium underline-offset-2 hover:underline">
               Terms of Service
             </Link>{' '}
             and{' '}
-            <Link to="/privacy" className="text-purple-400 hover:text-purple-300 transition-colors duration-200 font-medium">
+            <Link to="/privacy" className="text-purple-700 hover:text-purple-800 dark:text-purple-400 dark:hover:text-purple-300 font-medium underline-offset-2 hover:underline">
               Privacy Policy
             </Link>
-          </motion.p>
+            .
+          </p>
         </motion.div>
-      </div>
-    </>
+      </main>
+    </MotionConfig>
   );
 };

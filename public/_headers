@@ -1,25 +1,29 @@
-# Content Security Policy and additional security headers
+# Security & caching headers for non-Vercel static hosts (Netlify, Cloudflare Pages).
+# Vercel reads vercel.json instead - keep the two in sync.
 /*
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.firebaseapp.com https://*.googleapis.com https://api.remove.bg; frame-ancestors 'none'
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://pagead2.googlesyndication.com https://*.googlesyndication.com https://*.doubleclick.net https://apis.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://image.pollinations.ai https://*.googleusercontent.com https://avatars.githubusercontent.com https://*.googlesyndication.com https://*.doubleclick.net https://www.google-analytics.com https://*.google-analytics.com https://www.googletagmanager.com https://img.youtube.com https://i.ytimg.com; media-src 'self' blob: data:; worker-src 'self' blob:; connect-src 'self' https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firebaseinstallations.googleapis.com https://www.googleapis.com https://api.mymemory.translated.net https://api.languagetool.org https://image.pollinations.ai https://img.youtube.com https://i.ytimg.com https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com https://*.googlesyndication.com https://*.doubleclick.net; frame-src https://*.googlesyndication.com https://*.doubleclick.net https://*.firebaseapp.com https://accounts.google.com https://github.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests
   X-Frame-Options: DENY
   X-Content-Type-Options: nosniff
-  X-XSS-Protection: 1; mode=block
   Referrer-Policy: strict-origin-when-cross-origin
-  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
-  Strict-Transport-Security: max-age=31536000; includeSubDomains
+  Permissions-Policy: camera=(self), microphone=(self), geolocation=(), payment=(), usb=(), interest-cohort=()
+  Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+  Cross-Origin-Opener-Policy: same-origin-allow-popups
 
-# Cache static assets
-/static/*
+# Vite emits content-hashed files here: safe to cache forever.
+/assets/*
   Cache-Control: public, max-age=31536000, immutable
 
-# Cache images
+# Must revalidate so a deploy is picked up immediately.
+/index.html
+  Cache-Control: no-cache
+/sw.js
+  Cache-Control: no-cache
+/manifest.json
+  Cache-Control: no-cache
+
 /*.png
-  Cache-Control: public, max-age=31536000
-/*.jpg
-  Cache-Control: public, max-age=31536000
-/*.jpeg
-  Cache-Control: public, max-age=31536000
+  Cache-Control: public, max-age=604800, stale-while-revalidate=86400
 /*.svg
-  Cache-Control: public, max-age=31536000
+  Cache-Control: public, max-age=604800, stale-while-revalidate=86400
 /*.webp
-  Cache-Control: public, max-age=31536000
+  Cache-Control: public, max-age=604800, stale-while-revalidate=86400
