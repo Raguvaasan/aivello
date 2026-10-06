@@ -62,7 +62,8 @@ const extractPdfText = async (file: File): Promise<{ text: string; truncated: bo
   const pdfjs = await import('pdfjs-dist');
   pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
   const data = new Uint8Array(await file.arrayBuffer());
-  const task = pdfjs.getDocument({ data, isEvalSupported: false });
+  // pdf.js >= 5.7 has no eval-based font path, so the old isEvalSupported: false guard is gone.
+  const task = pdfjs.getDocument({ data });
   let pdf: Awaited<typeof task.promise>;
   try {
     pdf = await task.promise;
@@ -111,7 +112,8 @@ const extractPdfText = async (file: File): Promise<{ text: string; truncated: bo
     }
     return { text: out.join('\n'), truncated: pdf.numPages > MAX_PDF_PAGES };
   } finally {
-    void pdf.destroy();
+    // pdf.js 6 removed PDFDocumentProxy.destroy(); the loading task owns teardown now.
+    task.destroy().catch(() => undefined);
   }
 };
 

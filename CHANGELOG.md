@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+- pdfjs-dist 5.4 → 6.4.299 (GHSA-hq66-cqwq-w95j: arbitrary JavaScript execution when opening a malicious PDF
+  in 5.6.83–6.2.107; PDF to Word and Resume Scanner open user PDFs).
+- `overrides` for `@grpc/grpc-js` ^1.14.5 (GHSA-m9gg-hp2v-232j, GHSA-f596-whhp-79r4) and
+  `postcss-selector-parser` ^7.1.6 (GHSA-rj75-hqrm-r3gf); lockfile refresh patches dompurify, source-map-js,
+  fast-glob and postcss-nested. `npm audit --omit=dev`: 0 vulnerabilities.
+
+### Changed
+- firebase 11 → 12, framer-motion 12 → 14, web-vitals 5 → 6, react-qrcode-logo 3 → 4; React 19.3, React Router
+  7.18.4, Vite 8.3.3, Tailwind 3.4.19 and other minor/patch updates.
+- Node.js 22.13+ required (Vitest 5 and pdfjs-dist 6); CI matrix is now Node 22 and 24.
+- Initial JS kept under the 400 KB budget despite React 19.3's larger runtime: per-tool SEO data moved to
+  `src/data/toolSeoData.ts` (lazy tool chunks) and the toaster is loaded on demand.
+
+### Removed
+- Unused dependencies: `@firebase/auth`, `@loadable/component`, `compromise`, `compromise-numbers`, `sentiment`,
+  `@testing-library/user-event`.
+- Stale `docs/` folder (pre-Vite guides and already-remediated audit/fix reports; `docs/SECURITY.md`
+  duplicated `.github/SECURITY.md`).
+- `tools/*.html` logo/icon generators, which still produced the old blue logo.
+- Unused `src/App.css` (Create React App boilerplate) and `src/components/ui/card.tsx`.
+
 ## [1.0.0] - 2026-09-30
 
 ### Added

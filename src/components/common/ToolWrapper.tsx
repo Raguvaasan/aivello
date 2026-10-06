@@ -3,7 +3,8 @@ import { Link, useLocation } from 'react-router-dom';
 import { FiChevronRight } from 'react-icons/fi';
 import { SEOHelmet } from '../common/SEOHelmet';
 import { IconWrapper } from './IconWrapper';
-import { seoData, structuredDataSchemas } from '../../data/seoData';
+import { structuredDataSchemas } from '../../data/seoData';
+import { toolSeoData } from '../../data/toolSeoData';
 import { tools } from '../../data/tools';
 
 interface ToolWrapperProps {
@@ -36,7 +37,7 @@ export const ToolWrapper: React.FC<ToolWrapperProps> = ({
   const name = registryEntry?.name ?? toolName;
   const category = registryEntry?.category ?? toolCategory;
   const url = `${SITE_URL}${location.pathname}`;
-  const toolSeoData = seoData.tools[toolId as keyof typeof seoData.tools];
+  const toolSeo = toolSeoData[toolId as keyof typeof toolSeoData];
 
   const seoInfo = useMemo(() => {
     const breadcrumbSchema = structuredDataSchemas.createBreadcrumbSchema([
@@ -45,8 +46,8 @@ export const ToolWrapper: React.FC<ToolWrapperProps> = ({
       { name, url },
     ]);
 
-    if (toolSeoData) {
-      return { ...toolSeoData, structuredData: [toolSeoData.structuredData, breadcrumbSchema] };
+    if (toolSeo) {
+      return { ...toolSeo, structuredData: [toolSeo.structuredData, breadcrumbSchema] };
     }
 
     return {
@@ -58,7 +59,7 @@ export const ToolWrapper: React.FC<ToolWrapperProps> = ({
         breadcrumbSchema,
       ],
     };
-  }, [toolSeoData, name, toolDescription, category, url]);
+  }, [toolSeo, name, toolDescription, category, url]);
 
   return (
     <>

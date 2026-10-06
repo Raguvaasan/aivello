@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import type { Auth, AuthProvider as FirebaseAuthProvider, UserCredential } from 'firebase/auth';
-import toast from 'react-hot-toast';
 import { User } from '../types/user';
 import { REMOTE_THEME_EVENT } from './ThemeContext';
 import { logger } from '../utils/logger';
@@ -20,6 +19,11 @@ interface AuthContextType {
    */
   ensureAuth: () => void;
 }
+
+/** Sign-in errors are rare; load the toast library only when one needs showing. */
+const showError = (message: string) => {
+  void import('react-hot-toast').then(({ default: toast }) => toast.error(message));
+};
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
@@ -163,15 +167,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } catch (error) {
         const code = firebaseErrorCode(error);
         if (code === 'auth/account-exists-with-different-credential') {
-          toast.error('This email is already registered with a different sign-in provider.');
+          showError('This email is already registered with a different sign-in provider.');
         } else if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') {
-          toast.error('Sign-in popup closed. Please try again.');
+          showError('Sign-in popup closed. Please try again.');
         } else if (code === 'auth/popup-blocked') {
-          toast.error('Your browser blocked the sign-in popup. Please allow popups and retry.');
+          showError('Your browser blocked the sign-in popup. Please allow popups and retry.');
         } else if (code === 'auth/network-request-failed') {
-          toast.error('Network error. Check your connection and try again.');
+          showError('Network error. Check your connection and try again.');
         } else {
-          toast.error(`${providerName === 'google' ? 'Google' : 'GitHub'} sign-in failed. Try again.`);
+          showError(`${providerName === 'google' ? 'Google' : 'GitHub'} sign-in failed. Try again.`);
         }
         throw error;
       }
@@ -189,7 +193,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       writeSessionHint(false);
     } catch (error) {
       logger.error('Sign out failed', error);
-      toast.error('Could not sign you out. Please try again.');
+      showError('Could not sign you out. Please try again.');
     }
   }, []);
 

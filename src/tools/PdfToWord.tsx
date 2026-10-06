@@ -118,7 +118,8 @@ export default function PdfToWord() {
         pdfjs.GlobalWorkerOptions.workerSrc = PDF_WORKER_SRC;
         if (!isCurrent()) return;
 
-        const task = pdfjs.getDocument({ data, isEvalSupported: false });
+        // pdf.js >= 5.7 has no eval-based font path, so the old isEvalSupported: false guard is gone.
+        const task = pdfjs.getDocument({ data });
         loadingTask.current = task;
         const pdf = await task.promise;
         if (!isCurrent()) return;

@@ -24,7 +24,7 @@ Tools that send data to a third party: Grammar Checker (LanguageTool), Language 
 
 ## Quick start
 
-**Prerequisites:** Node.js **20.19+** (Vite 8 requirement), npm, a Firebase project.
+**Prerequisites:** Node.js **22.13+** (required by Vitest 5 and pdfjs-dist 6), npm, a Firebase project.
 
 ```bash
 git clone https://github.com/Raguvaasan/aivello.git

@@ -10,7 +10,7 @@ We love your input! We want to make contributing to Aivello as easy and transpar
    git clone https://github.com/your-username/aivello.git
    cd aivello
    ```
-3. **Setup development environment** (Node.js 20.19+)
+3. **Setup development environment** (Node.js 22.13+)
    ```bash
    npm install
    cp .env.example .env.local   # fill in your Firebase web config
